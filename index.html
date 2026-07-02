@@ -4,6 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Patrimoine Dashboard</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <script>
@@ -139,95 +142,7 @@
     html.is-tiny .toast-container { right: 8px !important; left: 8px !important; bottom: 8px !important }
     html.is-tiny .toast { min-width: 0 !important; width: 100% !important }
 
-    /* Classes ajoutées dynamiquement par JS selon la largeur réelle
-       (solution de secours pour les simulateurs qui ne respectent pas
-       correctement la meta viewport) */
-    html.is-mobile body { font-size: 12px }
-    html.is-mobile .nav-tabs { display: none !important }
-    html.is-mobile .header-date { display: none !important }
-    html.is-mobile .kpi-row { grid-template-columns: 1fr 1fr !important; gap: 8px !important }
-    html.is-mobile .grid-3cols,
-    html.is-mobile .grid-3eq,
-    html.is-mobile .grid-2eq { grid-template-columns: 1fr !important }
-    html.is-mobile .grid-3cols .panel,
-    html.is-mobile .grid-3eq .panel,
-    html.is-mobile .grid-2eq .panel { grid-column: 1 / -1 !important }
-    html.is-mobile .header { padding: 0 10px !important; height: 52px !important; gap: 6px !important }
-    html.is-mobile .logo-text h1 { font-size: 12px !important }
-    html.is-mobile .logo-text p { font-size: 7px !important }
-    html.is-mobile .logo-icon { width: 28px !important; height: 28px !important; font-size: 10px !important }
-    html.is-mobile .header-right { gap: 6px !important }
-    html.is-mobile .sidebar { position: fixed !important; top: 52px !important; left: 0 !important; width: 280px !important; height: calc(100vh - 52px) !important; height: calc(100dvh - 52px) !important; z-index: 300 !important; transform: translateX(-100%) !important; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; opacity: 1 !important; box-shadow: 4px 0 24px rgba(0,0,0,0.5) !important; border-right: 1px solid var(--border) !important; }
-    html.is-mobile .sidebar.collapsed { width: 280px !important; padding: 16px 0 !important; opacity: 1 !important; transform: translateX(-100%) !important; overflow-y: auto !important }
-    html.is-mobile .sidebar.mobile-open { transform: translateX(0) !important }
-    html.is-mobile .content { padding: 12px !important; width: 100% !important; max-width: 100vw !important }
-    html.is-mobile .kpi-card { padding: 12px !important }
-    html.is-mobile .kpi-value { font-size: 17px !important }
-    html.is-mobile .kpi-icon { width: 28px !important; height: 28px !important; font-size: 13px !important }
-    html.is-mobile .panel { padding: 12px !important }
-    html.is-mobile .panel-title { font-size: 10px !important }
-    html.is-mobile .donut-layout { flex-direction: column !important; align-items: stretch !important }
-    html.is-mobile .donut-wrap { width: 100% !important; max-width: 160px !important; height: 160px !important; margin: 0 auto !important }
-    html.is-mobile .legend-items { width: 100% !important }
-    html.is-mobile .ring-center { width: 110px !important; height: 110px !important }
-    html.is-mobile .ring-center svg { width: 110px !important; height: 110px !important }
-    html.is-mobile .ring-pct { font-size: 22px !important }
-    html.is-mobile .indicators { grid-template-columns: 1fr 1fr !important; gap: 6px !important }
-    html.is-mobile .ind-value { font-size: 15px !important }
-    html.is-mobile .indicator { padding: 8px !important }
-    html.is-mobile .bar-name { width: 80px !important; font-size: 10px !important }
-    html.is-mobile .bar-val { font-size: 10px !important; min-width: 50px !important }
-    html.is-mobile .stat-cards-row { grid-template-columns: 1fr !important; gap: 8px !important }
-    html.is-mobile .form-row { grid-template-columns: 1fr !important; gap: 0 !important }
-    html.is-mobile .proj-sliders { grid-template-columns: 1fr !important; gap: 14px !important }
-    html.is-mobile .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important }
-    html.is-mobile .page-title { font-size: 15px !important }
-    html.is-mobile .page-sub { font-size: 10px !important }
-    html.is-mobile .sidebar-toggle { width: 36px !important; height: 36px !important; font-size: 18px !important }
-    html.is-mobile .modal-overlay { align-items: flex-end !important; padding: 0 !important }
-    html.is-mobile .modal { width: 100% !important; max-width: 100% !important; max-height: 90vh !important; border-radius: 16px 16px 0 0 !important; padding: 20px 16px !important }
-    html.is-mobile .h180 { height: 160px !important }
-    html.is-mobile .h200 { height: 180px !important }
-    html.is-mobile .h220 { height: 200px !important }
-    html.is-mobile .h240 { height: 220px !important }
-    html.is-mobile .h260 { height: 240px !important }
-    html.is-mobile .sparkline-wrap { height: 24px !important }
-    html.is-mobile .auth-open-btn { padding: 8px 12px !important; font-size: 12px !important }
-    html.is-mobile .data-table { font-size: 10px !important; min-width: 480px }
-    html.is-mobile .data-table th,
-    html.is-mobile .data-table td { padding: 6px 5px !important }
-    html.is-mobile .table-wrap { max-height: 280px !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important }
-    html.is-mobile .settings-row { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important }
-    html.is-mobile .settings-row input,
-    html.is-mobile .settings-row select,
-    html.is-mobile .settings-row .form-input { width: 100% !important }
-    html.is-mobile .toast-container { right: 12px !important; left: 12px !important; bottom: 12px !important }
-    html.is-mobile .toast { min-width: 0 !important; width: 100% !important }
-    html.is-mobile #authStatusBar { padding: 6px 8px !important }
-    html.is-mobile .main-layout { position: relative !important; overflow: visible !important }
-    html.is-mobile .sidebar-backdrop { position: fixed !important; top: 52px !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.6) !important; z-index: 250 !important; opacity: 0 !important; pointer-events: none !important; transition: opacity 0.3s !important; backdrop-filter: blur(2px) !important; -webkit-backdrop-filter: blur(2px) !important }
-    html.is-mobile .sidebar-backdrop.show { opacity: 1 !important; pointer-events: auto !important }
-
-    /* Tablette */
-    html.is-tablet .kpi-row { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important }
-    html.is-tablet .grid-3cols { grid-template-columns: 1fr 1fr !important }
-    html.is-tablet .grid-3cols .panel:nth-child(3) { grid-column: 1 / -1 !important }
-    html.is-tablet .grid-3eq { grid-template-columns: 1fr 1fr !important }
-    html.is-tablet .grid-3eq .panel:nth-child(3) { grid-column: 1 / -1 !important }
-    html.is-tablet .stat-cards-row { grid-template-columns: repeat(3, 1fr) !important }
-    html.is-tablet .proj-sliders { grid-template-columns: 1fr 1fr !important }
-
-    /* Très petit mobile (≤ 380px) */
-    html.is-tiny .kpi-row { grid-template-columns: 1fr !important }
-    html.is-tiny .kpi-value { font-size: 19px !important }
-    html.is-tiny .indicators { grid-template-columns: 1fr !important }
-    html.is-tiny .header { padding: 0 8px !important }
-    html.is-tiny .logo-text { display: none !important }
-    html.is-tiny .content { padding: 10px !important }
-    html.is-tiny .toast-container { right: 8px !important; left: 8px !important; bottom: 8px !important }
-    html.is-tiny .toast { min-width: 0 !important; width: 100% !important }
-
-    :root {
+        :root {
       --gold: #C8A84B;
       --gold-light: #E8C96A;
       --bg: #0A0A0A;
@@ -4605,10 +4520,23 @@
         });
 
         dc('catChart');
-        const last = h[h.length - 1];
+        // CORRECTION : Utilise les comptes réels (D.accounts) au lieu de D.history
+        // pour rester SYNCHRONISÉ avec la vue d'ensemble et la répartition principale
+        const livretTotal = getLivret();
+        const banqueTotal = getBanque();
+        const especesTotal = getEspeces();
+        const investTotal = D.accounts.filter(a => a.type === 'invest').reduce((s, a) => s + a.balance, 0);
+        const catLabels = ['Livret A', 'Banque', 'Espèces'];
+        const catValues = [livretTotal, banqueTotal, especesTotal];
+        const catColors = ['#4CAF50', '#2196F3', '#FF9800'];
+        if (investTotal > 0) {
+          catLabels.push('Investissement');
+          catValues.push(investTotal);
+          catColors.push('#9C27B0');
+        }
         charts['catChart'] = new Chart(document.getElementById('catChart'), {
           type: 'pie',
-          data: { labels: ['Livret A', 'Banque', 'Espèces'], datasets: [{ data: [last.livret, last.banque, last.esp], backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'], borderColor: '#111', borderWidth: 2 }] },
+          data: { labels: catLabels, datasets: [{ data: catValues, backgroundColor: catColors, borderColor: '#111', borderWidth: 2 }] },
           options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#B0B0B0', font: { size: 10 }, boxWidth: 10 } }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#2A2A2A', borderWidth: 1, callbacks: { label: c => ' ' + c.label + ': ' + fmt(c.raw) } } } }
         });
 
@@ -4662,8 +4590,14 @@
 
         row.m = m; row.total = total; row.livret = livret; row.banque = banque; row.esp = esp; row.month_date = monthDate;
         D.history.sort((a, b) => (a.month_date || '').localeCompare(b.month_date || ''));
+        // CORRECTIF : recalcule le delta (settings.delta dépend de l'historique)
+        if (D.history.length >= 2) {
+          D.settings.delta = D.history[D.history.length - 1].total - D.history[D.history.length - 2].total;
+        }
         closeModal('editHistorique');
         renderAnalyse(); renderEvolution(); renderOverview();
+        // Rafraîchit aussi les indicateurs clés (Meilleur/Pire mois, épargne moyenne)
+        renderIndicateurs();
         showToast('Données modifiées ✓');
       }
 
@@ -4805,7 +4739,13 @@
         if (error) { showToast('Erreur : ' + error.message, 'error'); return }
 
         obj.target = target; obj.current = current;
-        renderObjectifs(); renderOverview(); showToast('Objectif modifié ✓');
+        // CORRECTIF : re-render l'anneau d'objectif ET recalculer le score
+        // (sinon le ring continue d'afficher l'ancien % si l'objectif modifié est le principal)
+        renderObjectifs();
+        renderOverview();
+        updateRing(getTotal());
+        calcScore();
+        showToast('Objectif modifié ✓');
       }
 
       async function deleteObjectif(i) {
@@ -4839,17 +4779,7 @@
         renderOverview();
       }
 
-      async function deleteObjectif(i) {
-        if (!requireLogin()) return;
-        if (!confirm('Supprimer cet objectif ?')) return;
-        const obj = D.objectives[i];
 
-        const { error } = await supabaseClient.from('objectives').delete().eq('id', obj.id);
-
-        if (error) { showToast('Erreur : ' + error.message, 'error'); return }
-
-        D.objectives.splice(i, 1); renderObjectifs(); showToast('Objectif supprimé', 'error');
-      }
 
       // ======================== PROJECTION ========================
       function renderProjection() {
@@ -4965,9 +4895,12 @@
       // ======================== SETTINGS ========================
       async function saveAllParametres() {
         if (!requireLogin()) return;
-        const revenu = parseFloat(document.getElementById('settingRevenu').value) || 2200;
-        const goal = parseFloat(document.getElementById('settingGoal').value) || 20000;
-        const budget = parseFloat(document.getElementById('settingBudget').value) || 1800;
+        const revenuVal = document.getElementById('settingRevenu').value;
+        const revenu = (revenuVal === '' || isNaN(parseFloat(revenuVal))) ? 2200 : parseFloat(revenuVal);
+        const goalVal = document.getElementById('settingGoal').value;
+        const goal = (goalVal === '' || isNaN(parseFloat(goalVal))) ? 20000 : parseFloat(goalVal);
+        const budgetVal = document.getElementById('settingBudget').value;
+        const budget = (budgetVal === '' || isNaN(parseFloat(budgetVal))) ? 1800 : parseFloat(budgetVal);
         const currency = document.getElementById('settingCurrency').value;
         const dateFormat = document.getElementById('settingDateFormat').value;
 
@@ -5004,8 +4937,10 @@
 
       async function updateSettings() {
         if (!requireLogin()) return;
-        const revenu = parseFloat(document.getElementById('settingRevenu').value) || 2200;
-        const budget = parseFloat(document.getElementById('settingBudget').value) || 1800;
+        const revenuVal = document.getElementById('settingRevenu').value;
+        const revenu = (revenuVal === '' || isNaN(parseFloat(revenuVal))) ? 2200 : parseFloat(revenuVal);
+        const budgetVal = document.getElementById('settingBudget').value;
+        const budget = (budgetVal === '' || isNaN(parseFloat(budgetVal))) ? 1800 : parseFloat(budgetVal);
 
         const { error } = await supabaseClient.from('settings')
           .update({ revenu, budget })
@@ -5022,7 +4957,8 @@
 
       async function updateGoalFromSettings() {
         if (!requireLogin()) return;
-        const goal = parseFloat(document.getElementById('settingGoal').value) || 20000;
+        const goalVal = document.getElementById('settingGoal').value;
+        const goal = (goalVal === '' || isNaN(parseFloat(goalVal))) ? 20000 : parseFloat(goalVal);
 
         const { error } = await supabaseClient.from('settings')
           .update({ goal })
@@ -5109,6 +5045,6 @@
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f2c196b907836',t:'MTc4MzAxMTI2NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
