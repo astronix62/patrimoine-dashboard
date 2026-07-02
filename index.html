@@ -6,8 +6,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Patrimoine Dashboard</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+  <!-- DÉTECTION DU DEVICE (s'exécute immédiatement, avant tout le reste)
+       Ce script ajoute une classe sur <html> selon la largeur de l'écran
+       (mobile, tablette, desktop, très petit). Cela permet d'appliquer
+       les styles responsive même si le navigateur/simulateur ne respecte
+       pas correctement la meta viewport. -->
+  <script>
+    (function () {
+      function detectDevice() {
+        var w = window.innerWidth || document.documentElement.clientWidth;
+        var root = document.documentElement;
+        root.classList.remove('is-mobile', 'is-tablet', 'is-tiny');
+        if (w <= 380) {
+          root.classList.add('is-mobile', 'is-tiny');
+        } else if (w <= 768) {
+          root.classList.add('is-mobile');
+        } else if (w <= 1024) {
+          root.classList.add('is-tablet');
+        }
+      }
+      detectDevice();
+      window.addEventListener('resize', detectDevice);
+      window.addEventListener('orientationchange', detectDevice);
+      // Détection via le user-agent (certains simulateurs ne changent pas la taille)
+      var ua = navigator.userAgent || navigator.vendor || window.opera;
+      var isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(ua);
+      if (isMobileUA && !document.documentElement.classList.contains('is-mobile')) {
+        document.documentElement.classList.add('is-mobile');
+      }
+    })();
+  </script>
+
+  <!-- SDK Supabase (authentification) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
+    // =====================================================================
+    // CONFIGURATION SUPABASE — À REMPLIR
+    // Trouve ces deux valeurs dans ton projet Supabase :
+    // Project Settings > API > Project URL, et Project API keys > anon/public
+    // =====================================================================
     const SUPABASE_URL = "https://zhhzfzdmrnowbnczxjvn.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpoaHpmemRtcm5vd2JuY3p4anZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1ODU5NzUsImV4cCI6MjA5ODE2MTk3NX0.JZx1ZSjvgHdAXraN66BjYJqy-M6PQQMfhHS7buNVN2M";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -18,6 +56,182 @@
       padding: 0;
       box-sizing: border-box
     }
+
+    /* Classes ajoutées dynamiquement par JS selon la largeur réelle
+       (solution de secours pour les simulateurs qui ne respectent pas
+       correctement la meta viewport) */
+    html.is-mobile body { font-size: 12px }
+    html.is-mobile .nav-tabs { display: none !important }
+    html.is-mobile .header-date { display: none !important }
+    html.is-mobile .kpi-row { grid-template-columns: 1fr 1fr !important; gap: 8px !important }
+    html.is-mobile .grid-3cols,
+    html.is-mobile .grid-3eq,
+    html.is-mobile .grid-2eq { grid-template-columns: 1fr !important }
+    html.is-mobile .grid-3cols .panel,
+    html.is-mobile .grid-3eq .panel,
+    html.is-mobile .grid-2eq .panel { grid-column: 1 / -1 !important }
+    html.is-mobile .header { padding: 0 10px !important; height: 52px !important; gap: 6px !important }
+    html.is-mobile .logo-text h1 { font-size: 12px !important }
+    html.is-mobile .logo-text p { font-size: 7px !important }
+    html.is-mobile .logo-icon { width: 28px !important; height: 28px !important; font-size: 10px !important }
+    html.is-mobile .header-right { gap: 6px !important }
+    html.is-mobile .sidebar { position: fixed !important; top: 52px !important; left: 0 !important; width: 280px !important; height: calc(100vh - 52px) !important; height: calc(100dvh - 52px) !important; z-index: 300 !important; transform: translateX(-100%) !important; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; opacity: 1 !important; box-shadow: 4px 0 24px rgba(0,0,0,0.5) !important; border-right: 1px solid var(--border) !important; }
+    html.is-mobile .sidebar.collapsed { width: 280px !important; padding: 16px 0 !important; opacity: 1 !important; transform: translateX(-100%) !important; overflow-y: auto !important }
+    html.is-mobile .sidebar.mobile-open { transform: translateX(0) !important }
+    html.is-mobile .content { padding: 12px !important; width: 100% !important; max-width: 100vw !important }
+    html.is-mobile .kpi-card { padding: 12px !important }
+    html.is-mobile .kpi-value { font-size: 17px !important }
+    html.is-mobile .kpi-icon { width: 28px !important; height: 28px !important; font-size: 13px !important }
+    html.is-mobile .panel { padding: 12px !important }
+    html.is-mobile .panel-title { font-size: 10px !important }
+    html.is-mobile .donut-layout { flex-direction: column !important; align-items: stretch !important }
+    html.is-mobile .donut-wrap { width: 100% !important; max-width: 160px !important; height: 160px !important; margin: 0 auto !important }
+    html.is-mobile .legend-items { width: 100% !important }
+    html.is-mobile .ring-center { width: 110px !important; height: 110px !important }
+    html.is-mobile .ring-center svg { width: 110px !important; height: 110px !important }
+    html.is-mobile .ring-pct { font-size: 22px !important }
+    html.is-mobile .indicators { grid-template-columns: 1fr 1fr !important; gap: 6px !important }
+    html.is-mobile .ind-value { font-size: 15px !important }
+    html.is-mobile .indicator { padding: 8px !important }
+    html.is-mobile .bar-name { width: 80px !important; font-size: 10px !important }
+    html.is-mobile .bar-val { font-size: 10px !important; min-width: 50px !important }
+    html.is-mobile .stat-cards-row { grid-template-columns: 1fr !important; gap: 8px !important }
+    html.is-mobile .form-row { grid-template-columns: 1fr !important; gap: 0 !important }
+    html.is-mobile .proj-sliders { grid-template-columns: 1fr !important; gap: 14px !important }
+    html.is-mobile .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important }
+    html.is-mobile .page-title { font-size: 15px !important }
+    html.is-mobile .page-sub { font-size: 10px !important }
+    html.is-mobile .sidebar-toggle { width: 36px !important; height: 36px !important; font-size: 18px !important }
+    html.is-mobile .modal-overlay { align-items: flex-end !important; padding: 0 !important }
+    html.is-mobile .modal { width: 100% !important; max-width: 100% !important; max-height: 90vh !important; border-radius: 16px 16px 0 0 !important; padding: 20px 16px !important }
+    html.is-mobile .h180 { height: 160px !important }
+    html.is-mobile .h200 { height: 180px !important }
+    html.is-mobile .h220 { height: 200px !important }
+    html.is-mobile .h240 { height: 220px !important }
+    html.is-mobile .h260 { height: 240px !important }
+    html.is-mobile .sparkline-wrap { height: 24px !important }
+    html.is-mobile .auth-open-btn { padding: 8px 12px !important; font-size: 12px !important }
+    html.is-mobile .data-table { font-size: 10px !important; min-width: 480px }
+    html.is-mobile .data-table th,
+    html.is-mobile .data-table td { padding: 6px 5px !important }
+    html.is-mobile .table-wrap { max-height: 280px !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important }
+    html.is-mobile .settings-row { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important }
+    html.is-mobile .settings-row input,
+    html.is-mobile .settings-row select,
+    html.is-mobile .settings-row .form-input { width: 100% !important }
+    html.is-mobile .toast-container { right: 12px !important; left: 12px !important; bottom: 12px !important }
+    html.is-mobile .toast { min-width: 0 !important; width: 100% !important }
+    html.is-mobile #authStatusBar { padding: 6px 8px !important }
+    html.is-mobile .main-layout { position: relative !important; overflow: visible !important }
+    html.is-mobile .sidebar-backdrop { position: fixed !important; top: 52px !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.6) !important; z-index: 250 !important; opacity: 0 !important; pointer-events: none !important; transition: opacity 0.3s !important; backdrop-filter: blur(2px) !important; -webkit-backdrop-filter: blur(2px) !important }
+    html.is-mobile .sidebar-backdrop.show { opacity: 1 !important; pointer-events: auto !important }
+
+    /* Tablette */
+    html.is-tablet .kpi-row { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important }
+    html.is-tablet .grid-3cols { grid-template-columns: 1fr 1fr !important }
+    html.is-tablet .grid-3cols .panel:nth-child(3) { grid-column: 1 / -1 !important }
+    html.is-tablet .grid-3eq { grid-template-columns: 1fr 1fr !important }
+    html.is-tablet .grid-3eq .panel:nth-child(3) { grid-column: 1 / -1 !important }
+    html.is-tablet .stat-cards-row { grid-template-columns: repeat(3, 1fr) !important }
+    html.is-tablet .proj-sliders { grid-template-columns: 1fr 1fr !important }
+
+    /* Très petit mobile (≤ 380px) */
+    html.is-tiny .kpi-row { grid-template-columns: 1fr !important }
+    html.is-tiny .kpi-value { font-size: 19px !important }
+    html.is-tiny .indicators { grid-template-columns: 1fr !important }
+    html.is-tiny .header { padding: 0 8px !important }
+    html.is-tiny .logo-text { display: none !important }
+    html.is-tiny .content { padding: 10px !important }
+    html.is-tiny .toast-container { right: 8px !important; left: 8px !important; bottom: 8px !important }
+    html.is-tiny .toast { min-width: 0 !important; width: 100% !important }
+
+    /* Classes ajoutées dynamiquement par JS selon la largeur réelle
+       (solution de secours pour les simulateurs qui ne respectent pas
+       correctement la meta viewport) */
+    html.is-mobile body { font-size: 12px }
+    html.is-mobile .nav-tabs { display: none !important }
+    html.is-mobile .header-date { display: none !important }
+    html.is-mobile .kpi-row { grid-template-columns: 1fr 1fr !important; gap: 8px !important }
+    html.is-mobile .grid-3cols,
+    html.is-mobile .grid-3eq,
+    html.is-mobile .grid-2eq { grid-template-columns: 1fr !important }
+    html.is-mobile .grid-3cols .panel,
+    html.is-mobile .grid-3eq .panel,
+    html.is-mobile .grid-2eq .panel { grid-column: 1 / -1 !important }
+    html.is-mobile .header { padding: 0 10px !important; height: 52px !important; gap: 6px !important }
+    html.is-mobile .logo-text h1 { font-size: 12px !important }
+    html.is-mobile .logo-text p { font-size: 7px !important }
+    html.is-mobile .logo-icon { width: 28px !important; height: 28px !important; font-size: 10px !important }
+    html.is-mobile .header-right { gap: 6px !important }
+    html.is-mobile .sidebar { position: fixed !important; top: 52px !important; left: 0 !important; width: 280px !important; height: calc(100vh - 52px) !important; height: calc(100dvh - 52px) !important; z-index: 300 !important; transform: translateX(-100%) !important; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; opacity: 1 !important; box-shadow: 4px 0 24px rgba(0,0,0,0.5) !important; border-right: 1px solid var(--border) !important; }
+    html.is-mobile .sidebar.collapsed { width: 280px !important; padding: 16px 0 !important; opacity: 1 !important; transform: translateX(-100%) !important; overflow-y: auto !important }
+    html.is-mobile .sidebar.mobile-open { transform: translateX(0) !important }
+    html.is-mobile .content { padding: 12px !important; width: 100% !important; max-width: 100vw !important }
+    html.is-mobile .kpi-card { padding: 12px !important }
+    html.is-mobile .kpi-value { font-size: 17px !important }
+    html.is-mobile .kpi-icon { width: 28px !important; height: 28px !important; font-size: 13px !important }
+    html.is-mobile .panel { padding: 12px !important }
+    html.is-mobile .panel-title { font-size: 10px !important }
+    html.is-mobile .donut-layout { flex-direction: column !important; align-items: stretch !important }
+    html.is-mobile .donut-wrap { width: 100% !important; max-width: 160px !important; height: 160px !important; margin: 0 auto !important }
+    html.is-mobile .legend-items { width: 100% !important }
+    html.is-mobile .ring-center { width: 110px !important; height: 110px !important }
+    html.is-mobile .ring-center svg { width: 110px !important; height: 110px !important }
+    html.is-mobile .ring-pct { font-size: 22px !important }
+    html.is-mobile .indicators { grid-template-columns: 1fr 1fr !important; gap: 6px !important }
+    html.is-mobile .ind-value { font-size: 15px !important }
+    html.is-mobile .indicator { padding: 8px !important }
+    html.is-mobile .bar-name { width: 80px !important; font-size: 10px !important }
+    html.is-mobile .bar-val { font-size: 10px !important; min-width: 50px !important }
+    html.is-mobile .stat-cards-row { grid-template-columns: 1fr !important; gap: 8px !important }
+    html.is-mobile .form-row { grid-template-columns: 1fr !important; gap: 0 !important }
+    html.is-mobile .proj-sliders { grid-template-columns: 1fr !important; gap: 14px !important }
+    html.is-mobile .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important }
+    html.is-mobile .page-title { font-size: 15px !important }
+    html.is-mobile .page-sub { font-size: 10px !important }
+    html.is-mobile .sidebar-toggle { width: 36px !important; height: 36px !important; font-size: 18px !important }
+    html.is-mobile .modal-overlay { align-items: flex-end !important; padding: 0 !important }
+    html.is-mobile .modal { width: 100% !important; max-width: 100% !important; max-height: 90vh !important; border-radius: 16px 16px 0 0 !important; padding: 20px 16px !important }
+    html.is-mobile .h180 { height: 160px !important }
+    html.is-mobile .h200 { height: 180px !important }
+    html.is-mobile .h220 { height: 200px !important }
+    html.is-mobile .h240 { height: 220px !important }
+    html.is-mobile .h260 { height: 240px !important }
+    html.is-mobile .sparkline-wrap { height: 24px !important }
+    html.is-mobile .auth-open-btn { padding: 8px 12px !important; font-size: 12px !important }
+    html.is-mobile .data-table { font-size: 10px !important; min-width: 480px }
+    html.is-mobile .data-table th,
+    html.is-mobile .data-table td { padding: 6px 5px !important }
+    html.is-mobile .table-wrap { max-height: 280px !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important }
+    html.is-mobile .settings-row { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important }
+    html.is-mobile .settings-row input,
+    html.is-mobile .settings-row select,
+    html.is-mobile .settings-row .form-input { width: 100% !important }
+    html.is-mobile .toast-container { right: 12px !important; left: 12px !important; bottom: 12px !important }
+    html.is-mobile .toast { min-width: 0 !important; width: 100% !important }
+    html.is-mobile #authStatusBar { padding: 6px 8px !important }
+    html.is-mobile .main-layout { position: relative !important; overflow: visible !important }
+    html.is-mobile .sidebar-backdrop { position: fixed !important; top: 52px !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.6) !important; z-index: 250 !important; opacity: 0 !important; pointer-events: none !important; transition: opacity 0.3s !important; backdrop-filter: blur(2px) !important; -webkit-backdrop-filter: blur(2px) !important }
+    html.is-mobile .sidebar-backdrop.show { opacity: 1 !important; pointer-events: auto !important }
+
+    /* Tablette */
+    html.is-tablet .kpi-row { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important }
+    html.is-tablet .grid-3cols { grid-template-columns: 1fr 1fr !important }
+    html.is-tablet .grid-3cols .panel:nth-child(3) { grid-column: 1 / -1 !important }
+    html.is-tablet .grid-3eq { grid-template-columns: 1fr 1fr !important }
+    html.is-tablet .grid-3eq .panel:nth-child(3) { grid-column: 1 / -1 !important }
+    html.is-tablet .stat-cards-row { grid-template-columns: repeat(3, 1fr) !important }
+    html.is-tablet .proj-sliders { grid-template-columns: 1fr 1fr !important }
+
+    /* Très petit mobile (≤ 380px) */
+    html.is-tiny .kpi-row { grid-template-columns: 1fr !important }
+    html.is-tiny .kpi-value { font-size: 19px !important }
+    html.is-tiny .indicators { grid-template-columns: 1fr !important }
+    html.is-tiny .header { padding: 0 8px !important }
+    html.is-tiny .logo-text { display: none !important }
+    html.is-tiny .content { padding: 10px !important }
+    html.is-tiny .toast-container { right: 8px !important; left: 8px !important; bottom: 8px !important }
+    html.is-tiny .toast { min-width: 0 !important; width: 100% !important }
 
     :root {
       --gold: #C8A84B;
@@ -2675,7 +2889,7 @@
                   <svg viewBox="0 0 130 130" width="130" height="130">
                     <circle cx="65" cy="65" r="52" fill="none" stroke="#2A2A2A" stroke-width="9" />
                     <circle cx="65" cy="65" r="52" fill="none" stroke="#C8A84B" stroke-width="9"
-                      stroke-dasharray="326.73" stroke-dashoffset="94.75" stroke-linecap="round"
+                      stroke-dasharray="326.73" stroke-dashoffset="326.73" stroke-linecap="round"
                       transform="rotate(-90 65 65)" id="ringCircle" />
                   </svg>
                   <div class="ring-text">
@@ -3605,7 +3819,7 @@
 
           D.objectives = (objRes.data || []).map(o => ({
             id: o.id, name: o.name, target: parseFloat(o.target), current: parseFloat(o.current),
-            date: o.target_date, color: o.color
+            date: o.target_date, color: o.color, isMain: o.is_main === true
           }));
 
           D.history = (histRes.data || []).map(h => ({
@@ -3614,8 +3828,13 @@
           }));
 
           if (setRes.data) {
+            let goalValue = parseFloat(setRes.data.goal);
+            // Sécurité : si le goal récupéré est invalide (NaN, 0, ou négatif), on garde la valeur par défaut
+            if (isNaN(goalValue) || goalValue <= 0) {
+              goalValue = 1000000; // 1 000 000 € par défaut
+            }
             D.settings = {
-              revenu: parseFloat(setRes.data.revenu), goal: parseFloat(setRes.data.goal),
+              revenu: parseFloat(setRes.data.revenu), goal: goalValue,
               delta: D.settings.delta, budget: parseFloat(setRes.data.budget),
               currency: setRes.data.currency, dateFormat: setRes.data.date_format
             };
@@ -3703,14 +3922,14 @@
         if (id === 'addTx') populateTxAccountSelect();
         document.getElementById('modal-' + id).classList.add('show');
         // Sur mobile : bloque le scroll du body pendant l'ouverture
-        if (window.innerWidth <= 768) {
+        if (isMobileView()) {
           document.body.style.overflow = 'hidden';
         }
       }
       function closeModal(id) {
         document.getElementById('modal-' + id).classList.remove('show');
         // Restaure le scroll du body si aucune sidebar mobile n'est ouverte
-        if (window.innerWidth <= 768) {
+        if (isMobileView()) {
           const sb = document.getElementById('sidebar');
           if (!sb.classList.contains('mobile-open')) {
             document.body.style.overflow = '';
@@ -3736,7 +3955,7 @@
         if (tRenders[id]) setTimeout(tRenders[id], 40);
 
         // Sur mobile : ferme la sidebar après navigation et scrolle en haut
-        if (window.innerWidth <= 768) {
+        if (isMobileView()) {
           closeMobileSidebar();
           const content = document.getElementById('mainContent');
           if (content) content.scrollTop = 0;
@@ -3748,14 +3967,20 @@
         document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
         // Sur mobile : ferme le menu après clic
-        if (window.innerWidth <= 768) {
+        if (isMobileView()) {
           closeMobileSidebar();
         }
       }
 
+      function isMobileView() {
+        // Détection robuste du mode mobile (utilise la classe is-mobile
+        // posée par le script de détection, ET la largeur de fenêtre en fallback)
+        return document.documentElement.classList.contains('is-mobile') ||
+          (window.innerWidth || document.documentElement.clientWidth || 0) <= 768;
+      }
+
       function toggleSidebar() {
-        // Détecte si on est sur mobile/tablette (sidebar en mode overlay)
-        if (window.innerWidth <= 768) {
+        if (isMobileView()) {
           const sb = document.getElementById('sidebar');
           const backdrop = document.getElementById('sidebarBackdrop');
           const isOpen = sb.classList.contains('mobile-open');
@@ -3785,7 +4010,7 @@
 
       // Ferme la sidebar mobile automatiquement si on dépasse 768px (rotation, resize)
       window.addEventListener('resize', function () {
-        if (window.innerWidth > 768) {
+        if (!isMobileView()) {
           closeMobileSidebar();
         }
       });
@@ -3862,7 +4087,11 @@
 
       function calcScore() {
         const total = getTotal();
-        const goal = D.settings.goal;
+        // Utilise l'objectif marqué principal s'il existe, sinon l'objectif global
+        const mainObjective = D.objectives.find(o => o.isMain);
+        const goal = (mainObjective && mainObjective.target > 0)
+          ? mainObjective.target
+          : (D.settings.goal || 1000000);
         const pctGoal = Math.min(100, (total / goal) * 100);
         const revenu = D.settings.revenu || 1;
         const rate = (D.indicators.avgEpargne / revenu) * 100;
@@ -3938,15 +4167,41 @@
       }
 
       function updateRing(total) {
-        const goal = D.settings.goal;
-        const pct = Math.min(100, Math.round(total / goal * 100));
-        const circ = 2 * Math.PI * 52;
+        // Récupère l'objectif marqué comme principal dans la page Objectifs.
+        // S'il n'y en a aucun, prend D.settings.goal en fallback.
+        const mainObjective = D.objectives.find(o => o.isMain);
+        let goal = 0;
+        if (mainObjective && typeof mainObjective.target === 'number' && mainObjective.target > 0) {
+          goal = mainObjective.target;
+        } else if (typeof D.settings.goal === 'number' && D.settings.goal > 0) {
+          goal = D.settings.goal;
+        } else {
+          goal = 1000000; // Fallback ultime
+        }
+
+        // Calcul du pourcentage avec sécurité
+        const pct = goal > 0 ? Math.min(100, Math.max(0, Math.round((total / goal) * 100))) : 0;
+
+        // Circonférence du cercle (r=52)
+        const circ = 2 * Math.PI * 52; // ≈ 326.73
         const offset = circ - (circ * pct / 100);
-        document.getElementById('ringPct').textContent = pct + '%';
-        document.getElementById('ringGoal').textContent = fmt(goal);
-        document.getElementById('ringReached').textContent = fmt(total);
+
+        // Mise à jour des textes
+        const ringPctEl = document.getElementById('ringPct');
+        const ringGoalEl = document.getElementById('ringGoal');
+        const ringReachedEl = document.getElementById('ringReached');
+        if (ringPctEl) ringPctEl.textContent = pct + '%';
+        if (ringGoalEl) ringGoalEl.textContent = fmt(goal);
+        if (ringReachedEl) ringReachedEl.textContent = fmt(total);
+
+        // Mise à jour de l'anneau SVG (couleur or + longueur proportionnelle)
         const rc = document.getElementById('ringCircle');
-        if (rc) { rc.setAttribute('stroke-dasharray', circ.toFixed(2)); rc.setAttribute('stroke-dashoffset', offset.toFixed(2)); }
+        if (rc) {
+          rc.setAttribute('stroke-dasharray', circ.toFixed(2));
+          rc.setAttribute('stroke-dashoffset', offset.toFixed(2));
+        }
+
+        return { pct, goal, reached: total };
       }
 
       function renderIndicateurs() {
@@ -4436,10 +4691,18 @@
       function renderObjectifs() {
         document.getElementById('objectifsList').innerHTML = D.objectives.map((o, i) => {
           const pct = Math.min(100, Math.round(o.current / o.target * 100));
-          return `<div class="obj-card">
+          const isMain = o.isMain === true;
+          const mainBadge = isMain
+            ? '<span class="badge" style="background:rgba(200,168,75,0.25);color:var(--gold);font-size:9px;margin-left:6px">⭐ PRINCIPAL</span>'
+            : '';
+          const mainBtnStyle = isMain
+            ? 'background:rgba(200,168,75,0.15);border-color:var(--gold);color:var(--gold)'
+            : '';
+          return `<div class="obj-card" style="${isMain ? 'border-color:var(--gold);box-shadow:0 0 0 1px rgba(200,168,75,0.25)' : ''}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:13px;font-weight:600">🎯 ${o.name}</div>
+        <div style="font-size:13px;font-weight:600">🎯 ${o.name}${mainBadge}</div>
         <div class="action-btns">
+          <button class="action-btn" onclick="toggleMainObjectif(${i})" title="${isMain ? 'Retirer comme principal' : 'Définir comme principal'}" style="${mainBtnStyle}">⭐</button>
           <button class="action-btn" onclick="editObjectif(${i})">✏️</button>
           <button class="action-btn del" onclick="deleteObjectif(${i})">🗑️</button>
         </div>
@@ -4458,6 +4721,49 @@
         }).join('');
       }
 
+      // Marque un objectif comme principal (ou retire ce statut).
+      // Met à jour D.objectives, persiste dans Supabase, et rafraîchit l'anneau.
+      async function toggleMainObjectif(i) {
+        if (!requireLogin()) return;
+        const target = D.objectives[i];
+        if (!target) return;
+
+        // Si l'objectif est déjà principal → on le retire
+        // Sinon, on le marque principal (et on retire le statut des autres)
+        const newState = !target.isMain;
+
+        // Mise à jour locale optimiste
+        D.objectives.forEach(o => o.isMain = false);
+        target.isMain = newState;
+
+        // Si on vient d'ajouter un principal et qu'il n'y en avait aucun avant,
+        // on garde le premier en cas d'erreur réseau
+        const previousMain = D.objectives.find(o => o._wasMain);
+
+        // Persistance Supabase : un seul UPDATE par objectif
+        try {
+          // D'abord, retirer le statut de tous les autres
+          for (let j = 0; j < D.objectives.length; j++) {
+            const o = D.objectives[j];
+            if (o.id && o.isMain !== (j === i ? newState : false)) {
+              const { error } = await supabaseClient.from('objectives')
+                .update({ is_main: j === i ? newState : false })
+                .eq('id', o.id);
+              if (error) throw error;
+            }
+          }
+          showToast(newState ? '⭐ Objectif défini comme principal' : 'Statut principal retiré');
+        } catch (err) {
+          showToast('Erreur : ' + (err.message || err), 'error');
+          // Rollback local
+          target.isMain = !newState;
+        }
+
+        renderObjectifs();
+        renderOverview();
+        renderComptes();
+      }
+
       async function addObjectif() {
         if (!requireLogin()) return;
         const name = document.getElementById('objName').value.trim();
@@ -4468,14 +4774,26 @@
         const colors = ['#C8A84B', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336'];
         const color = colors[D.objectives.length % colors.length];
 
+        // Si c'est le tout premier objectif, il devient automatiquement principal
+        const isMain = D.objectives.length === 0;
+
         const { data, error } = await supabaseClient.from('objectives').insert({
-          user_id: currentUserId, name, target, current, target_date: date, color
+          user_id: currentUserId, name, target, current, target_date: date, color, is_main: isMain
         }).select().single();
 
         if (error) { showToast('Erreur : ' + error.message, 'error'); return }
 
-        D.objectives.push({ id: data.id, name: data.name, target: parseFloat(data.target), current: parseFloat(data.current), date: data.target_date, color: data.color });
-        closeModal('addObjectif'); renderObjectifs(); showToast('Objectif créé ✓');
+        D.objectives.push({
+          id: data.id, name: data.name,
+          target: parseFloat(data.target), current: parseFloat(data.current),
+          date: data.target_date, color: data.color,
+          isMain: data.is_main === true
+        });
+        closeModal('addObjectif');
+        renderObjectifs();
+        renderOverview();
+        if (isMain) showToast('Objectif créé et défini comme principal ⭐');
+        else showToast('Objectif créé ✓');
       }
 
       async function editObjectif(i) {
@@ -4494,6 +4812,37 @@
 
         obj.target = target; obj.current = current;
         renderObjectifs(); renderOverview(); showToast('Objectif modifié ✓');
+      }
+
+      async function deleteObjectif(i) {
+        if (!requireLogin()) return;
+        if (!confirm('Supprimer cet objectif ?')) return;
+        const obj = D.objectives[i];
+        const wasMain = obj.isMain === true;
+
+        const { error } = await supabaseClient.from('objectives').delete().eq('id', obj.id);
+
+        if (error) { showToast('Erreur : ' + error.message, 'error'); return }
+
+        D.objectives.splice(i, 1);
+
+        // Si on a supprimé l'objectif principal, promouvoir le premier restant
+        if (wasMain && D.objectives.length > 0) {
+          D.objectives[0].isMain = true;
+          if (D.objectives[0].id) {
+            await supabaseClient.from('objectives')
+              .update({ is_main: true })
+              .eq('id', D.objectives[0].id);
+            showToast('Objectif supprimé — le premier devient principal ⭐', 'error');
+          } else {
+            showToast('Objectif supprimé', 'error');
+          }
+        } else {
+          showToast('Objectif supprimé', 'error');
+        }
+
+        renderObjectifs();
+        renderOverview();
       }
 
       async function deleteObjectif(i) {
@@ -4653,7 +5002,7 @@
         const c = document.getElementById('settingCurrency');
         const df = document.getElementById('settingDateFormat');
         if (r) r.value = D.settings.revenu;
-        if (g) g.value = D.settings.goal;
+        if (g && typeof D.settings.goal === 'number' && D.settings.goal > 0) g.value = D.settings.goal;
         if (b) b.value = D.settings.budget;
         if (c && D.settings.currency) c.value = D.settings.currency;
         if (df && D.settings.dateFormat) df.value = D.settings.dateFormat;
@@ -4758,11 +5107,14 @@
         const ct = document.getElementById('customTo');
         if (cf) cf.value = now.toISOString().slice(0, 7);
         if (ct) ct.value = now.toISOString().slice(0, 7);
+        // Initialise immédiatement l'anneau d'objectif avec les valeurs par défaut
+        // pour éviter l'affichage des valeurs codées en dur du SVG avant la connexion
+        updateRing(0);
         renderOverview();
       }
 
       init();
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f2c196b907836',t:'MTc4MzAxMTI2NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
