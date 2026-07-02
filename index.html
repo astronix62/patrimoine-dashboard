@@ -1451,6 +1451,42 @@
       }
     }
 
+    /* Toast adapté mobile : slide depuis le bas */
+    @media (max-width: 768px) {
+      .toast-container {
+        right: 12px;
+        left: 12px;
+        bottom: 12px
+      }
+
+      .toast {
+        min-width: 0;
+        width: 100%
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateY(110%);
+          opacity: 0
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1
+        }
+      }
+
+      @keyframes slideOut {
+        from {
+          transform: translateY(0);
+          opacity: 1
+        }
+        to {
+          transform: translateY(110%);
+          opacity: 0
+        }
+      }
+    }
+
     /*connextion/inscription*/
 
     .auth-open-btn {
@@ -1893,6 +1929,482 @@
         align-items: flex-start
       }
     }
+
+    /* ============================================
+       RESPONSIVE MOBILE & TABLETTE
+       ============================================ */
+
+    /* ===== TABLETTE (≤ 1024px) ===== */
+    @media (max-width: 1024px) {
+      body {
+        font-size: 12px
+      }
+
+      .kpi-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px
+      }
+
+      .grid-3cols {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .grid-3cols .panel:nth-child(3) {
+        grid-column: 1 / -1
+      }
+
+      .grid-3eq {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .grid-3eq .panel:nth-child(3) {
+        grid-column: 1 / -1
+      }
+
+      .stat-cards-row {
+        grid-template-columns: repeat(3, 1fr)
+      }
+
+      .proj-sliders {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+
+    /* ===== MOBILE (≤ 768px) ===== */
+    @media (max-width: 768px) {
+
+      /* Empêche tout scroll horizontal */
+      html, body {
+        overflow-x: hidden !important;
+        width: 100%;
+        max-width: 100vw;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 100vw;
+      }
+
+      /* HEADER COMPACT */
+      .header {
+        padding: 0 10px;
+        height: 52px;
+        gap: 6px;
+      }
+
+      .logo-text h1 {
+        font-size: 12px;
+        letter-spacing: 1.5px
+      }
+
+      .logo-text p {
+        font-size: 7px;
+        letter-spacing: 2px
+      }
+
+      .logo-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 10px
+      }
+
+      /* Cache la barre d'onglets horizontale du header sur mobile
+         (on utilise plutôt la sidebar hamburger pour naviguer) */
+      .nav-tabs {
+        display: none
+      }
+
+      .header-date {
+        display: none
+      }
+
+      .header-right {
+        gap: 6px
+      }
+
+      /* Sidebar devient un menu overlay en plein écran */
+      .main-layout {
+        position: relative;
+        overflow: visible
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 52px;
+        left: 0;
+        width: 280px;
+        height: calc(100vh - 52px);
+        height: calc(100dvh - 52px);
+        z-index: 300;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s;
+        opacity: 1;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+        border-right: 1px solid var(--border);
+      }
+
+      .sidebar.collapsed {
+        width: 280px;
+        padding: 16px 0;
+        opacity: 1;
+        transform: translateX(-100%);
+        overflow-y: auto
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0)
+      }
+
+      /* Overlay sombre quand sidebar ouverte */
+      .sidebar-backdrop {
+        position: fixed;
+        top: 52px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 250;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px)
+      }
+
+      .sidebar-backdrop.show {
+        opacity: 1;
+        pointer-events: auto
+      }
+
+      /* Bouton hamburger prend tout l'espace dispo */
+      .sidebar-toggle {
+        width: 36px;
+        height: 36px;
+        font-size: 18px
+      }
+
+      /* CONTENU PLEINE LARGEUR */
+      .content {
+        padding: 12px;
+        width: 100%;
+        max-width: 100vw
+      }
+
+      /* KPI : 1 colonne sur très petit, 2 sur petit mobile */
+      .kpi-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 10px
+      }
+
+      .kpi-card {
+        padding: 12px
+      }
+
+      .kpi-value {
+        font-size: 17px
+      }
+
+      .kpi-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 13px
+      }
+
+      /* Grilles : tout empilé */
+      .grid-3cols,
+      .grid-3eq,
+      .grid-2eq {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 10px
+      }
+
+      .grid-3cols .panel,
+      .grid-3eq .panel,
+      .grid-2eq .panel {
+        grid-column: 1 / -1
+      }
+
+      /* Panneaux */
+      .panel {
+        padding: 12px
+      }
+
+      .panel-title {
+        font-size: 10px
+      }
+
+      /* Donut chart : empile verticalement */
+      .donut-layout {
+        flex-direction: column;
+        align-items: stretch
+      }
+
+      .donut-wrap {
+        width: 100%;
+        max-width: 160px;
+        height: 160px;
+        margin: 0 auto
+      }
+
+      .legend-items {
+        width: 100%
+      }
+
+      /* Anneau d'objectif */
+      .ring-center {
+        width: 110px;
+        height: 110px
+      }
+
+      .ring-center svg {
+        width: 110px;
+        height: 110px
+      }
+
+      .ring-pct {
+        font-size: 22px
+      }
+
+      .ring-details {
+        width: 100%;
+        max-width: 200px
+      }
+
+      /* Indicateurs : 2x2 */
+      .indicators {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px
+      }
+
+      .ind-value {
+        font-size: 15px
+      }
+
+      .indicator {
+        padding: 8px
+      }
+
+      /* Bar chart : nom plus petit */
+      .bar-name {
+        width: 80px;
+        font-size: 10px
+      }
+
+      .bar-val {
+        font-size: 10px;
+        min-width: 50px
+      }
+
+      /* Stat cards : empilés */
+      .stat-cards-row {
+        grid-template-columns: 1fr;
+        gap: 8px
+      }
+
+      /* Form rows : empilés */
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 0
+      }
+
+      /* Projections */
+      .proj-sliders {
+        grid-template-columns: 1fr;
+        gap: 14px
+      }
+
+      /* Page header */
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px
+      }
+
+      .page-title {
+        font-size: 15px
+      }
+
+      .page-sub {
+        font-size: 10px
+      }
+
+      /* Tables : scroll horizontal interne uniquement si nécessaire */
+      .table-wrap {
+        max-height: 280px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch
+      }
+
+      .data-table {
+        font-size: 10px;
+        min-width: 480px
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 6px 5px
+      }
+
+      /* Settings row : empile label et input */
+      .settings-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px
+      }
+
+      .settings-row input,
+      .settings-row select,
+      .settings-row .form-input {
+        width: 100% !important
+      }
+
+      /* Modal plein écran sur mobile */
+      .modal-overlay {
+        align-items: flex-end;
+        padding: 0
+      }
+
+      .modal {
+        width: 100%;
+        max-width: 100%;
+        max-height: 90vh;
+        border-radius: 16px 16px 0 0;
+        padding: 20px 16px
+      }
+
+      /* Bar supérieure des paramètres : boutons empilés */
+      .proj-controls {
+        padding: 12px
+      }
+
+      /* Hauteur des graphiques réduite */
+      .h180 { height: 160px }
+      .h200 { height: 180px }
+      .h220 { height: 200px }
+      .h240 { height: 220px }
+      .h260 { height: 240px }
+
+      /* Sparkline */
+      .sparkline-wrap {
+        height: 24px
+      }
+
+      /* Bouton d'auth */
+      .auth-open-btn {
+        padding: 8px 12px;
+        font-size: 12px
+      }
+
+      #authStatusBar {
+        padding: 6px 8px !important
+      }
+    }
+
+    /* ===== TRÈS PETIT MOBILE (≤ 380px) ===== */
+    @media (max-width: 380px) {
+      .kpi-row {
+        grid-template-columns: 1fr
+      }
+
+      .kpi-value {
+        font-size: 19px
+      }
+
+      .indicators {
+        grid-template-columns: 1fr
+      }
+
+      .header {
+        padding: 0 8px
+      }
+
+      .logo-text {
+        display: none
+      }
+
+      .content {
+        padding: 10px
+      }
+
+      .toast-container {
+        right: 8px;
+        left: 8px;
+        bottom: 8px
+      }
+
+      .toast {
+        min-width: 0;
+        width: 100%
+      }
+    }
+
+    /* ===== ANIMATION slideInSidebar (mobile) ===== */
+    @keyframes slideInSidebar {
+      from {
+        transform: translateX(-100%);
+        opacity: 0.5;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .sidebar.mobile-open {
+      animation: slideInSidebar 0.3s cubic-bezier(0.4, 0, 0.2, 1)
+    }
+
+    /* ===== Animation des KPI cards au chargement mobile ===== */
+    @keyframes kpiFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .kpi-card,
+      .panel {
+        animation: kpiFadeIn 0.35s ease backwards
+      }
+      .kpi-card:nth-child(1) { animation-delay: 0.02s }
+      .kpi-card:nth-child(2) { animation-delay: 0.06s }
+      .kpi-card:nth-child(3) { animation-delay: 0.10s }
+      .kpi-card:nth-child(4) { animation-delay: 0.14s }
+      .kpi-row + .grid-3cols .panel:nth-child(1) { animation-delay: 0.18s }
+      .kpi-row + .grid-3cols .panel:nth-child(2) { animation-delay: 0.22s }
+      .kpi-row + .grid-3cols .panel:nth-child(3) { animation-delay: 0.26s }
+    }
+
+    /* Amélioration tactile pour les boutons sur mobile */
+    @media (max-width: 768px) {
+      .btn,
+      .nav-tab,
+      .sidebar-item,
+      .sidebar-toggle,
+      .action-btn,
+      .panel-action,
+      .filter-select,
+      .auth-btn,
+      button {
+        -webkit-tap-highlight-color: rgba(200, 168, 75, 0.15);
+        touch-action: manipulation;
+      }
+
+      /* Scroll fluide sur iOS */
+      .content,
+      .sidebar,
+      .table-wrap,
+      .modal {
+        -webkit-overflow-scrolling: touch;
+      }
+    }
   </style>
 </head>
 
@@ -2010,6 +2522,7 @@
     </header>
 
     <div class="main-layout">
+      <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
       <!-- SIDEBAR -->
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-section">
@@ -2185,7 +2698,7 @@
                     <div class="r-val" id="ringReached">—</div>
                   </div>
                 </div>
-                <button class="ring-link" onclick="showPage('objectifs')">Voir le détail ›</button>
+                <button class="ring-link" onclick="showPage('objectifs');if(window.innerWidth<=768)closeMobileSidebar()">Voir le détail ›</button>
               </div>
             </div>
           </div>
@@ -2195,7 +2708,7 @@
               <div class="panel-header">
                 <div class="panel-title">MONTANT PAR CATÉGORIE</div>
                 <button class="edit-btn-panel"
-                  onclick="showPage('comptes');setSidebarActive(document.querySelector('.sidebar-item[onclick*=&quot;comptes&quot;]'))">Gérer</button>
+                  onclick="showPage('comptes');setSidebarActive(document.querySelector('.sidebar-item[onclick*=&quot;comptes&quot;]'));if(window.innerWidth<=768)closeMobileSidebar()">Gérer</button>
               </div>
               <div class="bar-chart" id="barChart"></div>
             </div>
@@ -3195,8 +3708,21 @@
         }
         if (id === 'addTx') populateTxAccountSelect();
         document.getElementById('modal-' + id).classList.add('show');
+        // Sur mobile : bloque le scroll du body pendant l'ouverture
+        if (window.innerWidth <= 768) {
+          document.body.style.overflow = 'hidden';
+        }
       }
-      function closeModal(id) { document.getElementById('modal-' + id).classList.remove('show') }
+      function closeModal(id) {
+        document.getElementById('modal-' + id).classList.remove('show');
+        // Restaure le scroll du body si aucune sidebar mobile n'est ouverte
+        if (window.innerWidth <= 768) {
+          const sb = document.getElementById('sidebar');
+          if (!sb.classList.contains('mobile-open')) {
+            document.body.style.overflow = '';
+          }
+        }
+      }
       document.querySelectorAll('.modal-overlay').forEach(o => {
         o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show') });
       });
@@ -3214,19 +3740,61 @@
         const tRenders = { evolution: renderEvolution, analyse: renderAnalyse, projection: renderProjection };
         if (renders[id]) renders[id]();
         if (tRenders[id]) setTimeout(tRenders[id], 40);
+
+        // Sur mobile : ferme la sidebar après navigation et scrolle en haut
+        if (window.innerWidth <= 768) {
+          closeMobileSidebar();
+          const content = document.getElementById('mainContent');
+          if (content) content.scrollTop = 0;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       }
 
       function setSidebarActive(el) {
         document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
+        // Sur mobile : ferme le menu après clic
+        if (window.innerWidth <= 768) {
+          closeMobileSidebar();
+        }
       }
 
       function toggleSidebar() {
-        const sb = document.getElementById('sidebar');
-        D.sidebarOpen = !D.sidebarOpen;
-        sb.classList.toggle('collapsed', !D.sidebarOpen);
-        document.getElementById('sidebarToggleBtn').textContent = D.sidebarOpen ? '☰' : '▶';
+        // Détecte si on est sur mobile/tablette (sidebar en mode overlay)
+        if (window.innerWidth <= 768) {
+          const sb = document.getElementById('sidebar');
+          const backdrop = document.getElementById('sidebarBackdrop');
+          const isOpen = sb.classList.contains('mobile-open');
+          if (isOpen) {
+            closeMobileSidebar();
+          } else {
+            sb.classList.add('mobile-open');
+            backdrop.classList.add('show');
+            document.body.style.overflow = 'hidden';
+          }
+        } else {
+          // Mode desktop : comportement classique (collapse)
+          const sb = document.getElementById('sidebar');
+          D.sidebarOpen = !D.sidebarOpen;
+          sb.classList.toggle('collapsed', !D.sidebarOpen);
+          document.getElementById('sidebarToggleBtn').textContent = D.sidebarOpen ? '☰' : '▶';
+        }
       }
+
+      function closeMobileSidebar() {
+        const sb = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        sb.classList.remove('mobile-open');
+        backdrop.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+
+      // Ferme la sidebar mobile automatiquement si on dépasse 768px (rotation, resize)
+      window.addEventListener('resize', function () {
+        if (window.innerWidth > 768) {
+          closeMobileSidebar();
+        }
+      });
 
       function onPeriodChange() {
         const val = document.getElementById('filterPeriod').value;
