@@ -57,82 +57,217 @@
     /* Classes ajoutées dynamiquement par JS selon la largeur réelle
        (solution de secours pour les simulateurs qui ne respectent pas
        correctement la meta viewport) */
-    html.is-mobile body { font-size: 12px }
+    html.is-mobile body { font-size: 12px; overflow-x: hidden }
+    html.is-mobile html { overflow-x: hidden }
     html.is-mobile .nav-tabs { display: none !important }
     html.is-mobile .header-date { display: none !important }
-    html.is-mobile .kpi-row { grid-template-columns: 1fr 1fr !important; gap: 8px !important }
+
+    /* ── Layout : sidebar hors flux, content pleine largeur ── */
+    html.is-mobile .main-layout { display: block !important }
+    html.is-mobile .content {
+      padding: 12px !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+      box-sizing: border-box !important;
+      overflow-x: hidden !important;
+    }
+
+    /* ── KPI row : 2 colonnes qui tiennent dans le viewport ── */
+    html.is-mobile .kpi-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 8px !important;
+    }
+    html.is-tiny .kpi-row { grid-template-columns: 1fr !important }
+
+    /* ── Grilles : tout empilé ── */
     html.is-mobile .grid-3cols,
     html.is-mobile .grid-3eq,
     html.is-mobile .grid-2eq { grid-template-columns: 1fr !important }
     html.is-mobile .grid-3cols .panel,
     html.is-mobile .grid-3eq .panel,
     html.is-mobile .grid-2eq .panel { grid-column: 1 / -1 !important }
+
+    /* ── Header ── */
     html.is-mobile .header { padding: 0 10px !important; height: 52px !important; gap: 6px !important }
     html.is-mobile .logo-text h1 { font-size: 12px !important }
     html.is-mobile .logo-text p { font-size: 7px !important }
     html.is-mobile .logo-icon { width: 28px !important; height: 28px !important; font-size: 10px !important }
     html.is-mobile .header-right { gap: 6px !important }
-    html.is-mobile .sidebar { position: fixed !important; top: 52px !important; left: 0 !important; width: 280px !important; height: calc(100vh - 52px) !important; height: calc(100dvh - 52px) !important; z-index: 300 !important; transform: translateX(-100%) !important; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; opacity: 1 !important; box-shadow: 4px 0 24px rgba(0,0,0,0.5) !important; border-right: 1px solid var(--border) !important; }
-    html.is-mobile .sidebar.collapsed { width: 280px !important; padding: 16px 0 !important; opacity: 1 !important; transform: translateX(-100%) !important; overflow-y: auto !important }
+
+    /* ── authStatusBar : compact, même hauteur que le header ── */
+    html.is-mobile #authStatusBar {
+      padding: 4px 10px !important;
+      min-height: 0 !important;
+      height: auto !important;
+    }
+    html.is-mobile .auth-open-btn { padding: 6px 10px !important; font-size: 11px !important }
+
+    /* ── Sidebar : overlay mobile ── */
+    html.is-mobile .sidebar {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 280px !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      z-index: 300 !important;
+      transform: translateX(-100%) !important;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      opacity: 1 !important;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.5) !important;
+      border-right: 1px solid var(--border) !important;
+    }
+    html.is-mobile .sidebar.collapsed {
+      width: 280px !important;
+      padding: 16px 0 !important;
+      opacity: 1 !important;
+      transform: translateX(-100%) !important;
+      overflow-y: auto !important;
+    }
     html.is-mobile .sidebar.mobile-open { transform: translateX(0) !important }
-    html.is-mobile .content { padding: 12px !important; width: 100% !important; max-width: 100vw !important }
-    html.is-mobile .kpi-card { padding: 12px !important }
-    html.is-mobile .kpi-value { font-size: 17px !important }
+    html.is-mobile .sidebar-backdrop {
+      position: fixed !important;
+      inset: 0 !important;
+      background: rgba(0,0,0,0.6) !important;
+      z-index: 250 !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transition: opacity 0.3s !important;
+    }
+    html.is-mobile .sidebar-backdrop.show { opacity: 1 !important; pointer-events: auto !important }
+
+    /* ── Bouton hamburger : taille tactile minimum ── */
+    html.is-mobile .sidebar-toggle {
+      width: 44px !important;
+      height: 44px !important;
+      font-size: 20px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    /* ── KPI cards ── */
+    html.is-mobile .kpi-card { padding: 12px !important; min-width: 0 !important }
+    html.is-mobile .kpi-value { font-size: 17px !important; word-break: break-all }
     html.is-mobile .kpi-icon { width: 28px !important; height: 28px !important; font-size: 13px !important }
-    html.is-mobile .panel { padding: 12px !important }
+
+    /* ── Panels ── */
+    html.is-mobile .panel { padding: 12px !important; min-width: 0 !important; overflow: hidden !important }
     html.is-mobile .panel-title { font-size: 10px !important }
+
+    /* ── Donut / anneau ── */
     html.is-mobile .donut-layout { flex-direction: column !important; align-items: stretch !important }
     html.is-mobile .donut-wrap { width: 100% !important; max-width: 160px !important; height: 160px !important; margin: 0 auto !important }
     html.is-mobile .legend-items { width: 100% !important }
     html.is-mobile .ring-center { width: 110px !important; height: 110px !important }
     html.is-mobile .ring-center svg { width: 110px !important; height: 110px !important }
     html.is-mobile .ring-pct { font-size: 22px !important }
+
+    /* ── Indicateurs ── */
     html.is-mobile .indicators { grid-template-columns: 1fr 1fr !important; gap: 6px !important }
     html.is-mobile .ind-value { font-size: 15px !important }
-    html.is-mobile .indicator { padding: 8px !important }
+    html.is-mobile .indicator { padding: 8px !important; min-width: 0 !important }
+
+    /* ── Bar chart ── */
     html.is-mobile .bar-name { width: 80px !important; font-size: 10px !important }
     html.is-mobile .bar-val { font-size: 10px !important; min-width: 50px !important }
+
+    /* ── Stat cards / form / projection ── */
     html.is-mobile .stat-cards-row { grid-template-columns: 1fr !important; gap: 8px !important }
     html.is-mobile .form-row { grid-template-columns: 1fr !important; gap: 0 !important }
     html.is-mobile .proj-sliders { grid-template-columns: 1fr !important; gap: 14px !important }
+
+    /* ── Page header ── */
     html.is-mobile .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important }
     html.is-mobile .page-title { font-size: 15px !important }
     html.is-mobile .page-sub { font-size: 10px !important }
-    html.is-mobile .sidebar-toggle { width: 36px !important; height: 36px !important; font-size: 18px !important }
+
+    /* ── Modal → bottom sheet ── */
     html.is-mobile .modal-overlay { align-items: flex-end !important; padding: 0 !important }
-    html.is-mobile .modal { width: 100% !important; max-width: 100% !important; max-height: 90vh !important; border-radius: 16px 16px 0 0 !important; padding: 20px 16px !important }
+    html.is-mobile .modal {
+      width: 100% !important;
+      max-width: 100% !important;
+      max-height: 90dvh !important;
+      border-radius: 16px 16px 0 0 !important;
+      padding: 20px 16px !important;
+      box-sizing: border-box !important;
+    }
+    html.is-mobile .modal .form-input,
+    html.is-mobile .modal input,
+    html.is-mobile .modal select { font-size: 16px !important; min-height: 44px !important }
+    html.is-mobile .modal .btn { min-height: 44px !important }
+
+    /* ── Graphiques ── */
     html.is-mobile .h180 { height: 160px !important }
     html.is-mobile .h200 { height: 180px !important }
     html.is-mobile .h220 { height: 200px !important }
     html.is-mobile .h240 { height: 220px !important }
     html.is-mobile .h260 { height: 240px !important }
     html.is-mobile .sparkline-wrap { height: 24px !important }
-    html.is-mobile .auth-open-btn { padding: 8px 12px !important; font-size: 12px !important }
-    html.is-mobile .data-table { font-size: 10px !important; min-width: 480px }
+
+    /* ── Tableaux : scroll interne uniquement, pas global ── */
+    html.is-mobile .table-wrap {
+      max-height: 360px !important;
+      overflow-x: auto !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+    html.is-mobile .data-table { font-size: 11px !important; min-width: 480px }
     html.is-mobile .data-table th,
-    html.is-mobile .data-table td { padding: 6px 5px !important }
-    html.is-mobile .table-wrap { max-height: 280px !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important }
+    html.is-mobile .data-table td { padding: 8px 6px !important }
+
+    /* ── Paramètres ── */
     html.is-mobile .settings-row { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important }
     html.is-mobile .settings-row input,
     html.is-mobile .settings-row select,
-    html.is-mobile .settings-row .form-input { width: 100% !important }
+    html.is-mobile .settings-row .form-input {
+      width: 100% !important;
+      font-size: 16px !important;
+      min-height: 44px !important;
+    }
+
+    /* ── Toast ── */
     html.is-mobile .toast-container { right: 12px !important; left: 12px !important; bottom: 12px !important }
     html.is-mobile .toast { min-width: 0 !important; width: 100% !important }
-    html.is-mobile #authStatusBar { padding: 6px 8px !important }
-    html.is-mobile .main-layout { position: relative !important; overflow: visible !important }
-    html.is-mobile .sidebar-backdrop { position: fixed !important; top: 52px !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.6) !important; z-index: 250 !important; opacity: 0 !important; pointer-events: none !important; transition: opacity 0.3s !important; backdrop-filter: blur(2px) !important; -webkit-backdrop-filter: blur(2px) !important }
-    html.is-mobile .sidebar-backdrop.show { opacity: 1 !important; pointer-events: auto !important }
 
-    /* Tablette */
-    html.is-tablet .kpi-row { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important }
-    html.is-tablet .grid-3cols { grid-template-columns: 1fr 1fr !important }
-    html.is-tablet .grid-3cols .panel:nth-child(3) { grid-column: 1 / -1 !important }
-    html.is-tablet .grid-3eq { grid-template-columns: 1fr 1fr !important }
-    html.is-tablet .grid-3eq .panel:nth-child(3) { grid-column: 1 / -1 !important }
-    html.is-tablet .stat-cards-row { grid-template-columns: repeat(3, 1fr) !important }
-    html.is-tablet .proj-sliders { grid-template-columns: 1fr 1fr !important }
+    /* ── Auth modal : masquer le panneau gauche, formulaire centré ── */
+    html.is-mobile .auth-modal { padding: 0 !important; align-items: flex-end !important }
+    html.is-mobile .auth-wrap {
+      width: 100% !important;
+      max-height: 96dvh !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+    html.is-mobile .auth-shell {
+      grid-template-columns: 1fr !important;
+      border-radius: 20px 20px 0 0 !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+    }
+    html.is-mobile .auth-side { display: none !important }
+    html.is-mobile .auth-panel {
+      min-height: 0 !important;
+      padding: 28px 20px 24px !important;
+      display: block !important;
+    }
+    html.is-mobile .auth-card {
+      width: 100% !important;
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+    html.is-mobile .auth-field input { font-size: 16px !important; min-height: 48px !important }
+    html.is-mobile .auth-pass input { font-size: 16px !important; min-height: 48px !important }
+    html.is-mobile .auth-eye { min-width: 44px !important; min-height: 44px !important }
+    html.is-mobile .auth-btn { min-height: 48px !important; font-size: 15px !important }
+    html.is-mobile .auth-row { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important }
 
-    /* Très petit mobile (≤ 380px) */
+    /* ── Tactile global ── */
+    html.is-mobile .btn { min-height: 40px !important; touch-action: manipulation }
+    html.is-mobile button { touch-action: manipulation }
+
+    /* ── Très petit mobile (≤ 380px) ── */
     html.is-tiny .kpi-row { grid-template-columns: 1fr !important }
     html.is-tiny .kpi-value { font-size: 19px !important }
     html.is-tiny .indicators { grid-template-columns: 1fr !important }
@@ -141,6 +276,15 @@
     html.is-tiny .content { padding: 10px !important }
     html.is-tiny .toast-container { right: 8px !important; left: 8px !important; bottom: 8px !important }
     html.is-tiny .toast { min-width: 0 !important; width: 100% !important }
+
+    /* ── Tablette ── */
+    html.is-tablet .kpi-row { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important }
+    html.is-tablet .grid-3cols { grid-template-columns: 1fr 1fr !important }
+    html.is-tablet .grid-3cols .panel:nth-child(3) { grid-column: 1 / -1 !important }
+    html.is-tablet .grid-3eq { grid-template-columns: 1fr 1fr !important }
+    html.is-tablet .grid-3eq .panel:nth-child(3) { grid-column: 1 / -1 !important }
+    html.is-tablet .stat-cards-row { grid-template-columns: repeat(3, 1fr) !important }
+    html.is-tablet .proj-sliders { grid-template-columns: 1fr 1fr !important }
 
         :root {
       --gold: #C8A84B;
