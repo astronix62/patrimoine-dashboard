@@ -1,6 +1,5 @@
 // =====================================================================
 // Service Worker — Patrimoine Dashboard
-// À placer à la RACINE de ton repo GitHub (même niveau qu'index.html)
 // =====================================================================
 
 self.addEventListener('install',  () => self.skipWaiting());
