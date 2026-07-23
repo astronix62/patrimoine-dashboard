@@ -5129,20 +5129,24 @@
       // ================================================================
       // ⚠️ REMPLACE cette clé par ta vraie clé VAPID publique
       // (génère-la avec : node -e "require('web-push').generateVAPIDKeys()")
-      const VAPID_PUBLIC_KEY = 'VOTRE_CLE_VAPID_PUBLIQUE';
+      const VAPID_PUBLIC_KEY = 'BMY7JOsaXMymLVCB2aUjkilk-RiZQG-VmRP_V2qpJ8pS_Rk6kOy5L9A86BhAxfMni6Y1fxjBI3kZQ5ExvnfaNUQ';
 
       // ── Enregistrement du Service Worker ────────────────────────────
       async function registerSW() {
-        if (!('serviceWorker' in navigator)) return null;
-
-        // Sur file:// (ouverture locale), le SW ne peut pas s'enregistrer
-        if (location.protocol === 'file:') return null;
-
+        if (!('serviceWorker' in navigator)) {
+          console.warn('SW: API non disponible dans ce navigateur');
+          return null;
+        }
         try {
-          // Chemin relatif : sw.js est dans le même dossier qu'index.html
-          // Cela fonctionne que le site soit à la racine ou dans un sous-dossier (GitHub Pages)
-          const swPath = new URL('sw.js', location.href).pathname;
-          const reg = await navigator.serviceWorker.register(swPath);
+          // Chemin relatif depuis l'URL courante — fonctionne que le site soit
+          // à la racine ou dans un sous-dossier (ex: github.io/mon-repo/)
+          const swUrl = new URL('sw.js', location.href).href;
+          const reg = await navigator.serviceWorker.register(swUrl);
+          // Attendre que le SW soit actif (max 8 secondes)
+          await Promise.race([
+            navigator.serviceWorker.ready,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SW timeout')), 8000))
+          ]);
           return reg;
         } catch (e) {
           console.warn('SW registration failed:', e.message);
@@ -5170,13 +5174,9 @@
 
         const reg = await registerSW();
         if (!reg) {
-          // Pas de SW (file://, navigateur non compatible, ou VAPID absent) :
-          // on reste en mode "notifications in-app" (site ouvert uniquement)
-          if (location.protocol === 'file:') {
-            showToast('Les notifications push fonctionnent sur GitHub Pages (HTTPS), pas en local', 'error');
-          } else {
-            showToast('Service Worker non disponible — vérifie que sw.js est bien dans ton repo GitHub', 'error');
-          }
+          // Causes possibles : sw.js absent du repo, nom incorrect (Sw.js ≠ sw.js),
+          // protocole non sécurisé, ou timeout
+          showToast('sw.js introuvable — vérifie qu\'il est bien nommé sw.js (minuscule) à la racine du repo', 'error');
           return false;
         }
 
@@ -5219,8 +5219,8 @@
       // ── Désabonnement push ──────────────────────────────────────────
       async function unsubscribeFromPush() {
         if (!('serviceWorker' in navigator)) return;
-        const swPath = new URL('sw.js', location.href).pathname;
-        const reg = await navigator.serviceWorker.getRegistration(swPath);
+        const swUrl = new URL('sw.js', location.href).href;
+        const reg = await navigator.serviceWorker.getRegistration(swUrl);
         if (reg) {
           const sub = await reg.pushManager.getSubscription();
           if (sub) {
