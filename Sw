@@ -1,6 +1,5 @@
 // =====================================================================
 // Service Worker — Patrimoine Dashboard
-// À placer à la RACINE du repo GitHub (même niveau que index.html)
 // =====================================================================
 
 self.addEventListener('install',  () => self.skipWaiting());
@@ -15,12 +14,12 @@ self.addEventListener('push', event => {
   const title   = data.title  || 'Patrimoine Dashboard';
   const options = {
     body:    data.body   || '',
-    icon:    data.icon   || '/favicon.ico',
-    badge:   data.badge  || '/favicon.ico',
+    icon:    data.icon   || './favicon.ico',
+    badge:   data.badge  || './favicon.ico',
     tag:     data.tag    || 'patrimoine-notif',
     renotify: true,
     requireInteraction: false,
-    data: { url: data.url || '/' }
+    data: { url: data.url || self.location.origin }
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
@@ -28,11 +27,11 @@ self.addEventListener('push', event => {
 // ── Clic → ouvre / focus le site ────────────────────────────────────
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/';
+  const url = (event.notification.data && event.notification.data.url) || self.location.origin;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       for (const c of list) {
-        if (c.url.includes(self.location.origin) && 'focus' in c) return c.focus();
+        if ('focus' in c) return c.focus();
       }
       if (clients.openWindow) return clients.openWindow(url);
     })
