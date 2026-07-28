@@ -561,7 +561,7 @@
     /* KPI CARDS — sans pseudo-element rond */
     .kpi-row {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
       margin-bottom: 14px
     }
@@ -571,9 +571,7 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 14px;
-      position: relative;
-      min-width: 0;
-      overflow: hidden;
+      position: relative
     }
 
     .kpi-card-header {
@@ -667,13 +665,7 @@
 
     .sparkline-wrap {
       height: 28px;
-      margin-top: 6px;
-      max-width: 100%;
-      overflow: hidden;
-    }
-
-    .sparkline-wrap canvas {
-      max-width: 100% !important;
+      margin-top: 6px
     }
 
     /* GRID */
@@ -2712,10 +2704,10 @@
             </div>
           </div>
         </div>
-        <div class="quote-box">
+        <div class="quote-box" id="quoteBox">
           <div class="q">"</div>
-          <p>La discipline aujourd'hui crée la liberté demain.</p>
-          <div class="author">- Inconnu</div>
+          <p id="quoteText"></p>
+          <div class="author" id="quoteAuthor"></div>
         </div>
       </aside>
 
@@ -2897,6 +2889,25 @@
             </div>
           </div>
           <div class="panel" style="margin-bottom:10px">
+            <!-- Toggles de visibilité des courbes -->
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+              <label class="evo-toggle" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--text2)">
+                <input type="checkbox" id="evoShowTotal"  checked onchange="renderEvolution()">
+                <span style="color:#C8A84B;font-weight:600">Total</span>
+              </label>
+              <label class="evo-toggle" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--text2)">
+                <input type="checkbox" id="evoShowLivret" checked onchange="renderEvolution()">
+                <span style="color:#4CAF50">Livret A</span>
+              </label>
+              <label class="evo-toggle" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--text2)">
+                <input type="checkbox" id="evoShowBanque" checked onchange="renderEvolution()">
+                <span style="color:#2196F3">Banque</span>
+              </label>
+              <label class="evo-toggle" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--text2)">
+                <input type="checkbox" id="evoShowEsp"    checked onchange="renderEvolution()">
+                <span style="color:#FF9800">Espèces</span>
+              </label>
+            </div>
             <div class="chart-wrap h240"><canvas id="evoDetailChart"></canvas></div>
           </div>
           <div class="grid-2eq">
@@ -3078,61 +3089,6 @@
               <div class="page-sub">Configuration du dashboard</div>
             </div>
           </div>
-
-          <!-- ── PROFIL ──────────────────────────────────────────────── -->
-          <div class="settings-section">
-            <div class="settings-title">👤 Profil</div>
-            <div class="settings-row">
-              <div>
-                <div class="s-key">Prénom</div>
-                <div class="s-desc">Affiché dans les rapports et notifications</div>
-              </div>
-              <input type="text" class="form-input" style="width:160px" id="profilePrenom"
-                placeholder="Ton prénom" onchange="saveProfile()">
-            </div>
-            <div class="settings-row">
-              <div>
-                <div class="s-key">Situation</div>
-                <div class="s-desc">Adapte les pondérations du score santé financière</div>
-              </div>
-              <select class="filter-select" id="profileSituation" onchange="saveProfile()">
-                <option value="salarie">Salarié(e)</option>
-                <option value="independant">Indépendant(e) / Freelance</option>
-                <option value="etudiant">Étudiant(e)</option>
-                <option value="retraite">Retraité(e)</option>
-                <option value="sans_emploi">Sans emploi</option>
-              </select>
-            </div>
-            <div class="settings-row">
-              <div>
-                <div class="s-key">Âge</div>
-                <div class="s-desc">Contextualise tes objectifs à long terme</div>
-              </div>
-              <input type="number" class="form-input" style="width:90px" id="profileAge"
-                min="15" max="99" placeholder="–" onchange="saveProfile()">
-            </div>
-            <div class="settings-row">
-              <div>
-                <div class="s-key">Charges fixes mensuelles (€)</div>
-                <div class="s-desc">Loyer, abonnements, remboursements — pour le coussin de sécurité</div>
-              </div>
-              <input type="number" class="form-input" style="width:110px" id="profileCharges"
-                placeholder="0" min="0" onchange="saveProfile()">
-            </div>
-            <div class="settings-row">
-              <div>
-                <div class="s-key">Horizon d'objectif</div>
-                <div class="s-desc">Court (< 2 ans) · Moyen (2–10 ans) · Long (> 10 ans)</div>
-              </div>
-              <select class="filter-select" id="profileHorizon" onchange="saveProfile()">
-                <option value="court">Court terme</option>
-                <option value="moyen">Moyen terme</option>
-                <option value="long">Long terme</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- ── DONNÉES & COMPTES ────────────────────────────────────── -->
           <div class="settings-section">
             <div class="settings-title">💡 Données & Comptes</div>
             <div class="settings-row">
@@ -3168,36 +3124,24 @@
           </div>
           <div class="settings-section">
             <div class="settings-title">🔔 Notifications</div>
-            <!-- Bouton principal : active/désactive les push pour cet appareil -->
-            <div class="settings-row" id="notifPermRow">
+            <div class="settings-row">
               <div>
-                <div class="s-key">Activer les notifications push</div>
-                <div class="s-desc" id="notifPermDesc">Recevoir des alertes même lorsque le site est fermé</div>
+                <div class="s-key">Rappel mensuel</div>
+                <div class="s-desc">Notification de mise à jour</div>
               </div>
-              <button class="toggle off" id="togglePushEnabled" onclick="handleTogglePush(this)"></button>
+              <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
             </div>
-            <div id="notifSubSettings" style="opacity:0.4;pointer-events:none">
-              <div class="settings-row">
-                <div>
-                  <div class="s-key">Rappel mensuel</div>
-                  <div class="s-desc">Rappel de mise à jour le 1er du mois</div>
-                </div>
-                <button class="toggle on" id="toggleMensuel" onclick="handleToggleNotifPref('notif_mensuel',this)"></button>
+            <div class="settings-row">
+              <div>
+                <div class="s-key">Alerte objectif atteint</div>
               </div>
-              <div class="settings-row">
-                <div>
-                  <div class="s-key">Alerte objectif atteint</div>
-                  <div class="s-desc">Dès qu'un objectif d'épargne est atteint</div>
-                </div>
-                <button class="toggle on" id="toggleObjectif" onclick="handleToggleNotifPref('notif_objectif',this)"></button>
+              <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="s-key">Rapport hebdomadaire</div>
               </div>
-              <div class="settings-row">
-                <div>
-                  <div class="s-key">Rapport hebdomadaire</div>
-                  <div class="s-desc">Résumé chaque lundi matin</div>
-                </div>
-                <button class="toggle off" id="toggleHebdo" onclick="handleToggleNotifPref('notif_hebdo',this)"></button>
-              </div>
+              <button class="toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
             </div>
           </div>
           <div class="settings-section">
@@ -3209,6 +3153,7 @@
               <select class="filter-select" style="width:auto" id="settingCurrency" onchange="updateDisplaySettings()">
                 <option value="EUR">Euro (€)</option>
                 <option value="USD">Dollar ($)</option>
+                <option value="JPY">Yen (¥)</option>
               </select>
             </div>
             <div class="settings-row">
@@ -3754,7 +3699,6 @@
         objectives: [],
         history: [],
         settings: { revenu: 2200, goal: 20000, delta: 0, budget: 1800 },
-        profile: { prenom: '', situation: 'salarie', age: null, charges: 0, horizon: 'moyen' },
         indicators: { bestVal: 0, bestDate: '-', worstVal: 0, worstDate: '-', avgEpargne: 0 },
         sidebarOpen: true,
         customFrom: null,
@@ -3777,14 +3721,13 @@
       async function loadAllData() {
         if (!currentUserId) return;
         try {
-          const [accRes, txRes, objRes, histRes, setRes, indRes, profRes] = await Promise.all([
+          const [accRes, txRes, objRes, histRes, setRes, indRes] = await Promise.all([
             supabaseClient.from('accounts').select('*').order('id', { ascending: true }),
             supabaseClient.from('transactions').select('*').order('date', { ascending: false }),
             supabaseClient.from('objectives').select('*').order('id', { ascending: true }),
             supabaseClient.from('net_worth_history').select('*').order('month_date', { ascending: true }),
             supabaseClient.from('settings').select('*').eq('user_id', currentUserId).maybeSingle(),
             supabaseClient.from('indicators').select('*').eq('user_id', currentUserId).maybeSingle(),
-            supabaseClient.from('profiles').select('*').eq('id', currentUserId).maybeSingle(),
           ]);
 
           if (accRes.error) throw accRes.error;
@@ -3834,16 +3777,6 @@
             };
           }
 
-          if (profRes && profRes.data) {
-            D.profile = {
-              prenom:    profRes.data.prenom    || '',
-              situation: profRes.data.situation || 'salarie',
-              age:       profRes.data.age       || null,
-              charges:   parseFloat(profRes.data.charges) || 0,
-              horizon:   profRes.data.horizon   || 'moyen'
-            };
-          }
-
           // Le delta du mois est dérivé de l'historique (dernier point vs précédent),
           // faute d'une colonne dédiée dans le schéma.
           if (D.history.length >= 2) {
@@ -3864,8 +3797,6 @@
       window.onUserLoggedIn = async function (user) {
         currentUserId = user.id;
         await loadAllData();
-        // Charge les préférences de notification + évalue les conditions
-        await loadNotifPrefs();
       };
 
       window.onUserLoggedOut = function () {
@@ -3875,7 +3806,6 @@
         D.objectives = [];
         D.history = [];
         D.settings = { revenu: 2200, goal: 20000, delta: 0, budget: 1800 };
-        D.profile = { prenom: '', situation: 'salarie', age: null, charges: 0, horizon: 'moyen' };
         D.indicators = { bestVal: 0, bestDate: '-', worstVal: 0, worstDate: '-', avgEpargne: 0 };
         renderAll();
       };
@@ -3892,29 +3822,36 @@
       let charts = {};
 
       // ======================== UTILS ========================
+      // ── Devise : symbole et locale ────────────────────────────────────
+      const CURRENCY_MAP = {
+        EUR: { symbol: '€', locale: 'fr-FR', code: 'EUR', after: true  },
+        USD: { symbol: '$', locale: 'en-US', code: 'USD', after: false },
+        JPY: { symbol: '¥', locale: 'ja-JP', code: 'JPY', after: false },
+      };
+      function getCurrency() {
+        return CURRENCY_MAP[D.settings.currency] || CURRENCY_MAP['EUR'];
+      }
       function fmt(n) {
-        if (n == null || isNaN(n)) return '0 €';
+        if (n == null || isNaN(n)) return '0 ' + getCurrency().symbol;
         const v = parseFloat(n);
-        // Détecte les décimales significatives en passant par la représentation string
-        // pour éviter les erreurs d'arrondi flottant (ex: 1250.1 → 1250 était faux)
+        const cur = getCurrency();
         const str = v.toString();
         const dotIdx = str.indexOf('.');
-        const decimals = dotIdx >= 0 ? Math.min(str.length - dotIdx - 1, 2) : 0;
-        return v.toLocaleString('fr-FR', {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: 2
-        }) + ' €';
+        const decimals = cur.code === 'JPY' ? 0 : (dotIdx >= 0 ? Math.min(str.length - dotIdx - 1, 2) : 0);
+        const formatted = v.toLocaleString(cur.locale, { minimumFractionDigits: decimals, maximumFractionDigits: cur.code === 'JPY' ? 0 : 2 });
+        return cur.after ? formatted + ' ' + cur.symbol : cur.symbol + formatted;
       }
       function fmtDelta(n) {
-        if (n == null || isNaN(n)) return '+0 €';
+        if (n == null || isNaN(n)) return '+0 ' + getCurrency().symbol;
         const v = parseFloat(n);
-        const str = v.toString();
-        const dotIdx = str.indexOf('.');
-        const decimals = dotIdx >= 0 ? Math.min(str.length - dotIdx - 1, 2) : 0;
-        return (v >= 0 ? '+' : '') + v.toLocaleString('fr-FR', {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: 2
-        }) + ' €';
+        return (v >= 0 ? '+' : '') + fmt(v);
+      }
+      // Callback axe Y des graphiques — réutilisé partout
+      function fmtAxis(v) {
+        const cur = getCurrency();
+        if (Math.abs(v) >= 1000000) return (cur.after ? '' : cur.symbol) + (v/1000000).toFixed(1) + 'M' + (cur.after ? cur.symbol : '');
+        if (Math.abs(v) >= 1000)    return (cur.after ? '' : cur.symbol) + (v/1000).toFixed(0) + 'k' + (cur.after ? cur.symbol : '');
+        return fmt(v);
       }
       function getTotal() { return D.accounts.reduce((s, a) => s + a.balance, 0) }
       function getLivret() { return D.accounts.filter(a => a.type === 'livret').reduce((s, a) => s + a.balance, 0) }
@@ -3927,6 +3864,42 @@
         t.className = 'toast ' + type; t.textContent = msg; c.appendChild(t);
         setTimeout(() => { t.style.animation = 'slideOut 0.3s ease forwards'; setTimeout(() => t.remove(), 300) }, 2500);
       }
+      // ── Citations quotidiennes ────────────────────────────────────────
+      const QUOTES = [
+        { text: "La discipline aujourd'hui crée la liberté demain.", author: "Inconnu" },
+        { text: "Ne comptez pas les jours, faites que les jours comptent.", author: "Muhammad Ali" },
+        { text: "Un investissement dans la connaissance rapporte les meilleurs intérêts.", author: "Benjamin Franklin" },
+        { text: "La richesse n'est pas dans ce qu'on a, mais dans ce qu'on évite de dépenser.", author: "Inconnu" },
+        { text: "Épargner sans investir, c'est travailler sans récolter.", author: "Inconnu" },
+        { text: "Il n'est pas nécessaire d'être riche pour commencer, mais il faut commencer pour être riche.", author: "Inconnu" },
+        { text: "Le secret de votre avenir est caché dans votre routine quotidienne.", author: "Mike Murdock" },
+        { text: "Ne mettez pas tous vos œufs dans le même panier.", author: "Proverbe" },
+        { text: "Chaque euro économisé est un euro qui travaille pour vous.", author: "Inconnu" },
+        { text: "Le meilleur moment pour planter un arbre était il y a vingt ans. Le deuxième meilleur moment, c'est maintenant.", author: "Proverbe chinois" },
+        { text: "Les petites économies sont la source des grandes fortunes.", author: "Inconnu" },
+        { text: "La fortune sourit aux audacieux qui savent aussi être patients.", author: "Inconnu" },
+        { text: "Dépensez moins que vous ne gagnez et investissez la différence.", author: "Inconnu" },
+        { text: "La frugalité est la mère de toutes les vertus.", author: "Inconnu" },
+        { text: "Ce n'est pas votre salaire qui vous enrichit, c'est vos habitudes de dépense.", author: "Charles Jaffe" },
+        { text: "L'argent est un bon serviteur mais un mauvais maître.", author: "Francis Bacon" },
+        { text: "Soyez avare de votre temps autant que de votre argent.", author: "Inconnu" },
+        { text: "Construire la richesse est un marathon, pas un sprint.", author: "Inconnu" },
+        { text: "La meilleure assurance-vie, c'est votre épargne.", author: "Inconnu" },
+        { text: "Faites travailler votre argent pendant que vous dormez.", author: "Inconnu" },
+      ];
+
+      function renderQuote() {
+        const el = document.getElementById('quoteText');
+        const auth = document.getElementById('quoteAuthor');
+        if (!el || !auth) return;
+        // Index basé sur le numéro du jour dans l'année — change chaque jour, identique pour tous les logins du même jour
+        const now = new Date();
+        const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+        const q = QUOTES[dayOfYear % QUOTES.length];
+        el.textContent = q.text;
+        auth.textContent = '— ' + q.author;
+      }
+
       function openModal(id) {
         if (id === 'editGoal') document.getElementById('editGoalVal').value = D.settings.goal;
         if (id === 'editBanque') renderEditAccountType('banque', 'editBanqueList');
@@ -4107,119 +4080,22 @@
       }
 
       function calcScore() {
-        const total   = getTotal();
-        const profil  = D.profile || {};
-        const sit     = profil.situation || 'salarie';
-        const revenu  = D.settings.revenu || 0;
-        const budget  = D.settings.budget || 0;
-        const charges = profil.charges    || 0;
-        const horizon = profil.horizon    || 'moyen';
-
-        // ── 1. Progression vers l'objectif ──────────────────────────────
+        const total = getTotal();
+        // Utilise l'objectif marqué principal s'il existe, sinon l'objectif global
         const mainObjective = D.objectives.find(o => o.isMain);
         const goal = (mainObjective && mainObjective.target > 0)
           ? mainObjective.target
-          : (D.settings.goal > 0 ? D.settings.goal : null);
-        const pctGoal = goal ? Math.min(100, (total / goal) * 100) : 50; // Si pas d'objectif : score neutre
-
-        // ── 2. Taux d'épargne ────────────────────────────────────────────
-        // Utilisé seulement si un revenu est renseigné, quelle que soit la situation
-        let pctEpargne = 50; // score neutre par défaut si pas de revenu
-        if (revenu > 0) {
-          const avg = D.indicators.avgEpargne || 0;
-          const rate = (avg / revenu) * 100;
-          pctEpargne = Math.min(100, (rate / 50) * 100); // 50% de taux = score max
-        }
-
-        // ── 3. Coussin de sécurité (liquidités / charges mensuelles) ────
-        // Nombre de mois de charges couvert par les liquidités disponibles
-        const chargesTotales = charges > 0 ? charges : (budget > 0 ? budget * 0.6 : 0);
-        let pctCoussin = 50; // neutre si aucune donnée
-        if (chargesTotales > 0) {
-          const liquide = D.accounts
-            .filter(a => a.type === 'banque' || a.type === 'especes')
-            .reduce((s, a) => s + a.balance, 0);
-          const moisReserve = liquide / chargesTotales;
-          // Objectif : 3 à 6 mois selon horizon
-          const cible = horizon === 'court' ? 3 : horizon === 'long' ? 6 : 4;
-          pctCoussin = Math.min(100, (moisReserve / cible) * 100);
-        }
-
-        // ── 4. Régularité de progression ────────────────────────────────
-        // % de mois où le patrimoine a progressé dans l'historique récent
-        let pctRegularite = 50; // neutre par défaut
-        if (D.history.length >= 2) {
-          const recent = D.history.slice(-12); // 12 derniers mois max
-          const hausses = recent.filter((h, i) => i > 0 && h.total >= recent[i - 1].total).length;
-          pctRegularite = Math.round((hausses / (recent.length - 1)) * 100);
-        }
-
-        // ── 5. Diversification ──────────────────────────────────────────
-        const typesDifferents = new Set(D.accounts.map(a => a.type)).size;
-        const pctDiversite = Math.min(100, (typesDifferents / 3) * 100); // 3 types = score max
-
-        // ── Pondérations adaptées à la situation ─────────────────────────
-        // Chaque situation valorise différemment les critères, mais TOUS les
-        // critères restent actifs — seuls les poids changent.
-        let weights;
-        switch (sit) {
-          case 'etudiant':
-            // Pas forcément de revenu régulier : on valorise plus la régularité
-            // et le coussin de sécurité que le taux d'épargne
-            weights = { goal: 0.25, epargne: 0.15, coussin: 0.25, regularite: 0.25, diversite: 0.10 };
-            break;
-          case 'independant':
-            // Revenus variables : le coussin de sécurité est crucial
-            weights = { goal: 0.25, epargne: 0.20, coussin: 0.30, regularite: 0.15, diversite: 0.10 };
-            break;
-          case 'retraite':
-            // L'objectif et le coussin priment, la progression moins critique
-            weights = { goal: 0.30, epargne: 0.10, coussin: 0.35, regularite: 0.15, diversite: 0.10 };
-            break;
-          case 'sans_emploi':
-            // La régularité et le coussin sont primordiaux
-            weights = { goal: 0.15, epargne: 0.10, coussin: 0.35, regularite: 0.30, diversite: 0.10 };
-            break;
-          case 'salarie':
-          default:
-            weights = { goal: 0.30, epargne: 0.25, coussin: 0.20, regularite: 0.15, diversite: 0.10 };
-        }
-
-        // Ajustement horizon sur le poids de l'objectif
-        if (horizon === 'long') {
-          weights.goal    = Math.max(0.10, weights.goal - 0.05);   // moins d'urgence
-          weights.regularite = Math.min(0.40, weights.regularite + 0.05);
-        } else if (horizon === 'court') {
-          weights.goal    = Math.min(0.50, weights.goal + 0.05);   // plus d'urgence
-          weights.coussin = Math.min(0.40, weights.coussin + 0.05);
-        }
-
-        // Normalisation (s'assure que les poids totalisent 1.0)
-        const total_w = Object.values(weights).reduce((s, v) => s + v, 0);
-        Object.keys(weights).forEach(k => weights[k] /= total_w);
-
-        const score = Math.round(
-          pctGoal       * weights.goal      +
-          pctEpargne    * weights.epargne   +
-          pctCoussin    * weights.coussin   +
-          pctRegularite * weights.regularite +
-          pctDiversite  * weights.diversite
-        );
-
+          : (D.settings.goal || 1000000);
+        const pctGoal = Math.min(100, (total / goal) * 100);
+        const revenu = D.settings.revenu || 1;
+        const rate = (D.indicators.avgEpargne / revenu) * 100;
+        const pctRate = Math.min(100, (rate / 50) * 100);
+        const diversity = Math.min(100, (D.accounts.length / 4) * 100);
+        const score = Math.round(pctGoal * 0.45 + pctRate * 0.35 + diversity * 0.2);
         const label = score >= 80 ? 'Excellent' : score >= 60 ? 'Bon' : score >= 40 ? 'Moyen' : 'À améliorer';
-        document.getElementById('scoreNum').textContent  = score;
+        document.getElementById('scoreNum').textContent = score;
         document.getElementById('scoreLabel').textContent = label;
-        document.getElementById('scoreFill').style.width  = score + '%';
-
-        // Couleur de la jauge selon le score
-        const fillEl = document.getElementById('scoreFill');
-        if (fillEl) {
-          fillEl.style.background = score >= 70
-            ? 'linear-gradient(90deg,var(--amber),var(--green))'
-            : score >= 40
-              ? 'linear-gradient(90deg,var(--red),var(--amber))'
-              : 'var(--red)';
-        }
+        document.getElementById('scoreFill').style.width = score + '%';
         return score;
       }
 
@@ -4249,50 +4125,6 @@
     </div>`).join('');
       }
 
-      // ─── Helper : options axe Y avec paliers adaptatifs ────────────
-      // Calcule des paliers "propres" adaptés aux vraies valeurs (ex: 8 250 €
-      // donnera des paliers de 1 000 €, pas de 100 €)
-      function niceStep(range) {
-        if (range <= 0) return 1;
-        const rawStep = range / 5;           // ~5 divisions souhaitées
-        const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
-        const normalized = rawStep / magnitude;
-        // Choisit le palier "propre" le plus proche
-        let nice;
-        if      (normalized < 1.5) nice = 1;
-        else if (normalized < 3)   nice = 2;
-        else if (normalized < 7)   nice = 5;
-        else                       nice = 10;
-        return nice * magnitude;
-      }
-
-      function yAxisOpts(values) {
-        const valid = (values || []).filter(v => v != null && !isNaN(v));
-        const dataMin = valid.length ? Math.min(...valid) : 0;
-        const dataMax = valid.length ? Math.max(...valid) : 100;
-        const range = dataMax - dataMin || 1;
-
-        const step = niceStep(range * 1.2);  // 20% de marge incluse dans le calcul du pas
-
-        // Plancher et plafond alignés sur le pas propre
-        const axisMin = Math.max(0, Math.floor((dataMin - range * 0.08) / step) * step);
-        const axisMax = Math.ceil((dataMax + range * 0.08) / step) * step;
-
-        return {
-          beginAtZero: false,
-          suggestedMin: axisMin,
-          suggestedMax: axisMax,
-          maxTicksLimit: 7,
-          color: '#606060',
-          font: { size: 9 },
-          callback: v => {
-            if (v >= 1000000) return (v / 1000000).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + 'M€';
-            if (v >= 1000)    return (v / 1000).toLocaleString('fr-FR',    { maximumFractionDigits: 1 }) + 'k€';
-            return v.toLocaleString('fr-FR') + '€';
-          }
-        };
-      }
-
       function renderEvoChartMain() {
         const sel = document.getElementById('evoSelect').value;
         let h = [...D.history];
@@ -4300,15 +4132,13 @@
         if (sel === '6m') h = h.slice(-6);
         dc('evoChart');
         const ctx = document.getElementById('evoChart');
-        const totals = h.map(x => x.total);
-        const yOpts = yAxisOpts(totals);
         charts['evoChart'] = new Chart(ctx, {
           type: 'line',
-          data: { labels: h.map(x => x.m), datasets: [{ data: totals, borderColor: '#C8A84B', backgroundColor: 'rgba(200,168,75,0.08)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: '#C8A84B' }] },
+          data: { labels: h.map(x => x.m), datasets: [{ data: h.map(x => x.total), borderColor: '#C8A84B', backgroundColor: 'rgba(200,168,75,0.08)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: '#C8A84B' }] },
           options: {
             responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
             plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#C8A84B', borderWidth: 1, callbacks: { label: c => ' ' + fmt(c.raw) } } },
-            scales: { x: { ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: yOpts, grid: { color: 'rgba(255,255,255,0.03)' }, beginAtZero: false, suggestedMin: yOpts.suggestedMin, suggestedMax: yOpts.suggestedMax } }
+            scales: { x: { ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: { color: '#606060', font: { size: 9 }, callback: v => fmtAxis(v) }, grid: { color: 'rgba(255,255,255,0.03)' } } }
           }
         });
       }
@@ -4657,40 +4487,64 @@
         else if (period === '6m') h = h.slice(-6);
         else if (period === '3m') h = h.slice(-3);
 
-        const allValues = h.flatMap(x => [x.total, x.livret, x.banque, x.esp]);
+        // ── Lire les checkboxes de visibilité ───────────────────────────
+        const showTotal  = document.getElementById('evoShowTotal')?.checked  !== false;
+        const showLivret = document.getElementById('evoShowLivret')?.checked !== false;
+        const showBanque = document.getElementById('evoShowBanque')?.checked !== false;
+        const showEsp    = document.getElementById('evoShowEsp')?.checked    !== false;
+
+        // ── Construire les datasets visibles ────────────────────────────
+        const datasets = [];
+        if (showTotal)  datasets.push({ label: 'Total',    data: h.map(x => x.total),  borderColor: '#C8A84B', backgroundColor: 'rgba(200,168,75,0.07)', fill: true,  tension: 0.4, borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: '#C8A84B' });
+        if (showLivret) datasets.push({ label: 'Livret A', data: h.map(x => x.livret), borderColor: '#4CAF50', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1.5, pointRadius: 2, pointHoverRadius: 5, borderDash: [5, 4] });
+        if (showBanque) datasets.push({ label: 'Banque',   data: h.map(x => x.banque), borderColor: '#2196F3', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1.5, pointRadius: 2, pointHoverRadius: 5, borderDash: [5, 4] });
+        if (showEsp)    datasets.push({ label: 'Espèces',  data: h.map(x => x.esp),    borderColor: '#FF9800', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1,   pointRadius: 2, pointHoverRadius: 5, borderDash: [3, 4] });
+
+        // ── Calculer l'axe Y sur les données RÉELLEMENT visibles ────────
+        const allVisible = datasets.flatMap(ds => ds.data).filter(v => v != null && !isNaN(v));
+        const dataMin = allVisible.length ? Math.min(...allVisible) : 0;
+        const dataMax = allVisible.length ? Math.max(...allVisible) : 100;
+        const range   = dataMax - dataMin || 1;
+        // Palier adaptatif
+        const rawStep = range / 5;
+        const mag     = Math.pow(10, Math.floor(Math.log10(rawStep || 1)));
+        const norm    = rawStep / mag;
+        const niceN   = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10;
+        const step    = niceN * mag;
+        const yMin    = Math.max(0, Math.floor((dataMin - range * 0.08) / step) * step);
+        const yMax    = Math.ceil((dataMax + range * 0.08) / step) * step;
 
         dc('evoDetailChart');
         const ctx1 = document.getElementById('evoDetailChart');
-        const yOpts = yAxisOpts(allValues);
         charts['evoDetailChart'] = new Chart(ctx1, {
           type: 'line',
-          data: {
-            labels: h.map(x => x.m), datasets: [
-              { label: 'Total', data: h.map(x => x.total), borderColor: '#C8A84B', backgroundColor: 'rgba(200,168,75,0.07)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: '#C8A84B' },
-              { label: 'Livret A', data: h.map(x => x.livret), borderColor: '#4CAF50', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1.5, pointRadius: 0, borderDash: [5, 4] },
-              { label: 'Banque', data: h.map(x => x.banque), borderColor: '#2196F3', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1.5, pointRadius: 0, borderDash: [5, 4] },
-              { label: 'Espèces', data: h.map(x => x.esp), borderColor: '#FF9800', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1, pointRadius: 0, borderDash: [3, 4] },
-            ]
-          },
+          data: { labels: h.map(x => x.m), datasets },
           options: {
             responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { labels: { color: '#B0B0B0', font: { size: 10 }, boxWidth: 12 } }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#C8A84B', borderWidth: 1, callbacks: { label: c => ' ' + c.dataset.label + ': ' + fmt(c.raw) } } },
-            scales: { x: { ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { beginAtZero: false, suggestedMin: yOpts.suggestedMin, suggestedMax: yOpts.suggestedMax, ticks: yOpts, grid: { color: 'rgba(255,255,255,0.03)' } } }
+            plugins: {
+              legend: { labels: { color: '#B0B0B0', font: { size: 10 }, boxWidth: 12 } },
+              tooltip: { backgroundColor: '#1C1C1C', borderColor: '#C8A84B', borderWidth: 1, callbacks: { label: c => ' ' + c.dataset.label + ': ' + fmt(c.raw) } }
+            },
+            scales: {
+              x: { ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+              y: {
+                min: yMin, max: yMax,
+                ticks: { color: '#606060', font: { size: 9 }, callback: v => fmtAxis(v), maxTicksLimit: 7 },
+                grid: { color: 'rgba(255,255,255,0.03)' }
+              }
+            }
           }
         });
 
         dc('growthChart');
         const growthData = h.map((x, i) => i === 0 ? 0 : x.total - h[i - 1].total);
-        const yGrowth = yAxisOpts(growthData);
         charts['growthChart'] = new Chart(document.getElementById('growthChart'), {
           type: 'bar',
           data: { labels: h.map(x => x.m), datasets: [{ data: growthData, backgroundColor: growthData.map(v => v >= 0 ? 'rgba(76,175,80,0.65)' : 'rgba(244,67,54,0.65)'), borderRadius: 3 }] },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#2A2A2A', borderWidth: 1, callbacks: { label: c => ' ' + fmtDelta(c.raw) } } }, scales: { x: { ticks: { color: '#606060', font: { size: 8 } }, grid: { display: false } }, y: { beginAtZero: false, suggestedMin: yGrowth.suggestedMin, suggestedMax: yGrowth.suggestedMax, ticks: yGrowth, grid: { color: 'rgba(255,255,255,0.03)' } } } }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#2A2A2A', borderWidth: 1, callbacks: { label: c => ' ' + fmtDelta(c.raw) } } }, scales: { x: { ticks: { color: '#606060', font: { size: 8 } }, grid: { display: false } }, y: { ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } } } }
         });
 
         dc('stackChart');
-        const stackTotals = h.map(x => x.livret + x.banque + x.esp);
-        const yStack = yAxisOpts(stackTotals);
         charts['stackChart'] = new Chart(document.getElementById('stackChart'), {
           type: 'bar',
           data: {
@@ -4700,7 +4554,7 @@
               { label: 'Espèces', data: h.map(x => x.esp), backgroundColor: 'rgba(255,152,0,0.65)', stack: 's' },
             ]
           },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#B0B0B0', font: { size: 9 }, boxWidth: 10 } } }, scales: { x: { stacked: true, ticks: { color: '#606060', font: { size: 8 } }, grid: { display: false } }, y: { stacked: true, beginAtZero: false, suggestedMin: yStack.suggestedMin, suggestedMax: yStack.suggestedMax, ticks: yStack, grid: { color: 'rgba(255,255,255,0.03)' } } } }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#B0B0B0', font: { size: 9 }, boxWidth: 10 } } }, scales: { x: { stacked: true, ticks: { color: '#606060', font: { size: 8 } }, grid: { display: false } }, y: { stacked: true, ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } } } }
         });
 
         const total = getTotal();
@@ -5133,7 +4987,7 @@
             },
             scales: {
               x: { ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
-              y: { ticks: { color: '#606060', font: { size: 9 }, callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k€' : v + '€' }, grid: { color: 'rgba(255,255,255,0.03)' } }
+              y: { ticks: { color: '#606060', font: { size: 9 }, callback: v => fmtAxis(v) }, grid: { color: 'rgba(255,255,255,0.03)' } }
             }
           }
         });
@@ -5184,7 +5038,6 @@
       }
 
       function renderParametres() {
-        // ── Paramètres ─────────────────────────────────────────────
         const r = document.getElementById('settingRevenu');
         const g = document.getElementById('settingGoal');
         const b = document.getElementById('settingBudget');
@@ -5195,50 +5048,6 @@
         if (b) b.value = D.settings.budget;
         if (c && D.settings.currency) c.value = D.settings.currency;
         if (df && D.settings.dateFormat) df.value = D.settings.dateFormat;
-
-        // ── Profil ──────────────────────────────────────────────────
-        const p = D.profile || {};
-        const prenom    = document.getElementById('profilePrenom');
-        const situation = document.getElementById('profileSituation');
-        const age       = document.getElementById('profileAge');
-        const charges   = document.getElementById('profileCharges');
-        const horizon   = document.getElementById('profileHorizon');
-        if (prenom    && p.prenom    != null) prenom.value    = p.prenom;
-        if (situation && p.situation)         situation.value = p.situation;
-        if (age       && p.age       != null && p.age > 0) age.value = p.age;
-        if (charges   && p.charges   != null) charges.value   = p.charges;
-        if (horizon   && p.horizon)           horizon.value   = p.horizon;
-      }
-
-      async function saveProfile() {
-        if (!requireLogin()) return;
-        const prenom    = document.getElementById('profilePrenom')?.value.trim()  || '';
-        const situation = document.getElementById('profileSituation')?.value      || 'salarie';
-        const ageVal    = document.getElementById('profileAge')?.value;
-        const age       = ageVal && !isNaN(parseInt(ageVal)) ? parseInt(ageVal) : null;
-        const chargesV  = document.getElementById('profileCharges')?.value;
-        const charges   = chargesV && !isNaN(parseFloat(chargesV)) ? parseFloat(chargesV) : 0;
-        const horizon   = document.getElementById('profileHorizon')?.value || 'moyen';
-
-        const { error } = await supabaseClient.from('profiles')
-          .update({ prenom, situation, age, charges, horizon })
-          .eq('id', currentUserId);
-
-        if (error) { showToast('Erreur profil : ' + error.message, 'error'); return; }
-
-        D.profile = { prenom, situation, age, charges, horizon };
-
-        // Recalcule le score avec les nouvelles pondérations
-        calcScore();
-
-        // Met à jour le prénom dans le header si renseigné
-        const headerName = document.getElementById('userEmailLabel');
-        if (headerName && prenom) {
-          const email = headerName.textContent.split(' ')[0];
-          // On garde l'email mais on ajoute le prénom si disponible
-        }
-
-        showToast('Profil mis à jour ✓');
       }
 
       async function updateSettings() {
@@ -5290,6 +5099,9 @@
 
         D.settings.currency = currency;
         D.settings.dateFormat = dateFormat;
+
+        // Re-rendu de tout ce qui affiche des montants
+        renderAll();
         showToast('Préférences d\'affichage enregistrées ✓');
       }
 
@@ -5334,281 +5146,6 @@
       }
 
       // ======================== INIT ========================
-      // ================================================================
-      // NOTIFICATIONS PUSH — Service Worker + Web Push API
-      // ================================================================
-      // ⚠️ REMPLACE cette clé par ta vraie clé VAPID publique
-      // (génère-la avec : node -e "require('web-push').generateVAPIDKeys()")
-      const VAPID_PUBLIC_KEY = 'VOTRE_CLE_VAPID_PUBLIQUE';
-
-      // ── Enregistrement du Service Worker ────────────────────────────
-      async function registerSW() {
-        if (!('serviceWorker' in navigator)) {
-          console.warn('SW: API non disponible dans ce navigateur');
-          return null;
-        }
-        try {
-          // Chemin relatif depuis l'URL courante — fonctionne que le site soit
-          // à la racine ou dans un sous-dossier (ex: github.io/mon-repo/)
-          const swUrl = new URL('sw.js', location.href).href;
-          const reg = await navigator.serviceWorker.register(swUrl);
-          // Attendre que le SW soit actif (max 8 secondes)
-          await Promise.race([
-            navigator.serviceWorker.ready,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('SW timeout')), 8000))
-          ]);
-          return reg;
-        } catch (e) {
-          console.warn('SW registration failed:', e.message);
-          return null;
-        }
-      }
-
-      // ── Conversion clé VAPID base64url → Uint8Array ─────────────────
-      function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const raw = atob(base64);
-        return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-      }
-
-      // ── Demande de permission + abonnement push ──────────────────────
-      async function subscribeToPush() {
-        if (!requireLogin()) return false;
-
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          showToast('Notifications refusées par le navigateur', 'error');
-          return false;
-        }
-
-        const reg = await registerSW();
-        if (!reg) {
-          // Causes possibles : sw.js absent du repo, nom incorrect (Sw.js ≠ sw.js),
-          // protocole non sécurisé, ou timeout
-          showToast('sw.js introuvable — vérifie qu\'il est bien nommé sw.js (minuscule) à la racine du repo', 'error');
-          return false;
-        }
-
-        // Attendre que le SW soit actif
-        await navigator.serviceWorker.ready;
-
-        let sub = await reg.pushManager.getSubscription();
-        if (!sub) {
-          try {
-            sub = await reg.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-            });
-          } catch (e) {
-            // VAPID non configurée → mode dégradé (notifications in-app seulement)
-            showToast('Clé VAPID non configurée — notifications in-app uniquement', 'error');
-            return false;
-          }
-        }
-
-        // Sauvegarder l'abonnement dans Supabase
-        const json = sub.toJSON();
-        const { error } = await supabaseClient.from('push_subscriptions').upsert({
-          user_id:    currentUserId,
-          endpoint:   json.endpoint,
-          p256dh:     json.keys.p256dh,
-          auth_key:   json.keys.auth,
-          user_agent: navigator.userAgent.slice(0, 200)
-        }, { onConflict: 'user_id,endpoint' });
-
-        if (error) { showToast('Erreur sauvegarde abonnement: ' + error.message, 'error'); return false; }
-
-        // Marquer push_enabled dans les prefs
-        await supabaseClient.from('notification_prefs')
-          .upsert({ user_id: currentUserId, push_enabled: true }, { onConflict: 'user_id' });
-
-        return true;
-      }
-
-      // ── Désabonnement push ──────────────────────────────────────────
-      async function unsubscribeFromPush() {
-        if (!('serviceWorker' in navigator)) return;
-        const swUrl = new URL('sw.js', location.href).href;
-        const reg = await navigator.serviceWorker.getRegistration(swUrl);
-        if (reg) {
-          const sub = await reg.pushManager.getSubscription();
-          if (sub) {
-            await supabaseClient.from('push_subscriptions')
-              .delete().eq('user_id', currentUserId).eq('endpoint', sub.endpoint);
-            await sub.unsubscribe();
-          }
-        }
-        await supabaseClient.from('notification_prefs')
-          .upsert({ user_id: currentUserId, push_enabled: false }, { onConflict: 'user_id' });
-      }
-
-      // ── Toggle principal push ────────────────────────────────────────
-      async function handleTogglePush(btn) {
-        if (!requireLogin()) return;
-        const enabling = btn.classList.contains('off');
-        if (enabling) {
-          const ok = await subscribeToPush();
-          if (ok) {
-            btn.classList.replace('off', 'on');
-            document.getElementById('notifSubSettings').style.opacity = '1';
-            document.getElementById('notifSubSettings').style.pointerEvents = 'auto';
-            document.getElementById('notifPermDesc').textContent = 'Notifications actives sur cet appareil';
-            showToast('Notifications push activées ✓');
-          }
-        } else {
-          await unsubscribeFromPush();
-          btn.classList.replace('on', 'off');
-          document.getElementById('notifSubSettings').style.opacity = '0.4';
-          document.getElementById('notifSubSettings').style.pointerEvents = 'none';
-          document.getElementById('notifPermDesc').textContent = 'Recevoir des alertes même lorsque le site est fermé';
-          showToast('Notifications désactivées');
-        }
-      }
-
-      // ── Toggle sous-préférences (mensuel / objectif / hebdo) ─────────
-      async function handleToggleNotifPref(field, btn) {
-        if (!requireLogin()) return;
-        const newVal = btn.classList.contains('off');
-        btn.classList.toggle('on', newVal);
-        btn.classList.toggle('off', !newVal);
-        const { error } = await supabaseClient.from('notification_prefs')
-          .upsert({ user_id: currentUserId, [field]: newVal }, { onConflict: 'user_id' });
-        if (error) showToast('Erreur: ' + error.message, 'error');
-      }
-
-      // ── Chargement des prefs notifications (appelé après login) ─────
-      async function loadNotifPrefs() {
-        if (!currentUserId) return;
-        const { data } = await supabaseClient.from('notification_prefs')
-          .select('*').eq('user_id', currentUserId).single();
-
-        if (!data) return;
-
-        // Synchronise les toggles
-        const sync = (id, val) => {
-          const el = document.getElementById(id);
-          if (!el) return;
-          el.classList.toggle('on', val);
-          el.classList.toggle('off', !val);
-        };
-        sync('togglePushEnabled', data.push_enabled);
-        sync('toggleMensuel',     data.notif_mensuel);
-        sync('toggleObjectif',    data.notif_objectif);
-        sync('toggleHebdo',       data.notif_hebdo);
-
-        const subSettings = document.getElementById('notifSubSettings');
-        if (subSettings) {
-          subSettings.style.opacity = data.push_enabled ? '1' : '0.4';
-          subSettings.style.pointerEvents = data.push_enabled ? 'auto' : 'none';
-        }
-        if (data.push_enabled) {
-          document.getElementById('notifPermDesc').textContent = 'Notifications actives sur cet appareil';
-        }
-
-        // Évalue si des notifications doivent être envoyées maintenant
-        if (data.push_enabled) {
-          await evaluateNotifications(data);
-        }
-      }
-
-      // ── Évaluation des conditions de notification ───────────────────
-      // Ces notifications s'affichent immédiatement dans le navigateur
-      // via l'API Notification (sans serveur) si le site est ouvert,
-      // ou via push si le SW est actif.
-      async function evaluateNotifications(prefs) {
-        if (!('Notification' in window) || Notification.permission !== 'granted') return;
-
-        const today     = new Date();
-        const todayStr  = today.toISOString().slice(0, 10);
-        const dayOfWeek = today.getDay(); // 1 = lundi
-
-        // 1. Rappel mensuel — 1er du mois ET pas encore envoyé ce mois-ci
-        if (prefs.notif_mensuel) {
-          const thisMonth = todayStr.slice(0, 7); // YYYY-MM
-          const lastSent  = prefs.last_mensuel_sent ? prefs.last_mensuel_sent.slice(0, 7) : null;
-          if (today.getDate() === 1 && lastSent !== thisMonth) {
-            sendLocalNotification(
-              '📅 Rappel mensuel — Patrimoine',
-              'C\'est le début du mois ! Mettez à jour votre patrimoine.'
-            );
-            await supabaseClient.from('notification_prefs')
-              .update({ last_mensuel_sent: todayStr }).eq('user_id', currentUserId);
-          }
-        }
-
-        // 2. Alerte objectif atteint
-        if (prefs.notif_objectif) {
-          const total = getTotal();
-          D.objectives.forEach(o => {
-            if (o.target > 0 && total >= o.target) {
-              sendLocalNotification(
-                '🎯 Objectif atteint !',
-                `Félicitations ! Votre objectif "${o.name}" (${fmt(o.target)}) est atteint.`
-              );
-            }
-          });
-        }
-
-        // 3. Rapport hebdomadaire — lundi ET pas encore envoyé cette semaine
-        if (prefs.notif_hebdo && dayOfWeek === 1) {
-          const monday    = getMonday(today);
-          const lastSent  = prefs.last_hebdo_sent;
-          if (lastSent !== monday) {
-            const total = getTotal();
-            sendLocalNotification(
-              '📊 Rapport hebdomadaire',
-              `Votre patrimoine total cette semaine : ${fmt(total)}`
-            );
-            await supabaseClient.from('notification_prefs')
-              .update({ last_hebdo_sent: monday }).eq('user_id', currentUserId);
-          }
-        }
-      }
-
-      // ── Envoi d'une notification locale (via SW si disponible) ──────
-      function sendLocalNotification(title, body) {
-        if (!('serviceWorker' in navigator)) {
-          // Fallback : Notification API directe (site ouvert uniquement)
-          if (Notification.permission === 'granted') {
-            new Notification(title, { body, icon: '/favicon.ico' });
-          }
-          return;
-        }
-        navigator.serviceWorker.ready.then(reg => {
-          reg.showNotification(title, {
-            body, icon: '/favicon.ico', badge: '/favicon.ico',
-            tag: 'patrimoine-' + Date.now(), renotify: true
-          });
-        }).catch(() => {
-          if (Notification.permission === 'granted') {
-            new Notification(title, { body });
-          }
-        });
-      }
-
-      // ── Utilitaire : lundi de la semaine courante (YYYY-MM-DD) ───────
-      function getMonday(d) {
-        const day = d.getDay() || 7;
-        const mon = new Date(d);
-        mon.setDate(d.getDate() - day + 1);
-        return mon.toISOString().slice(0, 10);
-      }
-
-      // ── Vérifie la permission actuelle au chargement ─────────────────
-      async function initNotifState() {
-        if (!('Notification' in window)) return;
-        // Si la permission a été révoquée manuellement dans le navigateur
-        if (Notification.permission === 'denied') {
-          const desc = document.getElementById('notifPermDesc');
-          if (desc) desc.textContent = '⚠️ Notifications bloquées dans les paramètres du navigateur';
-          const btn = document.getElementById('togglePushEnabled');
-          if (btn) { btn.classList.replace('on', 'off'); btn.disabled = true; btn.title = 'Débloque les notifications dans les paramètres du navigateur'; }
-        }
-      }
-
-      // ================================================================
-
       function init() {
         const now = new Date();
         document.getElementById('headerDate').textContent = now.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -5618,11 +5155,11 @@
         const ct = document.getElementById('customTo');
         if (cf) cf.value = now.toISOString().slice(0, 7);
         if (ct) ct.value = now.toISOString().slice(0, 7);
+        // Initialise immédiatement l'anneau d'objectif avec les valeurs par défaut
+        // pour éviter l'affichage des valeurs codées en dur du SVG avant la connexion
         updateRing(0);
         renderOverview();
-        // Enregistre le Service Worker et vérifie l'état des permissions
-        registerSW();
-        initNotifState();
+        renderQuote();
       }
 
       init();
