@@ -2712,10 +2712,10 @@
             </div>
           </div>
         </div>
-        <div class="quote-box">
+        <div class="quote-box" id="quoteBox">
           <div class="q">"</div>
-          <p>La discipline aujourd'hui crée la liberté demain.</p>
-          <div class="author">- Inconnu</div>
+          <p id="quoteText"></p>
+          <div class="author" id="quoteAuthor"></div>
         </div>
       </aside>
 
@@ -2894,9 +2894,29 @@
                 <option value="3m">3 mois</option>
               </select>
               <button class="btn btn-ghost btn-sm" onclick="openModal('addHistorique')">+ Ajouter mois</button>
+              <button class="btn btn-ghost btn-sm" onclick="openSelectMonthModal()">✏️ Modifier un mois</button>
             </div>
           </div>
           <div class="panel" style="margin-bottom:10px">
+            <!-- Toggles de visibilité des courbes -->
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+              <label class="evo-toggle" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--text2)">
+                <input type="checkbox" id="evoShowTotal"  checked onchange="renderEvolution()">
+                <span style="color:#C8A84B;font-weight:600">Total</span>
+              </label>
+              <label class="evo-toggle" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--text2)">
+                <input type="checkbox" id="evoShowLivret" checked onchange="renderEvolution()">
+                <span style="color:#4CAF50">Livret A</span>
+              </label>
+              <label class="evo-toggle" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--text2)">
+                <input type="checkbox" id="evoShowBanque" checked onchange="renderEvolution()">
+                <span style="color:#2196F3">Banque</span>
+              </label>
+              <label class="evo-toggle" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--text2)">
+                <input type="checkbox" id="evoShowEsp"    checked onchange="renderEvolution()">
+                <span style="color:#FF9800">Espèces</span>
+              </label>
+            </div>
             <div class="chart-wrap h240"><canvas id="evoDetailChart"></canvas></div>
           </div>
           <div class="grid-2eq">
@@ -3209,6 +3229,7 @@
               <select class="filter-select" style="width:auto" id="settingCurrency" onchange="updateDisplaySettings()">
                 <option value="EUR">Euro (€)</option>
                 <option value="USD">Dollar ($)</option>
+                <option value="JPY">Yen (¥)</option>
               </select>
             </div>
             <div class="settings-row">
@@ -3463,6 +3484,17 @@
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="closeModal('addObjectif')">Annuler</button>
           <button class="btn btn-gold" onclick="addObjectif()">Créer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sélection du mois à modifier -->
+    <div class="modal-overlay" id="modal-selectMonth">
+      <div class="modal">
+        <div class="modal-title">📅 Choisir un mois à modifier</div>
+        <div id="selectMonthList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
+        <div class="modal-actions" style="margin-top:14px">
+          <button class="btn btn-ghost" onclick="closeModal('selectMonth')">Fermer</button>
         </div>
       </div>
     </div>
@@ -3891,30 +3923,81 @@
 
       let charts = {};
 
+      // ======================== DEVISE : symbole et locale ========================
+      // Table de correspondance entre code devise → symbole + format
+      const CURRENCY_MAP = {
+        EUR: { symbol: '€', locale: 'fr-FR', code: 'EUR', after: true  },
+        USD: { symbol: '$', locale: 'en-US', code: 'USD', after: false },
+        JPY: { symbol: '¥', locale: 'ja-JP', code: 'JPY', after: false }
+      };
+      function getCurrency() {
+        return CURRENCY_MAP[D.settings.currency] || CURRENCY_MAP['EUR'];
+      }
+
       // ======================== UTILS ========================
+      // ── Citations quotidiennes ────────────────────────────────────────
+      // Affiche une citation différente chaque jour (rotation sur 20).
+      // Index stable : dayOfYear modulo 20 → même citation toute la journée
+      // pour tous les utilisateurs, change au passage à minuit.
+      const QUOTES = [
+        { text: "La discipline aujourd'hui crée la liberté demain.", author: "Inconnu" },
+        { text: "Ne comptez pas les jours, faites que les jours comptent.", author: "Muhammad Ali" },
+        { text: "Un investissement dans la connaissance rapporte les meilleurs intérêts.", author: "Benjamin Franklin" },
+        { text: "La richesse n'est pas dans ce qu'on a, mais dans ce qu'on évite de dépenser.", author: "Inconnu" },
+        { text: "Épargner sans investir, c'est travailler sans récolter.", author: "Inconnu" },
+        { text: "Il n'est pas nécessaire d'être riche pour commencer, mais il faut commencer pour être riche.", author: "Inconnu" },
+        { text: "Le secret de votre avenir est caché dans votre routine quotidienne.", author: "Mike Murdock" },
+        { text: "Ne mettez pas tous vos œufs dans le même panier.", author: "Proverbe" },
+        { text: "Chaque euro économisé est un euro qui travaille pour vous.", author: "Inconnu" },
+        { text: "Le meilleur moment pour planter un arbre était il y a vingt ans. Le deuxième meilleur moment, c'est maintenant.", author: "Proverbe chinois" },
+        { text: "Les petites économies sont la source des grandes fortunes.", author: "Inconnu" },
+        { text: "La fortune sourit aux audacieux qui savent aussi être patients.", author: "Inconnu" },
+        { text: "Dépensez moins que vous ne gagnez et investissez la différence.", author: "Inconnu" },
+        { text: "La frugalité est la mère de toutes les vertus.", author: "Inconnu" },
+        { text: "Ce n'est pas votre salaire qui vous enrichit, c'est vos habitudes de dépense.", author: "Charles Jaffe" },
+        { text: "L'argent est un bon serviteur mais un mauvais maître.", author: "Francis Bacon" },
+        { text: "Soyez avare de votre temps autant que de votre argent.", author: "Inconnu" },
+        { text: "Construire la richesse est un marathon, pas un sprint.", author: "Inconnu" },
+        { text: "La meilleure assurance-vie, c'est votre épargne.", author: "Inconnu" },
+        { text: "Faites travailler votre argent pendant que vous dormez.", author: "Inconnu" },
+      ];
+
+      function renderQuote() {
+        const el = document.getElementById('quoteText');
+        const auth = document.getElementById('quoteAuthor');
+        if (!el || !auth) return;
+        // Index basé sur le numéro du jour dans l'année — change chaque jour, identique pour tous les logins du même jour
+        const now = new Date();
+        const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+        const q = QUOTES[dayOfYear % QUOTES.length];
+        el.textContent = q.text;
+        auth.textContent = '— ' + q.author;
+      }
+
       function fmt(n) {
-        if (n == null || isNaN(n)) return '0 €';
+        if (n == null || isNaN(n)) return '0 ' + getCurrency().symbol;
         const v = parseFloat(n);
         // Détecte les décimales significatives en passant par la représentation string
         // pour éviter les erreurs d'arrondi flottant (ex: 1250.1 → 1250 était faux)
         const str = v.toString();
         const dotIdx = str.indexOf('.');
-        const decimals = dotIdx >= 0 ? Math.min(str.length - dotIdx - 1, 2) : 0;
-        return v.toLocaleString('fr-FR', {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: 2
-        }) + ' €';
+        // Le Yen n'utilise pas de décimales (devise sans centimes)
+        const cur = getCurrency();
+        const decimals = cur.code === 'JPY' ? 0 : (dotIdx >= 0 ? Math.min(str.length - dotIdx - 1, 2) : 0);
+        const maxDec = cur.code === 'JPY' ? 0 : 2;
+        const formatted = v.toLocaleString(cur.locale, { minimumFractionDigits: decimals, maximumFractionDigits: maxDec });
+        return cur.after ? formatted + ' ' + cur.symbol : cur.symbol + formatted;
       }
       function fmtDelta(n) {
-        if (n == null || isNaN(n)) return '+0 €';
+        if (n == null || isNaN(n)) return '+0 ' + getCurrency().symbol;
         const v = parseFloat(n);
         const str = v.toString();
         const dotIdx = str.indexOf('.');
-        const decimals = dotIdx >= 0 ? Math.min(str.length - dotIdx - 1, 2) : 0;
-        return (v >= 0 ? '+' : '') + v.toLocaleString('fr-FR', {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: 2
-        }) + ' €';
+        const cur = getCurrency();
+        const decimals = cur.code === 'JPY' ? 0 : (dotIdx >= 0 ? Math.min(str.length - dotIdx - 1, 2) : 0);
+        const maxDec = cur.code === 'JPY' ? 0 : 2;
+        const formatted = v.toLocaleString(cur.locale, { minimumFractionDigits: decimals, maximumFractionDigits: maxDec });
+        return (v >= 0 ? '+' : '') + (cur.after ? formatted + ' ' + cur.symbol : cur.symbol + formatted);
       }
       function getTotal() { return D.accounts.reduce((s, a) => s + a.balance, 0) }
       function getLivret() { return D.accounts.filter(a => a.type === 'livret').reduce((s, a) => s + a.balance, 0) }
@@ -4657,21 +4740,28 @@
         else if (period === '6m') h = h.slice(-6);
         else if (period === '3m') h = h.slice(-3);
 
-        const allValues = h.flatMap(x => [x.total, x.livret, x.banque, x.esp]);
+        // ── Lire les checkboxes de visibilité ───────────────────────────
+        const showTotal  = document.getElementById('evoShowTotal')?.checked  !== false;
+        const showLivret = document.getElementById('evoShowLivret')?.checked !== false;
+        const showBanque = document.getElementById('evoShowBanque')?.checked !== false;
+        const showEsp    = document.getElementById('evoShowEsp')?.checked    !== false;
+
+        // ── Construire les datasets visibles ────────────────────────────
+        const datasets = [];
+        if (showTotal)  datasets.push({ label: 'Total',    data: h.map(x => x.total),  borderColor: '#C8A84B', backgroundColor: 'rgba(200,168,75,0.07)', fill: true,  tension: 0.4, borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: '#C8A84B' });
+        if (showLivret) datasets.push({ label: 'Livret A', data: h.map(x => x.livret), borderColor: '#4CAF50', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1.5, pointRadius: 2, pointHoverRadius: 5, borderDash: [5, 4] });
+        if (showBanque) datasets.push({ label: 'Banque',   data: h.map(x => x.banque), borderColor: '#2196F3', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1.5, pointRadius: 2, pointHoverRadius: 5, borderDash: [5, 4] });
+        if (showEsp)    datasets.push({ label: 'Espèces',  data: h.map(x => x.esp),    borderColor: '#FF9800', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1,   pointRadius: 2, pointHoverRadius: 5, borderDash: [3, 4] });
+
+        // ── Calculer l'axe Y sur les données RÉELLEMENT visibles ────────
+        const allVisible = datasets.flatMap(ds => ds.data).filter(v => v != null && !isNaN(v));
+        const yOpts = yAxisOpts(allVisible);
 
         dc('evoDetailChart');
         const ctx1 = document.getElementById('evoDetailChart');
-        const yOpts = yAxisOpts(allValues);
         charts['evoDetailChart'] = new Chart(ctx1, {
           type: 'line',
-          data: {
-            labels: h.map(x => x.m), datasets: [
-              { label: 'Total', data: h.map(x => x.total), borderColor: '#C8A84B', backgroundColor: 'rgba(200,168,75,0.07)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: '#C8A84B' },
-              { label: 'Livret A', data: h.map(x => x.livret), borderColor: '#4CAF50', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1.5, pointRadius: 0, borderDash: [5, 4] },
-              { label: 'Banque', data: h.map(x => x.banque), borderColor: '#2196F3', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1.5, pointRadius: 0, borderDash: [5, 4] },
-              { label: 'Espèces', data: h.map(x => x.esp), borderColor: '#FF9800', backgroundColor: 'transparent', tension: 0.4, borderWidth: 1, pointRadius: 0, borderDash: [3, 4] },
-            ]
-          },
+          data: { labels: h.map(x => x.m), datasets },
           options: {
             responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
             plugins: { legend: { labels: { color: '#B0B0B0', font: { size: 10 }, boxWidth: 12 } }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#C8A84B', borderWidth: 1, callbacks: { label: c => ' ' + c.dataset.label + ': ' + fmt(c.raw) } } },
@@ -4819,6 +4909,35 @@
       </div></td>
     </tr>`;
         }).join('');
+      }
+
+      // Ouvre la modal de sélection du mois à modifier (depuis la page Évolution)
+      function openSelectMonthModal() {
+        if (!requireLogin()) return;
+        if (!D.history || D.history.length === 0) {
+          showToast('Aucune donnée historique disponible', 'error');
+          return;
+        }
+
+        // Affiche les mois dans l'ordre chronologique (du plus ancien au plus récent)
+        const list = document.getElementById('selectMonthList');
+        list.innerHTML = D.history.map((h, i) => `
+          <button
+            onclick="closeModal('selectMonth'); editHistoriqueRow(${i})"
+            style="
+              display:flex; justify-content:space-between; align-items:center;
+              padding:10px 14px; background:var(--bg3); border:1px solid var(--border);
+              border-radius:8px; color:var(--text); font-size:13px; cursor:pointer;
+              text-align:left; width:100%; transition:border-color 0.15s;
+            "
+            onmouseover="this.style.borderColor='var(--gold)'"
+            onmouseout="this.style.borderColor='var(--border)'"
+          >
+            <span style="font-weight:600">${h.m}</span>
+            <span style="color:var(--gold);font-size:12px">${fmt(h.total)}</span>
+          </button>`).join('');
+
+        openModal('selectMonth');
       }
 
       function editHistoriqueRow(i) {
@@ -5290,6 +5409,11 @@
 
         D.settings.currency = currency;
         D.settings.dateFormat = dateFormat;
+
+        // CORRECTIF : rafraîchit toute l'interface (KPI, graphiques, modals) pour
+        // que le changement de devise soit visible IMMÉDIATEMENT, sans attendre
+        // un rechargement de page.
+        renderAll();
         showToast('Préférences d\'affichage enregistrées ✓');
       }
 
@@ -5623,10 +5747,12 @@
         // Enregistre le Service Worker et vérifie l'état des permissions
         registerSW();
         initNotifState();
+        // Affiche la citation du jour dans la sidebar
+        renderQuote();
       }
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2462ed80d1bd14e',t:'MTc4NTYwMTM2MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
