@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Fond noir arrondi (s'intègre aux onglets sombres + iOS) -->
+  <rect width="64" height="64" rx="14" fill="#0A0A0A"/>
+  <!-- Bordure dorée subtile -->
+  <rect x="1" y="1" width="62" height="62" rx="13" fill="none" stroke="#C8A84B" stroke-width="1.5" opacity="0.5"/>
+  <!-- Lettre P en Cormorant Garamond, dorée -->
+  <text x="32" y="46"
+        font-family="'Cormorant Garamond', 'Playfair Display', Georgia, serif"
+        font-size="42"
+        font-weight="700"
+        fill="#C8A84B"
+        text-anchor="middle"
+        letter-spacing="-1">P</text>
+</svg>
