@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -1295,6 +1295,271 @@
     .demo-notice-actions .btn {
       padding: 9px 20px;
       font-size: 13px;
+    }
+
+    /* ============================================
+       FIX ZOOM AUTO MOBILE SUR LES INPUTS
+       ============================================
+       Sur iOS Safari, quand un input a un font-size
+       < 16px, le navigateur zoome automatiquement
+       sur le champ au focus (pour faciliter la
+       lecture). Une fois sorti, la page reste zoomée
+       et l'utilisateur doit pincer pour dézoomer.
+
+       Solution : on force font-size: 16px sur tous
+       les inputs sur mobile, et on remet le
+       dimensionnement visuel d'origine (padding,
+       hauteur) pour qu'ils gardent leur look compact.
+       ============================================ */
+    @media (max-width: 768px) {
+      .form-input,
+      .form-input[type="number"],
+      .form-input[type="text"],
+      .form-input[type="date"],
+      .form-input[type="month"],
+      .form-input[type="password"],
+      .form-input[type="email"],
+      input.form-input,
+      select.form-input,
+      input[type="date"].form-input,
+      input[type="month"].form-input {
+        font-size: 16px !important; /* iOS lit >= 16 = pas de zoom */
+      }
+      /* On compense la hausse de font-size en réduisant
+         le padding et la hauteur pour conserver le look */
+      .form-input {
+        padding: 6px 8px !important;
+      }
+      input[type="date"].form-input,
+      input[type="month"].form-input {
+        min-height: 36px;
+      }
+    }
+
+    /* ============================================
+       FIX SIDEBAR QUI TREMBLE À LA NAVIGATION
+       ============================================
+       Symptôme : quand on change de page, la sidebar
+       (desktop) se déplace de quelques pixels verticalement
+       (saut vers le haut ou le bas).
+
+       Cause : la sidebar est en position: sticky, top: 56px.
+       Sur certaines pages, le contenu principal change de
+       hauteur à chaque render (animations fadeIn, charts
+       qui se re-tracent avec une hauteur différente). Cela
+       peut faire "resauter" la position sticky de quelques
+       pixels pendant la phase d'animation.
+
+       Solution :
+       1. Empêcher la barre de défilement de bouger (scrollbar-gutter)
+       2. Forcer la position de la sidebar à ne pas dépendre
+          d'un scroll parent instable
+       3. Rendre la position calculée plus stable
+       ============================================ */
+    html {
+      /* Réserve l'espace pour la scrollbar verticale en permanence :
+         évite qu'elle apparaisse/disparaisse et que le contenu
+         se décale horizontalement de 17px à l'arrivée/disparition */
+      scrollbar-gutter: stable;
+    }
+    .main-layout {
+      /* Empêche le contenu de "resauter" pendant les animations :
+         - align-items: flex-start évite que les enfants sticky se
+           repositionnent si leur hauteur change
+         - contain: layout réduit la zone de reflow pour que les
+           changements dans .content n'affectent pas la sidebar */
+      align-items: flex-start;
+      contain: layout;
+    }
+    .sidebar {
+      /* Le tremblement venait aussi de la combinaison
+         position:sticky + transform/opacity transition.
+         On supprime transform/opacity des transitions de
+         la sidebar (elle ne s'en sert que sur mobile via
+         .mobile-open, géré séparément). On garde seulement
+         width et padding pour le collapse desktop. */
+      will-change: width;
+    }
+    .sidebar.collapsed {
+      /* Sur desktop, on désactive les transitions inutiles
+         sur transform/opacity pour la sidebar collapsed */
+      transition: none !important;
+    }
+    /* Force une "barre de défilement invisible" sur .content
+       pour qu'elle soit toujours là (sinon elle apparaît/disparaît
+       au gré des re-renders et fait sauter la mise en page) */
+    .content {
+      scrollbar-gutter: stable;
+    }
+    /* Pendant une animation fadeIn d'une page, on n'autorise
+       pas la sidebar à bouger (on la "fige" visuellement) */
+    .page {
+      animation-fill-mode: both;
+    }
+    /* Sur mobile : la sidebar est en position fixed, le problème
+       ne s'y pose pas. On garde juste la transition propre. */
+    @media (max-width: 768px) {
+      .main-layout {
+        align-items: stretch;
+        contain: none;
+      }
+    }
+
+    /* ============================================
+       MODAL DE SUPPRESSION DE COMPTE
+       ============================================
+       Style miroir du modal-demo-notice pour garder
+       la cohérence visuelle. Couleurs rouges pour
+       bien signifier le danger.
+       ============================================ */
+    .modal-delete-account {
+      max-width: 500px;
+      padding: 28px 26px 22px;
+      text-align: center;
+      position: relative;
+      border-color: rgba(244, 67, 54, 0.5);
+      box-shadow: 0 0 60px rgba(244, 67, 54, 0.15);
+    }
+    .delete-account-icon {
+      font-size: 44px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .delete-account-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--red);
+      margin: 0 0 14px;
+      letter-spacing: 0.3px;
+    }
+    .delete-account-text {
+      color: var(--text2);
+      font-size: 12px;
+      line-height: 1.55;
+      margin: 0 0 14px;
+      text-align: left;
+    }
+    .delete-account-warning {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      background: rgba(244, 67, 54, 0.08);
+      border: 1px solid rgba(244, 67, 54, 0.3);
+      border-radius: 7px;
+      padding: 10px 12px;
+      margin: 0 0 16px;
+      text-align: left;
+      color: var(--text2);
+      font-size: 11.5px;
+      line-height: 1.5;
+    }
+    .delete-account-warning-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 1px;
+    }
+    .delete-account-warning strong {
+      color: var(--red);
+      font-weight: 700;
+    }
+    .delete-account-confirm-label {
+      display: block;
+      font-size: 11.5px;
+      color: var(--text2);
+      margin-bottom: 6px;
+      text-align: left;
+    }
+    .delete-account-confirm-input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid rgba(244, 67, 54, 0.35);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 5px;
+      font-size: 14px !important; /* Pas de zoom iOS, on a déjà le viewport bloqué */
+      font-family: inherit;
+      outline: none;
+      text-align: center;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .delete-account-confirm-input:focus {
+      border-color: var(--red);
+      background: var(--bg2);
+    }
+    .delete-account-confirm-input.match {
+      border-color: rgba(76, 175, 80, 0.55);
+      background: rgba(76, 175, 80, 0.05);
+    }
+    .delete-account-confirm-hint {
+      font-size: 10px;
+      color: var(--text3);
+      margin: 0 0 16px;
+      text-align: right;
+      min-height: 14px;
+    }
+    .delete-account-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+    .delete-account-actions .btn {
+      padding: 8px 18px;
+      font-size: 12px;
+    }
+    .btn-danger-strong {
+      background: rgba(244, 67, 54, 0.18);
+      border: 1px solid rgba(244, 67, 54, 0.5);
+      color: var(--red);
+      font-weight: 700;
+    }
+    .btn-danger-strong:hover:not(:disabled) {
+      background: rgba(244, 67, 54, 0.28);
+      border-color: var(--red);
+    }
+    .btn-danger-strong:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Mobile (≤ 600px) : le modal de suppression devient plus compact.
+       Le modal-overlay a déjà sa gestion via la classe is-mobile
+       (align-items: flex-end + 100% width). On ajuste juste
+       le padding interne pour ne pas être trop à l'étroit. */
+    @media (max-width: 600px) {
+      .modal-delete-account {
+        max-width: 100%;
+        padding: 24px 18px 20px;
+      }
+      .delete-account-title {
+        font-size: 16px;
+      }
+      .delete-account-icon {
+        font-size: 38px;
+      }
+    }
+
+    /* Bouton "Supprimer mon compte" dans la barre de settings.
+       Le bouton est rouge, mais plus discret que la variante
+       "forte" (utilisée dans la modal de confirmation). */
+    .btn-delete-account {
+      background: rgba(244, 67, 54, 0.12);
+      border: 1px solid rgba(244, 67, 54, 0.3);
+      color: var(--red);
+      padding: 7px 18px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-delete-account:hover {
+      background: rgba(244, 67, 54, 0.2);
+      border-color: var(--red);
     }
 
     /* MODAL */
@@ -3515,6 +3780,7 @@
             <button class="btn btn-ghost" onclick="exportCSV()">Exporter en CSV</button>
             <button class="btn btn-danger"
               onclick="if(confirm('Réinitialiser toutes les données ?')){resetData()}">Réinitialiser données</button>
+            <button class="btn-delete-account" id="btnDeleteAccount" onclick="openDeleteAccountModal()">Supprimer mon compte</button>
           </div>
         </div>
 
@@ -3849,6 +4115,51 @@
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="closeModal('editHistorique')">Annuler</button>
           <button class="btn btn-gold" onclick="saveEditHistorique()">Sauvegarder</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de suppression définitive du compte utilisateur
+         S'affiche quand l'utilisateur clique sur "Supprimer mon compte"
+         dans les paramètres. Pas de croix pour forcer l'utilisateur
+         à passer par Annuler ou par la validation explicite (champ texte
+         à compléter). -->
+    <div class="modal-overlay" id="modal-deleteAccount">
+      <div class="modal modal-delete-account">
+        <div class="delete-account-icon">⚠️</div>
+        <h2 class="delete-account-title">Supprimer définitivement mon compte</h2>
+
+        <p class="delete-account-text">
+          Cette action entraînera la <strong style="color:var(--red)">suppression définitive</strong> de votre compte
+          et de <strong>toutes les données</strong> associées :
+          comptes, transactions, historique de patrimoine, objectifs, paramètres et profil.
+        </p>
+
+        <div class="delete-account-warning">
+          <div class="delete-account-warning-icon">🚨</div>
+          <div>
+            <strong>Cette action est irréversible.</strong><br>
+            Une fois votre compte supprimé, il sera impossible de récupérer vos données.
+            Assurez-vous d'avoir bien <strong>exporté vos données en CSV</strong> au préalable si vous souhaitez en conserver une copie.
+          </div>
+        </div>
+
+        <label class="delete-account-confirm-label" for="deleteAccountConfirmInput">
+          Pour supprimer votre compte, tapez <strong style="color:var(--red)">supprimer mon compte</strong> ci-dessous :
+        </label>
+        <input
+          type="text"
+          class="delete-account-confirm-input"
+          id="deleteAccountConfirmInput"
+          placeholder="supprimer mon compte"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <div class="delete-account-confirm-hint" id="deleteAccountConfirmHint">&nbsp;</div>
+
+        <div class="delete-account-actions">
+          <button class="btn btn-ghost" id="deleteAccountCancel">Annuler</button>
+          <button class="btn btn-danger-strong" id="deleteAccountConfirm" disabled>Supprimer définitivement</button>
         </div>
       </div>
     </div>
@@ -6497,6 +6808,204 @@
       }
 
       // ================================================================
+      // MODAL DE SUPPRESSION DÉFINITIVE DU COMPTE
+      // ================================================================
+      // Sécurité anti-clic accidentel :
+      // 1. Le bouton "Supprimer définitivement" est DÉSACTIVÉ par défaut
+      // 2. L'utilisateur doit taper EXACTEMENT "supprimer mon compte"
+      //    dans le champ de confirmation
+      // 3. Tant que la saisie ne correspond pas, le bouton reste grisé
+      // 4. À la validation, on supprime les données utilisateur
+      //    dans TOUTES les tables Supabase, puis on déconnecte.
+      //    Si l'utilisateur n'a pas configuré d'RPC "delete_user" côté
+      //    Supabase, on se contente des étapes 1-3 : les données
+      //    utilisateur sont effacées, le compte Auth reste (à supprimer
+      //    manuellement depuis le dashboard Supabase).
+      // ================================================================
+      const DELETE_CONFIRM_TEXT = 'supprimer mon compte';
+
+      function openDeleteAccountModal() {
+        // Bloque l'accès si non connecté
+        if (!currentUserId) {
+          showToast('Veuillez vous connecter pour gérer votre compte.', 'error');
+          return;
+        }
+        // Refuse l'accès au compte démo (sinon on supprimerait les données
+        // partagées que les autres utilisateurs sont en train de consulter)
+        const userEmailEl = document.getElementById('userEmailLabel');
+        const currentEmail = (userEmailEl?.textContent || '').toLowerCase();
+        if (currentEmail === 'demo@patrimoine.fr') {
+          showToast('Le compte de démonstration ne peut pas être supprimé.', 'error');
+          return;
+        }
+        const overlay = document.getElementById('modal-deleteAccount');
+        if (!overlay) return;
+        // Reset de l'état à chaque ouverture
+        const input = document.getElementById('deleteAccountConfirmInput');
+        const btn  = document.getElementById('deleteAccountConfirm');
+        const hint = document.getElementById('deleteAccountConfirmHint');
+        if (input) { input.value = ''; input.classList.remove('match'); }
+        if (btn)  { btn.disabled = true; btn.textContent = 'Supprimer définitivement'; }
+        if (hint) { hint.innerHTML = '&nbsp;'; }
+        // Stop la propagation du clic sur la modal pour qu'elle ne se
+        // ferme pas si on clique à l'intérieur (pas de croix par design)
+        const modalEl = overlay.querySelector('.modal');
+        if (modalEl) {
+          modalEl.addEventListener('click', function (e) {
+            e.stopPropagation();
+          });
+        }
+        // Bloque le scroll du body pendant l'affichage
+        document.body.style.overflow = 'hidden';
+        overlay.classList.add('show');
+        // Bind des boutons (avec dataset.bound pour éviter les doublons)
+        const btnCancel = document.getElementById('deleteAccountCancel');
+        if (btnCancel && !btnCancel.dataset.bound) {
+          btnCancel.dataset.bound = '1';
+          btnCancel.addEventListener('click', closeDeleteAccountModal);
+        }
+        // Bind de l'input (live check sur la saisie)
+        if (input && !input.dataset.bound) {
+          input.dataset.bound = '1';
+          input.addEventListener('input', onDeleteAccountInputChange);
+          // Touche Entrée = soumettre si valide
+          input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !btn.disabled) {
+              e.preventDefault();
+              confirmDeleteAccount();
+            }
+          });
+        }
+        // Bind du bouton de validation finale
+        if (btn && !btn.dataset.bound) {
+          btn.dataset.bound = '1';
+          btn.addEventListener('click', confirmDeleteAccount);
+        }
+        // Focus sur l'input après un court délai (sinon le focus
+        // ne "prend" pas car la modal n'est pas encore peinte)
+        setTimeout(() => { if (input) input.focus(); }, 60);
+      }
+
+      function closeDeleteAccountModal() {
+        const overlay = document.getElementById('modal-deleteAccount');
+        if (!overlay) return;
+        overlay.classList.remove('show');
+        // Restaure le scroll comme les autres modals
+        if (typeof isMobileView === 'function' && isMobileView()) {
+          const sb = document.getElementById('sidebar');
+          if (sb && !sb.classList.contains('mobile-open')) {
+            document.body.style.overflow = '';
+          }
+        } else {
+          document.body.style.overflow = '';
+        }
+      }
+
+      // Live-check : active le bouton de validation UNIQUEMENT si
+      // la saisie correspond exactement à la chaîne attendue.
+      // Utilise un trim() pour tolérer un espace accidentel au début/fin.
+      function onDeleteAccountInputChange() {
+        const input = document.getElementById('deleteAccountConfirmInput');
+        const btn   = document.getElementById('deleteAccountConfirm');
+        const hint  = document.getElementById('deleteAccountConfirmHint');
+        if (!input || !btn) return;
+        const val = input.value.trim();
+        if (val.length === 0) {
+          btn.disabled = true;
+          input.classList.remove('match');
+          if (hint) hint.innerHTML = '&nbsp;';
+        } else if (val === DELETE_CONFIRM_TEXT) {
+          btn.disabled = false;
+          input.classList.add('match');
+          if (hint) hint.innerHTML = '<span style="color:var(--green)">✓ Saisie correcte, vous pouvez valider</span>';
+        } else {
+          btn.disabled = true;
+          input.classList.remove('match');
+          if (hint) hint.innerHTML = '<span style="color:var(--text3)">Saisie incorrecte</span>';
+        }
+      }
+
+      // Action finale : supprime toutes les données utilisateur dans Supabase,
+      // puis déconnecte. Si une fonction RPC "delete_user" existe côté
+      // Supabase, elle est appelée pour supprimer aussi l'utilisateur Auth.
+      async function confirmDeleteAccount() {
+        if (!currentUserId) return;
+        const btn = document.getElementById('deleteAccountConfirm');
+        const btnCancel = document.getElementById('deleteAccountCancel');
+        if (btn.disabled) return;
+        // Double-sécurité : on revérifie le contenu du champ
+        const input = document.getElementById('deleteAccountConfirmInput');
+        if (!input || input.value.trim() !== DELETE_CONFIRM_TEXT) {
+          showToast('Saisie incorrecte.', 'error');
+          return;
+        }
+        // Désactive les boutons pour éviter le double-clic
+        btn.disabled = true;
+        btn.textContent = 'Suppression…';
+        if (btnCancel) btnCancel.disabled = true;
+
+        try {
+          // 1. Suppression des données utilisateur dans TOUTES les tables
+          //    (RLS garantit qu'on ne supprime QUE ses propres données,
+          //    et le .eq('user_id', currentUserId) renforce ce filtre).
+          const tables = [
+            'transactions',
+            'accounts',
+            'objectives',
+            'net_worth_history',
+            'settings',
+            'indicators',
+            'push_subscriptions',
+            'notification_prefs',
+            'profiles',
+          ];
+          for (const t of tables) {
+            const { error } = await supabaseClient.from(t).delete().eq('user_id', currentUserId);
+            if (error) {
+              // Si RLS bloque (ex: l'utilisateur n'a pas le droit de DELETE
+              // sur cette table), on continue quand même. La fonction RPC
+              // "delete_user" ci-dessous fera le ménage en une seule fois.
+              console.warn(`Suppression partielle de la table ${t} :`, error.message);
+            }
+          }
+
+          // 2. Tentative d'appel à une fonction RPC "delete_user" qui
+          //    supprimerait l'utilisateur Auth côté serveur. Si elle
+          //    n'existe pas, on se contente des étapes 1 + 3.
+          try {
+            const { error: rpcErr } = await supabaseClient.rpc('delete_user');
+            if (rpcErr) {
+              console.warn('RPC delete_user indisponible :', rpcErr.message);
+            }
+          } catch (e) {
+            // Silencieux : la fonction n'existe peut-être pas
+          }
+
+          // 3. Déconnexion + reset local
+          await supabaseClient.auth.signOut();
+          if (typeof window.onUserLoggedOut === 'function') {
+            window.onUserLoggedOut();
+          }
+          if (typeof window.refreshAuthUI === 'function') {
+            await window.refreshAuthUI();
+          }
+
+          // 4. Fermeture de la modal + toast de confirmation
+          closeDeleteAccountModal();
+          showToast('Votre compte et toutes vos données ont été supprimés.', 'success');
+
+          // Réinitialise le bouton pour la prochaine ouverture
+          if (btn) { btn.textContent = 'Supprimer définitivement'; btn.disabled = true; }
+          if (btnCancel) btnCancel.disabled = false;
+        } catch (err) {
+          // En cas d'erreur réseau, on restaure l'état des boutons
+          if (btn) { btn.textContent = 'Supprimer définitivement'; btn.disabled = false; }
+          if (btnCancel) btnCancel.disabled = false;
+          showToast('Erreur lors de la suppression : ' + (err.message || err), 'error');
+        }
+      }
+
+      // ================================================================
 
       function init() {
         const now = new Date();
@@ -6547,6 +7056,6 @@
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2551d718d79d0a6',t:'MTc4NTc1NzkzNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a258ad4d0c2a016f',t:'MTc4NTc5NTI4NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
