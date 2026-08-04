@@ -1343,56 +1343,67 @@
        (desktop) se déplace de quelques pixels verticalement
        (saut vers le haut ou le bas).
 
-       Cause : la sidebar est en position: sticky, top: 56px.
-       Sur certaines pages, le contenu principal change de
-       hauteur à chaque render (animations fadeIn, charts
-       qui se re-tracent avec une hauteur différente). Cela
-       peut faire "resauter" la position sticky de quelques
-       pixels pendant la phase d'animation.
+       Cause racine : la sidebar était en position: sticky,
+       top: 56px. Le contenu à côté (page qui change) avait
+       une animation fadeIn (translateY 6px → 0) qui forçait
+       le navigateur à recalculer la position sticky de la
+       sidebar à chaque frame, provoquant un "saut" visible.
 
-       Solution :
-       1. Empêcher la barre de défilement de bouger (scrollbar-gutter)
-       2. Forcer la position de la sidebar à ne pas dépendre
-          d'un scroll parent instable
-       3. Rendre la position calculée plus stable
+       Solution définitive : passer la sidebar en
+       position: fixed (comme sur mobile). Elle est ainsi
+       TOTALEMENT INDÉPENDANTE du reflow du contenu, peu
+       importe la hauteur des pages ou les animations.
+
+       Le padding-left de .content compense la largeur de
+       la sidebar (190px) pour que le texte ne soit pas
+       masqué. Quand la sidebar est repliée (collapsed),
+       le padding passe à 0 grâce à :has().
        ============================================ */
     html {
-      /* Réserve l'espace pour la scrollbar verticale en permanence :
-         évite qu'elle apparaisse/disparaisse et que le contenu
-         se décale horizontalement de 17px à l'arrivée/disparition */
+      /* Réserve l'espace pour la scrollbar verticale en permanence */
       scrollbar-gutter: stable;
     }
-    .main-layout {
-      /* Empêche le contenu de "resauter" pendant les animations :
-         - align-items: flex-start évite que les enfants sticky se
-           repositionnent si leur hauteur change
-         - contain: layout réduit la zone de reflow pour que les
-           changements dans .content n'affectent pas la sidebar */
-      align-items: flex-start;
-      contain: layout;
-    }
     .sidebar {
-      /* Le tremblement venait aussi de la combinaison
-         position:sticky + transform/opacity transition.
-         On supprime transform/opacity des transitions de
-         la sidebar (elle ne s'en sert que sur mobile via
-         .mobile-open, géré séparément). On garde seulement
-         width et padding pour le collapse desktop. */
+      /* Position FIXED au lieu de sticky : la sidebar ne dépend
+         plus du contexte de scroll ni de la hauteur du contenu.
+         Elle reste collée au viewport, immobile, peu importe
+         ce qui se passe à droite. */
+      position: fixed;
+      top: 56px;
+      left: 0;
+      /* Hauteur = viewport moins le header sticky */
+      height: calc(100vh - 56px);
+      height: calc(100dvh - 56px);
+      /* Le z-index doit être < celui du header (200) pour ne pas
+         masquer le header quand on scrolle, mais > au contenu */
+      z-index: 100;
       will-change: width;
+    }
+    /* Le contenu principal commence APRÈS la sidebar (190px).
+       Quand la sidebar est repliée (width: 0), on retire le
+       padding grâce à :has() — supporté par tous les navigateurs
+       modernes (Chrome 105+, Safari 15.4+, Firefox 121+). */
+    .main-layout > .content {
+      padding-left: 190px;
+      transition: padding-left 0.25s ease;
+    }
+    .main-layout:has(> .sidebar.collapsed) > .content {
+      padding-left: 0;
+    }
+    /* Fallback pour les très vieux navigateurs qui ne supportent
+       pas :has() : le JS ajoute/retire la classe .sidebar-collapsed
+       sur <body> en miroir de .sidebar.collapsed. */
+    body.sidebar-collapsed .main-layout > .content {
+      padding-left: 0;
     }
     .sidebar.collapsed {
       /* Sur desktop, on désactive les transitions inutiles
          sur transform/opacity pour la sidebar collapsed */
       transition: none !important;
     }
-    /* Force une "barre de défilement invisible" sur .content
-       pour qu'elle soit toujours là (sinon elle apparaît/disparaît
-       au gré des re-renders et fait sauter la mise en page) */
     .content {
       scrollbar-gutter: stable;
     }
-    /* Pendant une animation fadeIn d'une page, on n'autorise
-       pas la sidebar à bouger (on la "fige" visuellement) */
     .page {
       animation-fill-mode: both;
     }
@@ -1401,16 +1412,89 @@
     @media (max-width: 768px) {
       .main-layout {
         align-items: stretch;
-        contain: none;
+      }
+      .main-layout > .content {
+        padding-left: 0;
       }
     }
 
     /* ============================================
-       MODAL DE SUPPRESSION DE COMPTE
+       EMPTY STATES INTELLIGENTS (point 5)
        ============================================
-       Style miroir du modal-demo-notice pour garder
-       la cohérence visuelle. Couleurs rouges pour
-       bien signifier le danger.
+       Affichés à la place du texte "Aucune donnée" brut.
+       Proposent un message contextuel + une action visible
+       pour aider l'utilisateur à démarrer.
+       ============================================ */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 18px;
+      text-align: center;
+      color: var(--text2);
+      gap: 12px;
+    }
+    .empty-state-icon {
+      font-size: 38px;
+      line-height: 1;
+      opacity: 0.55;
+    }
+    .empty-state-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+      max-width: 280px;
+    }
+    .empty-state-desc {
+      font-size: 11px;
+      color: var(--text3);
+      line-height: 1.5;
+      max-width: 320px;
+    }
+    .empty-state-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ============================================
+       DASHBOARD ADAPTATIF (point 6)
+       ============================================
+       Si l'utilisateur n'a qu'UN seul compte, on cache
+       les 3 cartes "kpi-card-type" (Banque / Livret / Espèces)
+       et on agrandit la 1re carte (Patrimoine total) pour
+       qu'elle prenne toute la largeur.
+       
+       Si l'utilisateur a PLUS DE 5 comptes, on ajoute
+       automatiquement la classe .kpi-top3 (utilisée par le
+       mini-graphique "Top 3 des comptes" — voir #top3ChartContainer).
+       ============================================ */
+    .kpi-row.kpi-single {
+      grid-template-columns: 1fr !important;
+    }
+    .kpi-row.kpi-single .kpi-card:first-child {
+      padding: 22px 24px;
+    }
+    .kpi-row.kpi-single .kpi-card:first-child .kpi-value {
+      font-size: 32px;
+    }
+    .kpi-row.kpi-single .kpi-card:first-child .kpi-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+    }
+    /* Sur mobile, on garde 1 colonne pour ne pas exploser le layout */
+    @media (max-width: 768px) {
+      .kpi-row.kpi-single { grid-template-columns: 1fr !important }
+      .kpi-row.kpi-single .kpi-card:first-child .kpi-value { font-size: 24px }
+    }
+
+    /* ============================================
+       MODAL DE SUPPRESSION DE COMPTE
        ============================================ */
     .modal-delete-account {
       max-width: 500px;
@@ -3267,7 +3351,7 @@
               <div class="kpi-sub">vs mois dernier</div>
               <div class="sparkline-wrap"><canvas id="spark-total"></canvas></div>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card kpi-card-type">
               <div class="kpi-card-header">
                 <div class="kpi-icon">🏛️</div>
                 <button class="edit-btn" onclick="openModal('editBanque')" title="Modifier">✏️ Modifier</button>
@@ -3277,7 +3361,7 @@
               <div class="kpi-sub" id="kpi-banque-pct">—</div>
               <div class="sparkline-wrap"><canvas id="spark-banque"></canvas></div>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card kpi-card-type">
               <div class="kpi-card-header">
                 <div class="kpi-icon">🏦</div>
                 <button class="edit-btn" onclick="openModal('editLivret')" title="Modifier">✏️ Modifier</button>
@@ -3287,7 +3371,7 @@
               <div class="kpi-sub" id="kpi-livret-pct">—</div>
               <div class="sparkline-wrap"><canvas id="spark-livret"></canvas></div>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card kpi-card-type">
               <div class="kpi-card-header">
                 <div class="kpi-icon">💵</div>
                 <button class="edit-btn" onclick="openModal('editEspeces')" title="Modifier">✏️ Modifier</button>
@@ -3297,6 +3381,15 @@
               <div class="kpi-sub" id="kpi-especes-pct">—</div>
               <div class="sparkline-wrap"><canvas id="spark-especes"></canvas></div>
             </div>
+          </div>
+
+          <!-- Mini-graphique "Top 3" (point 6) : affiché quand > 5 comptes -->
+          <div id="top3ChartContainer" class="panel" style="display:none;margin-bottom:14px">
+            <div class="panel-header">
+              <div class="panel-title">TOP 3 DES COMPTES</div>
+              <button class="panel-action" onclick="showPage('comptes');setSidebarActive(document.querySelector('.sidebar-item[onclick*=&quot;comptes&quot;]'));if(window.innerWidth<=768)closeMobileSidebar()">Tout voir ›</button>
+            </div>
+            <div class="chart-wrap h180"><canvas id="top3Chart"></canvas></div>
           </div>
 
           <div class="grid-3cols">
@@ -3892,12 +3985,26 @@
           <div class="form-group"><label class="form-label">Solde (€)</label><input type="number" class="form-input"
               id="newAccBalance" placeholder="0"></div>
           <div class="form-group"><label class="form-label">Type</label>
-            <select class="form-input" id="newAccType">
+            <!-- Le select est rempli dynamiquement par populateAccountTypeSelect()
+                 avec les types de l'utilisateur (les 4 par défaut + ses
+                 types personnalisés depuis la table account_types).
+                 L'option "__custom__" déclenche l'apparition du champ texte. -->
+            <select class="form-input" id="newAccType" onchange="onAccTypeSelectChange('add')">
               <option value="livret">Livret</option>
               <option value="banque">Bancaire</option>
               <option value="especes">Espèces</option>
               <option value="invest">Investissement</option>
             </select>
+          </div>
+        </div>
+        <!-- Champ texte caché, révélé quand l'utilisateur choisit
+             "Type personnalisé..." dans le select ci-dessus. -->
+        <div class="form-group" id="newAccCustomTypeGroup" style="display:none">
+          <label class="form-label">Nom du nouveau type</label>
+          <input class="form-input" id="newAccCustomType" placeholder="Ex: PEA, Crypto, Assurance-vie...">
+          <div class="s-desc" style="margin-top:3px">
+            Ce type sera ajouté à votre bibliothèque et réutilisable
+            pour vos prochains comptes et transactions.
           </div>
         </div>
         <div class="form-group"><label class="form-label">Banque</label><input class="form-input" id="newAccBank"
@@ -3919,7 +4026,7 @@
           <div class="form-group"><label class="form-label">Solde (€)</label><input type="number" class="form-input"
               id="editAccBalance"></div>
           <div class="form-group"><label class="form-label">Type</label>
-            <select class="form-input" id="editAccType">
+            <select class="form-input" id="editAccType" onchange="onAccTypeSelectChange('edit')">
               <option value="livret">Livret</option>
               <option value="banque">Bancaire</option>
               <option value="especes">Espèces</option>
@@ -3927,10 +4034,15 @@
             </select>
           </div>
         </div>
+        <!-- Champ texte caché pour créer un nouveau type depuis l'édition -->
+        <div class="form-group" id="editAccCustomTypeGroup" style="display:none">
+          <label class="form-label">Nom du nouveau type</label>
+          <input class="form-input" id="editAccCustomType" placeholder="Ex: PEA, Crypto, Assurance-vie...">
+        </div>
         <div class="form-group"><label class="form-label">Banque</label><input class="form-input" id="editAccBank">
         </div>
         <div class="modal-actions">
-          <button class="btn btn-ghost" onclick="closeModal('editAccount')">Annuler</button>
+          <button class="btn btn-bhost" onclick="closeModal('editAccount')">Annuler</button>
           <button class="btn btn-gold" onclick="saveEditAccount()">Sauvegarder</button>
         </div>
       </div>
@@ -3960,12 +4072,26 @@
           </div>
         </div>
         <div class="form-group"><label class="form-label">Catégorie</label>
-          <select class="form-input" id="txCat">
+          <!-- Le select est rempli dynamiquement par populateTxCategorySelect()
+               avec les 4 catégories par défaut + les catégories personnalisées
+               de l'utilisateur (table transaction_categories).
+               L'option "__custom__" déclenche l'apparition du champ texte. -->
+          <select class="form-input" id="txCat" onchange="onTxCatSelectChange('add')">
             <option>Épargne</option>
             <option>Revenu</option>
             <option>Retrait</option>
             <option>Virement</option>
           </select>
+        </div>
+        <!-- Champ texte caché, révélé quand l'utilisateur choisit
+             "Catégorie personnalisée..." dans le select ci-dessus. -->
+        <div class="form-group" id="newTxCatCustomGroup" style="display:none">
+          <label class="form-label">Nom de la nouvelle catégorie</label>
+          <input class="form-input" id="newTxCustomCat" placeholder="Ex: Loyer, Courses, Salaire...">
+          <div class="s-desc" style="margin-top:3px">
+            Cette catégorie sera ajoutée à votre bibliothèque et réutilisable
+            pour vos prochaines transactions.
+          </div>
         </div>
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="closeModal('addTx')">Annuler</button>
@@ -4000,12 +4126,16 @@
           </div>
         </div>
         <div class="form-group"><label class="form-label">Catégorie</label>
-          <select class="form-input" id="editTxCat">
+          <select class="form-input" id="editTxCat" onchange="onTxCatSelectChange('edit')">
             <option>Épargne</option>
             <option>Revenu</option>
             <option>Retrait</option>
             <option>Virement</option>
           </select>
+        </div>
+        <div class="form-group" id="editTxCatCustomGroup" style="display:none">
+          <label class="form-label">Nom de la nouvelle catégorie</label>
+          <input class="form-input" id="editTxCustomCat" placeholder="Ex: Loyer, Courses, Salaire...">
         </div>
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="closeModal('editTx')">Annuler</button>
@@ -4018,8 +4148,14 @@
     <div class="modal-overlay" id="modal-addHistorique">
       <div class="modal">
         <div class="modal-title">📅 Ajouter / Modifier données mensuelles</div>
-        <div class="form-group"><label class="form-label">Mois (ex: Jan 24)</label><input class="form-input"
-            id="histMois" placeholder="Jan 24"></div>
+        <div class="form-group">
+          <label class="form-label">Mois (ex: Jan 24)</label>
+          <input class="form-input" id="histMois" placeholder="Jan 24">
+          <div class="s-desc" style="margin-top:3px">
+            Pré-rempli avec le mois suivant le dernier mois enregistré
+            (ou le mois courant si aucun historique).
+          </div>
+        </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Patrimoine total (€)</label><input type="number"
               class="form-input" id="histTotal"></div>
@@ -4601,6 +4737,10 @@
 
       window.onUserLoggedIn = async function (user) {
         currentUserId = user.id;
+        // Charge les types de compte et catégories de transaction
+        // personnalisés AVANT loadAllData() pour que les selects soient
+        // prêts au moment où les pages se rendent.
+        await Promise.all([loadAccountTypes(), loadTxCategories()]);
         await loadAllData();
         // Charge les préférences de notification + évalue les conditions
         await loadNotifPrefs();
@@ -4734,8 +4874,62 @@
           // Les anciens champs ei-best-val, ei-best-date, etc. n'existent plus
           // et n'ont pas besoin d'être pré-remplis.
         }
-        if (id === 'addTx') populateTxAccountSelect();
-        if (id === 'editTx') populateEditTxAccountSelect();
+        if (id === 'addHistorique') {
+          // Pré-remplir le champ "Mois" avec le mois suivant le dernier
+          // mois enregistré (ou le mois courant si aucun historique).
+          // Format exact : "Jan 24" (1re lettre majuscule + 2 chiffres année)
+          const hm = document.getElementById('histMois');
+          if (hm && !hm.value) {
+            let nextDate = new Date();
+            if (D.history && D.history.length > 0) {
+              // D.history est trié ASC, le dernier élément est le plus récent
+              const last = D.history[D.history.length - 1];
+              if (last.month_date) {
+                // month_date est en YYYY-MM-DD
+                const parts = last.month_date.split('-');
+                if (parts.length >= 2) {
+                  const y = parseInt(parts[0]);
+                  const m = parseInt(parts[1]) - 1; // 0-based
+                  // +1 mois
+                  nextDate = new Date(y, m + 1, 1);
+                }
+              }
+            }
+            hm.value = moisLabelFromDate(nextDate);
+          }
+        }
+        if (id === 'addAccount') {
+          populateAccountTypeSelect('add');
+          // Reset du champ texte custom
+          const g = document.getElementById('newAccCustomTypeGroup');
+          const inp = document.getElementById('newAccCustomType');
+          if (g) g.style.display = 'none';
+          if (inp) inp.value = '';
+        }
+        if (id === 'editAccount') {
+          populateAccountTypeSelect('edit');
+          const g = document.getElementById('editAccCustomTypeGroup');
+          const inp = document.getElementById('editAccCustomType');
+          if (g) g.style.display = 'none';
+          if (inp) inp.value = '';
+        }
+        if (id === 'addTx') {
+          populateTxAccountSelect();
+          populateTxCategorySelect('add');
+          // Reset du champ texte custom
+          const g = document.getElementById('newTxCatCustomGroup');
+          const inp = document.getElementById('newTxCustomCat');
+          if (g) g.style.display = 'none';
+          if (inp) inp.value = '';
+        }
+        if (id === 'editTx') {
+          populateEditTxAccountSelect();
+          populateTxCategorySelect('edit');
+          const g = document.getElementById('editTxCatCustomGroup');
+          const inp = document.getElementById('editTxCustomCat');
+          if (g) g.style.display = 'none';
+          if (inp) inp.value = '';
+        }
         document.getElementById('modal-' + id).classList.add('show');
         // Sur mobile : bloque le scroll du body pendant l'ouverture
         if (isMobileView()) {
@@ -4828,6 +5022,9 @@
           const sb = document.getElementById('sidebar');
           D.sidebarOpen = !D.sidebarOpen;
           sb.classList.toggle('collapsed', !D.sidebarOpen);
+          // Miroir de l'état sur <body> pour les navigateurs qui
+          // ne supportent pas :has() (fallback robuste)
+          document.body.classList.toggle('sidebar-collapsed', !D.sidebarOpen);
           document.getElementById('sidebarToggleBtn').textContent = D.sidebarOpen ? '☰' : '▶';
         }
       }
@@ -4846,6 +5043,34 @@
           closeMobileSidebar();
         }
       });
+
+      // ================================================================
+      // FIX SIDEBAR QUI TREMBLE — mise à jour du padding du contenu
+      // ================================================================
+      // La sidebar est désormais en position: fixed. Le padding-left
+      // de .content compense sa largeur (190px) pour éviter que le
+      // texte ne passe dessous. Le CSS gère ça via :has() (moderne).
+      // Pour les vieux navigateurs sans :has(), on observe la classe
+      // .sidebar.collapsed et on applique le padding via JS.
+      (function setupSidebarContentPadding() {
+        if (typeof CSS === 'undefined' || !CSS.supports('selector(:has(*))')) {
+          // Fallback : observer + application directe
+          const sidebar = document.getElementById('sidebar');
+          const content = document.querySelector('.main-layout > .content');
+          if (!sidebar || !content) return;
+          const apply = () => {
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            const isMobile = isMobileView();
+            content.style.paddingLeft = (isMobile || isCollapsed) ? '0' : '190px';
+          };
+          // Observer les changements de classe sur la sidebar
+          new MutationObserver(apply).observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+          // Observer aussi les changements de taille de fenêtre (mobile ↔ desktop)
+          window.addEventListener('resize', apply);
+          // Application initiale (après que init() ait configuré D.sidebarOpen)
+          setTimeout(apply, 0);
+        }
+      })();
 
       function onPeriodChange() {
         const val = document.getElementById('filterPeriod').value;
@@ -4890,6 +5115,33 @@
         const prev = total - delta;
         const pct = prev > 0 ? (delta / prev * 100).toFixed(2) : 0;
 
+        // ================================================================
+        // DASHBOARD ADAPTATIF (point 6) — la grille de KPI change
+        // dynamiquement selon le nombre de comptes de l'utilisateur.
+        // ================================================================
+        //   0 compte  → empty state (géré par renderBarChart/Comptes)
+        //   1 compte  → KPI unique (le seul compte, mis en grand)
+        //   2-4       → layout standard (4 KPI : total + 3 types)
+        //   5+        → layout standard + mini-graphique "Top 3"
+        // ================================================================
+        const accCount = D.accounts.length;
+        const kpiRow = document.querySelector('.page.active .kpi-row');
+        if (kpiRow) {
+          kpiRow.classList.remove('kpi-single', 'kpi-top3');
+          if (accCount === 1) kpiRow.classList.add('kpi-single');
+          else if (accCount >= 5) kpiRow.classList.add('kpi-top3');
+        }
+
+        // Si 1 seul compte, on cache les 3 KPI de type (banque/livret/espèces)
+        // et on affiche le compte unique dans le KPI "total"
+        const singleAcc = accCount === 1 ? D.accounts[0] : null;
+        const showAllTypes = accCount !== 1;
+
+        // Affiche/cache les 3 KPI de type via une classe
+        document.querySelectorAll('.page.active .kpi-card-type').forEach(el => {
+          el.style.display = showAllTypes ? '' : 'none';
+        });
+
         document.getElementById('kpi-total').textContent = fmt(total);
         const dEl = document.getElementById('kpi-delta');
         dEl.textContent = (delta >= 0 ? '▲ +' : '▼ ') + Math.abs(pct) + '%';
@@ -4901,20 +5153,84 @@
         document.getElementById('kpi-especes').textContent = fmt(esp);
         document.getElementById('kpi-especes-pct').textContent = (total > 0 ? (esp / total * 100).toFixed(1) : 0) + '% du total';
 
+        // Si 1 seul compte : adapter le label du KPI "total" pour
+        // montrer le nom du compte et son type
+        if (singleAcc) {
+          const typeNames = { livret: 'Livret A', banque: 'Bancaire', especes: 'Espèces', invest: 'Investissement' };
+          const totalLabel = document.querySelector('.page.active .kpi-row .kpi-card:first-child .kpi-label');
+          if (totalLabel) {
+            totalLabel.textContent = (typeNames[singleAcc.type] || singleAcc.type).toUpperCase() + ' — ' + singleAcc.name.toUpperCase();
+          }
+        } else {
+          const totalLabel = document.querySelector('.page.active .kpi-row .kpi-card:first-child .kpi-label');
+          if (totalLabel) totalLabel.textContent = 'PATRIMOINE TOTAL';
+        }
+
         const h = D.history;
         mkSpark('spark-total', h.map(x => x.total), '#C8A84B');
-        mkSpark('spark-banque', h.map(x => x.banque), '#2196F3');
-        mkSpark('spark-livret', h.map(x => x.livret), '#4CAF50');
-        mkSpark('spark-especes', h.map(x => x.esp), '#FF9800');
+        // Si on a 1 seul compte, on supprime les sparklines des 3 KPI cachés
+        if (!showAllTypes) {
+          ['spark-banque', 'spark-livret', 'spark-especes'].forEach(id => dc(id));
+        } else {
+          mkSpark('spark-banque', h.map(x => x.banque), '#2196F3');
+          mkSpark('spark-livret', h.map(x => x.livret), '#4CAF50');
+          mkSpark('spark-especes', h.map(x => x.esp), '#FF9800');
+        }
 
         renderDonut(total, livret, banque, esp);
         renderEvoChartMain();
         renderBarChart(total);
+        renderTop3Chart();        // Mini-graphique Top 3 (point 6)
         updateRing(total);
         renderIndicateurs();
         renderApercu(total, delta);
         renderHealth();
         calcScore();
+      }
+
+      // Mini-graphique "Top 3" des comptes les plus importants
+      // Affiché uniquement quand l'utilisateur a > 5 comptes (point 6)
+      function renderTop3Chart() {
+        const container = document.getElementById('top3ChartContainer');
+        if (!container) return;
+        const accCount = D.accounts.length;
+        if (accCount <= 5) {
+          container.style.display = 'none';
+          dc('top3Chart');
+          return;
+        }
+        container.style.display = '';
+        // Top 3 par solde décroissant
+        const top3 = [...D.accounts]
+          .sort((a, b) => b.balance - a.balance)
+          .slice(0, 3);
+        const total = getTotal();
+        dc('top3Chart');
+        const ctx = document.getElementById('top3Chart');
+        if (!ctx) return;
+        const colors = { livret: '#4CAF50', banque: '#2196F3', especes: '#FF9800', invest: '#9C27B0' };
+        const colorOf = t => colors[t] || '#888';
+        charts['top3Chart'] = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: top3.map(a => a.name),
+            datasets: [{
+              data: top3.map(a => a.balance),
+              backgroundColor: top3.map(a => colorOf(a.type)),
+              borderRadius: 6
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + fmt(c.raw) + ' (' + (total > 0 ? (c.raw / total * 100).toFixed(0) : 0) + '%)' } } },
+            scales: {
+              x: { ticks: { color: '#606060', font: { size: 9 }, callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v }, grid: { color: 'rgba(255,255,255,0.03)' } },
+              y: { ticks: { color: '#B0B0B0', font: { size: 11 } }, grid: { display: false } }
+            }
+          }
+        });
       }
 
       function calcScore() {
@@ -5040,14 +5356,57 @@
       }
 
       function renderDonut(total, livret, banque, esp) {
-        const cats = [
-          { name: 'Livret A', val: livret, color: '#4CAF50' },
-          { name: 'Argent bancaire', val: banque, color: '#2196F3' },
-          { name: 'Espèces', val: esp, color: '#FF9800' },
-        ];
-        // Add invest
-        const inv = D.accounts.filter(a => a.type === 'invest').reduce((s, a) => s + a.balance, 0);
-        if (inv > 0) cats.push({ name: 'Investissement', val: inv, color: '#9C27B0' });
+        // ================================================================
+        // DONUT CHART DYNAMIQUE (B1) — basé sur les types réellement
+        // utilisés par les comptes de l'utilisateur. Plus on agrège
+        // d'office par type par défaut (livrets, banques, espèces, etc.) :
+        // chaque type distinct rencontré dans D.accounts devient une
+        // part du donut, avec un libellé qui vient de account_types.
+        // ================================================================
+
+        // 1. Palette de couleurs : on essaie d'extraire la couleur du
+        //    typeColor() historique pour les 4 types par défaut, et on
+        //    génère une couleur déterministe (HSL) pour les types custom.
+        const DEFAULT_COLORS = {
+          livret:  '#4CAF50',
+          banque:  '#2196F3',
+          especes: '#FF9800',
+          invest:  '#9C27B0',
+        };
+        // HSL déterministe à partir du nom du type (même type = même couleur)
+        function colorForType(value) {
+          if (DEFAULT_COLORS[value]) return DEFAULT_COLORS[value];
+          // Hash simple sur la string
+          let h = 0;
+          for (let i = 0; i < value.length; i++) h = ((h << 5) - h + value.charCodeAt(i)) | 0;
+          const hue = Math.abs(h) % 360;
+          return `hsl(${hue}, 60%, 55%)`;
+        }
+
+        // 2. Agrège les soldes par type (uniquement les types qui ont un solde > 0)
+        const totals = {};
+        D.accounts.forEach(a => {
+          if (a.balance > 0) totals[a.type] = (totals[a.type] || 0) + a.balance;
+        });
+        // 3. Construit la liste (name/value/color) en lisant le libellé
+        //    depuis D.accountTypes (qui contient les défauts + les customs)
+        const allTypes = getAllAccountTypes();
+        const cats = [];
+        Object.keys(totals).forEach(value => {
+          const t = allTypes.find(x => x.value === value);
+          cats.push({
+            name: t ? t.label : value,
+            val: totals[value],
+            color: colorForType(value)
+          });
+        });
+        // Tri décroissant par valeur (les plus gros en premier)
+        cats.sort((a, b) => b.val - a.val);
+
+        // 4. Si rien à afficher, on met un placeholder
+        if (cats.length === 0) {
+          cats.push({ name: 'Aucun solde', val: 1, color: '#444' });
+        }
 
         dc('donutChart');
         const ctx = document.getElementById('donutChart');
@@ -5060,8 +5419,8 @@
         document.getElementById('donut-legend').innerHTML = cats.map(c => `
     <div class="legend-item">
       <div class="legend-dot" style="background:${c.color}"></div>
-      <span class="legend-name">${c.name}</span>
-      <span style="color:var(--text);font-weight:600;font-size:10px">${total > 0 ? (c.val / total * 100).toFixed(1) : 0}%</span>
+      <span class="legend-name">${escapeHtml(c.name)}</span>
+      <span style="color:var(--text);font-weight:600;font-size:10px">${total > 0 && cats[0].val > 0 ? (c.val / total * 100).toFixed(1) : 0}%</span>
     </div>`).join('');
       }
 
@@ -5130,6 +5489,18 @@
       }
 
       function renderBarChart(total) {
+        if (D.accounts.length === 0) {
+          // Empty state intelligent (point 5)
+          document.getElementById('barChart').innerHTML = `<div class="empty-state" style="padding:20px">
+            <div class="empty-state-icon">📊</div>
+            <div class="empty-state-title">Aucun compte à afficher</div>
+            <div class="empty-state-desc">Vos comptes apparaîtront ici dès que vous en aurez ajouté.</div>
+            <div class="empty-state-actions">
+              <button class="btn btn-ghost btn-sm" onclick="showPage('comptes');setSidebarActive(document.querySelector('.sidebar-item[onclick*=&quot;comptes&quot;]'));if(window.innerWidth<=768)closeMobileSidebar()">+ Ajouter un compte</button>
+            </div>
+          </div>`;
+          return;
+        }
         const cats = [];
         D.accounts.forEach(a => {
           const existing = cats.find(c => c.name === a.name);
@@ -5352,16 +5723,27 @@
       // Edit modals quick
       function renderEditAccountType(type, containerId) {
         const accs = D.accounts.filter(a => a.type === type);
-        document.getElementById(containerId).innerHTML = accs.length === 0 ? '<p style="color:var(--text3);font-size:12px">Aucun compte de ce type.</p>' :
-          accs.map((a, _) => {
-            const idx = D.accounts.indexOf(a);
-            return `<div class="form-row" style="margin-bottom:10px;align-items:center">
+        if (accs.length === 0) {
+          // Empty state intelligent (point 5)
+          document.getElementById(containerId).innerHTML = `<div class="empty-state">
+            <div class="empty-state-icon">💼</div>
+            <div class="empty-state-title">Aucun compte de ce type</div>
+            <div class="empty-state-desc">Connectez votre premier compte pour commencer à suivre votre patrimoine.</div>
+            <div class="empty-state-actions">
+              <button class="btn btn-gold btn-sm" onclick="closeModal('edit${type.charAt(0).toUpperCase() + type.slice(1)}');openModal('addAccount')">+ Ajouter un compte</button>
+            </div>
+          </div>`;
+          return;
+        }
+        document.getElementById(containerId).innerHTML = accs.map((a, _) => {
+          const idx = D.accounts.indexOf(a);
+          return `<div class="form-row" style="margin-bottom:10px;align-items:center">
         <div class="form-group" style="margin-bottom:0"><label class="form-label">${a.name}</label>
           <input type="number" class="form-input" value="${a.balance}" id="qedit-${idx}" onchange="quickEditBalance(${idx},this.value)">
         </div>
         <div style="padding-top:18px"><span style="color:var(--text3);font-size:11px">${a.bank}</span></div>
       </div>`;
-          }).join('');
+        }).join('');
       }
 
       function renderEditRepartition() {
@@ -5428,7 +5810,18 @@
       // ======================== COMPTES ========================
       function renderComptes() {
         populateTxAccountSelect();
-        document.getElementById('accountsList').innerHTML = D.accounts.map((a, i) => `
+        // Liste des comptes — avec empty state si vide (point 5)
+        if (D.accounts.length === 0) {
+          document.getElementById('accountsList').innerHTML = `<div class="empty-state">
+            <div class="empty-state-icon">🏦</div>
+            <div class="empty-state-title">Connectez votre premier compte pour commencer</div>
+            <div class="empty-state-desc">Ajoutez un Livret A, un compte bancaire, des espèces ou tout autre actif à suivre.</div>
+            <div class="empty-state-actions">
+              <button class="btn btn-gold btn-sm" onclick="openModal('addAccount')">+ Ajouter un compte</button>
+            </div>
+          </div>`;
+        } else {
+          document.getElementById('accountsList').innerHTML = D.accounts.map((a, i) => `
     <div class="tx-item">
       <div class="tx-icon" style="background:${typeColor(a.type)}22;font-size:16px">${a.icon}</div>
       <div class="tx-info">
@@ -5443,8 +5836,20 @@
         <button class="action-btn del" onclick="deleteAccount(${i})">🗑️</button>
       </div>
     </div>`).join('');
+        }
 
-        document.getElementById('txList').innerHTML = D.transactions.slice(0, 6).map(t => `
+        // Transactions récentes
+        if (D.transactions.length === 0) {
+          document.getElementById('txList').innerHTML = `<div class="empty-state">
+            <div class="empty-state-icon">💳</div>
+            <div class="empty-state-title">Aucune transaction</div>
+            <div class="empty-state-desc">Vos transactions apparaîtront ici une fois que vous en aurez ajouté.</div>
+            <div class="empty-state-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openModal('addTx')">+ Ajouter une transaction</button>
+            </div>
+          </div>`;
+        } else {
+          document.getElementById('txList').innerHTML = D.transactions.slice(0, 6).map(t => `
     <div class="tx-item">
       <div class="tx-icon" style="background:${t.type === 'income' ? 'rgba(76,175,80,0.12)' : 'rgba(244,67,54,0.12)'}">${t.type === 'income' ? '⬆️' : '⬇️'}</div>
       <div class="tx-info">
@@ -5453,8 +5858,20 @@
       </div>
       <div class="tx-amount ${t.type}">${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}</div>
     </div>`).join('');
+        }
 
-        document.getElementById('txTable').innerHTML = D.transactions.map((t, i) => `
+        // Tableau historique complet
+        if (D.transactions.length === 0) {
+          document.getElementById('txTable').innerHTML = `<tr><td colspan="6"><div class="empty-state" style="padding:20px">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-title">Aucune transaction enregistrée</div>
+            <div class="empty-state-desc">L'historique complet apparaîtra ici dès que vous aurez ajouté des transactions.</div>
+            <div class="empty-state-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openModal('addTx')">+ Ajouter une transaction</button>
+            </div>
+          </div></td></tr>`;
+        } else {
+          document.getElementById('txTable').innerHTML = D.transactions.map((t, i) => `
     <tr>
       <td>${t.date}</td><td>${t.account}</td><td>${t.desc}</td>
       <td><span class="badge bo">${t.cat}</span></td>
@@ -5464,6 +5881,7 @@
         <button class="action-btn del" onclick="deleteTx(${i})" title="Supprimer">🗑️</button>
       </div></td>
     </tr>`).join('');
+        }
       }
 
       function typeLabel(t) { return { livret: 'Livret', banque: 'Bancaire', especes: 'Espèces', invest: 'Investissement' }[t] || t }
@@ -5479,9 +5897,23 @@
         if (!requireLogin()) return;
         const name = document.getElementById('newAccName').value.trim();
         const balance = parseFloat(document.getElementById('newAccBalance').value) || 0;
-        const type = document.getElementById('newAccType').value;
+        let type = document.getElementById('newAccType').value;
         const bank = document.getElementById('newAccBank').value.trim() || '-';
         if (!name) { showToast('Nom requis', 'error'); return }
+
+        // Si l'utilisateur a choisi "Type personnalisé...", on crée
+        // le nouveau type en BDD (ou on récupère un éventuel existant)
+        if (type === '__custom__') {
+          const customLabel = document.getElementById('newAccCustomType')?.value.trim();
+          if (!customLabel) {
+            showToast('Veuillez saisir le nom du nouveau type', 'error');
+            return;
+          }
+          const t = await createAccountTypeIfMissing(customLabel);
+          if (!t) return;
+          type = t.value;
+        }
+
         const icons = { livret: '🏦', banque: '💳', especes: '💵', invest: '📈' };
         const icon = icons[type] || '💰';
 
@@ -5493,7 +5925,7 @@
 
         D.accounts.push({ id: data.id, name: data.name, balance: parseFloat(data.balance), type: data.type, bank: data.bank, icon: data.icon });
         closeModal('addAccount'); renderComptes(); renderOverview(); showToast('Compte ajouté ✓');
-        ['newAccName', 'newAccBalance', 'newAccBank'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        ['newAccName', 'newAccBalance', 'newAccBank', 'newAccCustomType'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
       }
 
       function editAccount(i) {
@@ -5512,8 +5944,21 @@
         const acc = D.accounts[i];
         const name = document.getElementById('editAccName').value;
         const balance = parseFloat(document.getElementById('editAccBalance').value) || 0;
-        const type = document.getElementById('editAccType').value;
+        let type = document.getElementById('editAccType').value;
         const bank = document.getElementById('editAccBank').value;
+
+        // Si l'utilisateur a choisi "Type personnalisé...", on crée
+        // le nouveau type en BDD (ou on récupère un éventuel existant)
+        if (type === '__custom__') {
+          const customLabel = document.getElementById('editAccCustomType')?.value.trim();
+          if (!customLabel) {
+            showToast('Veuillez saisir le nom du nouveau type', 'error');
+            return;
+          }
+          const t = await createAccountTypeIfMissing(customLabel);
+          if (!t) return;
+          type = t.value;
+        }
 
         const { error } = await supabaseClient.from('accounts')
           .update({ name, balance, type, bank })
@@ -5544,8 +5989,19 @@
         const desc = document.getElementById('txDesc').value.trim();
         const amount = parseFloat(document.getElementById('txAmount').value) || 0;
         const type = document.getElementById('txType').value;
-        const cat = document.getElementById('txCat').value;
+        let cat = document.getElementById('txCat').value;
         if (!desc || !amount) { showToast('Description et montant requis', 'error'); return }
+
+        // Si l'utilisateur a choisi "Catégorie personnalisée...", on crée
+        // la nouvelle catégorie en BDD (ou on récupère un éventuelle existante)
+        if (cat === '__custom__') {
+          const customLabel = document.getElementById('newTxCustomCat')?.value.trim();
+          if (!customLabel) {
+            showToast('Veuillez saisir le nom de la nouvelle catégorie', 'error');
+            return;
+          }
+          cat = await createTxCategoryIfMissing(customLabel) || customLabel;
+        }
 
         const acc = D.accounts.find(a => a.name === account);
         const newBalance = acc ? acc.balance + (type === 'income' ? amount : -amount) : null;
@@ -5565,7 +6021,7 @@
 
         D.transactions.unshift({ id: data.id, date: data.date, account: data.account_name, desc: data.description, cat: data.category, amount: parseFloat(data.amount), type: data.type, account_id: data.account_id });
         closeModal('addTx'); renderComptes(); renderOverview(); showToast('Transaction ajoutée ✓');
-        ['txDesc', 'txAmount'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        ['txDesc', 'txAmount', 'newTxCustomCat'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
       }
 
       async function deleteTx(i) {
@@ -5641,11 +6097,22 @@
         const newDesc    = document.getElementById('editTxDesc').value.trim();
         const newAmount  = parseFloat(document.getElementById('editTxAmount').value) || 0;
         const newType    = document.getElementById('editTxType').value;
-        const newCat     = document.getElementById('editTxCat').value;
+        let newCat       = document.getElementById('editTxCat').value;
 
         if (!newDesc || !newAmount) {
           setMessageInline('La description et le montant sont requis.', 'error');
           return;
+        }
+
+        // Si l'utilisateur a choisi "Catégorie personnalisée...", on crée
+        // la nouvelle catégorie en BDD (ou on récupère un éventuelle existante)
+        if (newCat === '__custom__') {
+          const customLabel = document.getElementById('editTxCustomCat')?.value.trim();
+          if (!customLabel) {
+            setMessageInline('Veuillez saisir le nom de la nouvelle catégorie', 'error');
+            return;
+          }
+          newCat = await createTxCategoryIfMissing(customLabel) || customLabel;
         }
 
         // Mise à jour Supabase (on envoie amount en valeur absolue,
@@ -5777,15 +6244,32 @@
     </div>`).join('');
       }
 
-      // Convertit un libellé "Jan 24" / "Mars 25" en date réelle (1er du mois)
-      // pour la colonne month_date de Supabase. Retombe sur la date du jour
-      // si le format n'est pas reconnu (au moins jamais d'erreur d'insertion).
+      // ================================================================
+      // Conversion mois ↔ date (point 3 — date auto-formatée)
+      // ================================================================
+      // Deux helpers bidirectionnels :
+      //   - moisLabelToDate("Jan 24") → "2024-01-01" (1er du mois)
+      //   - moisLabelFromDate(new Date()) → "Jan 24" (format court fr)
+      // Le format de sortie est exactement celui demandé par l'utilisateur :
+      //   "Jan 24" (3 lettres du mois + 2 chiffres de l'année sur 2000+)
+      // ================================================================
+      const MOIS_FR_COURT = ['jan', 'fev', 'mar', 'avr', 'mai', 'jun', 'jul', 'aou', 'sep', 'oct', 'nov', 'dec'];
+      const MOIS_KEY_TO_IDX = {
+        jan: 0, fev: 1, mar: 2, avr: 3, mai: 4, jun: 5,
+        jul: 6, aou: 7, sep: 8, oct: 9, nov: 10, dec: 11
+      };
+      function moisLabelFromDate(d) {
+        if (!(d instanceof Date) || isNaN(d.getTime())) d = new Date();
+        const m = MOIS_FR_COURT[d.getMonth()];
+        const y = String(d.getFullYear()).slice(-2); // "24" pour 2024
+        // 1re lettre en majuscule, le reste en minuscule : "Jan 24"
+        return m.charAt(0).toUpperCase() + m.slice(1) + ' ' + y;
+      }
       function moisLabelToDate(label) {
-        const mois = { jan: 0, fev: 1, fév: 1, mar: 2, avr: 3, mai: 4, jun: 5, juin: 5, jul: 6, juil: 6, aou: 7, aoû: 7, sep: 8, oct: 9, nov: 10, dec: 11, déc: 11 };
         const m = (label || '').toLowerCase().match(/([a-zéû]+)\s*(\d{2,4})/i);
         if (!m) return new Date().toISOString().slice(0, 10);
         const key = m[1].slice(0, 3);
-        const monthIdx = mois[key];
+        const monthIdx = MOIS_KEY_TO_IDX[key];
         let year = parseInt(m[2]);
         if (year < 100) year += 2000;
         if (monthIdx === undefined || isNaN(year)) return new Date().toISOString().slice(0, 10);
@@ -5965,6 +6449,18 @@
 
       // ======================== OBJECTIFS ========================
       function renderObjectifs() {
+        if (D.objectives.length === 0) {
+          // Empty state intelligent (point 5)
+          document.getElementById('objectifsList').innerHTML = `<div class="empty-state">
+            <div class="empty-state-icon">🎯</div>
+            <div class="empty-state-title">Définissez votre premier objectif</div>
+            <div class="empty-state-desc">Fonds d'urgence, projet immobilier, voyage... Fixez-vous un cap à atteindre.</div>
+            <div class="empty-state-actions">
+              <button class="btn btn-gold btn-sm" onclick="openModal('addObjectif')">+ Nouvel objectif</button>
+            </div>
+          </div>`;
+          return;
+        }
         document.getElementById('objectifsList').innerHTML = D.objectives.map((o, i) => {
           const pct = Math.min(100, Math.round(o.current / o.target * 100));
           const isMain = o.isMain === true;
@@ -7006,6 +7502,222 @@
       }
 
       // ================================================================
+      // SYSTÈME DE TYPES PERSONNALISÉS (account_types)
+      // ================================================================
+      // 4 types par défaut : livret, banque, especes, invest
+      // L'utilisateur peut en ajouter depuis le formulaire
+      // d'ajout/édition de compte (option "Type personnalisé...").
+      // Stockés dans la table Supabase `account_types`.
+      // ================================================================
+      const DEFAULT_ACCOUNT_TYPES = [
+        { value: 'livret',   label: 'Livret' },
+        { value: 'banque',   label: 'Bancaire' },
+        { value: 'especes',  label: 'Espèces' },
+        { value: 'invest',   label: 'Investissement' },
+      ];
+      // Cache local des types (initialisé avec les défauts)
+      D.accountTypes = [...DEFAULT_ACCOUNT_TYPES];
+
+      async function loadAccountTypes() {
+        if (!currentUserId) return [...DEFAULT_ACCOUNT_TYPES];
+        try {
+          const { data, error } = await supabaseClient
+            .from('account_types')
+            .select('value,label')
+            .order('created_at', { ascending: true });
+          if (error) {
+            // Si la table n'existe pas encore (ou RLS bloque), on retombe
+            // sur les types par défaut sans crash
+            console.warn('loadAccountTypes:', error.message);
+            D.accountTypes = [...DEFAULT_ACCOUNT_TYPES];
+          } else {
+            D.accountTypes = [...DEFAULT_ACCOUNT_TYPES, ...(data || [])];
+          }
+        } catch (e) {
+          D.accountTypes = [...DEFAULT_ACCOUNT_TYPES];
+        }
+        return D.accountTypes;
+      }
+
+      function getAllAccountTypes() {
+        return D.accountTypes || DEFAULT_ACCOUNT_TYPES;
+      }
+
+      // Remplit le <select> d'un modal (add ou edit) avec les types dispo
+      function populateAccountTypeSelect(modalKind) {
+        const sel = document.getElementById(modalKind === 'add' ? 'newAccType' : 'editAccType');
+        if (!sel) return;
+        const types = getAllAccountTypes();
+        const currentVal = sel.value;
+        sel.innerHTML = types
+          .map(t => `<option value="${escapeHtml(t.value)}">${escapeHtml(t.label)}</option>`)
+          .join('') + `<option value="__custom__">＋ Type personnalisé...</option>`;
+        // Restaure la sélection si elle existe encore
+        if (currentVal && types.some(t => t.value === currentVal)) {
+          sel.value = currentVal;
+        } else {
+          sel.value = types[0] ? types[0].value : '';
+        }
+      }
+
+      // Quand l'utilisateur choisit "Type personnalisé..." dans le select
+      function onAccTypeSelectChange(modalKind) {
+        const sel = document.getElementById(modalKind === 'add' ? 'newAccType' : 'editAccType');
+        const group = document.getElementById(modalKind === 'add' ? 'newAccCustomTypeGroup' : 'editAccCustomTypeGroup');
+        const input = document.getElementById(modalKind === 'add' ? 'newAccCustomType' : 'editAccCustomType');
+        if (!sel || !group) return;
+        if (sel.value === '__custom__') {
+          group.style.display = '';
+          if (input) setTimeout(() => input.focus(), 50);
+        } else {
+          group.style.display = 'none';
+          if (input) input.value = '';
+        }
+      }
+
+      // Slugifie un label pour en faire un "value" (id unique)
+      function slugifyType(label) {
+        return (label || '')
+          .toString()
+          .toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_+|_+$/g, '')
+          .slice(0, 32) || 'custom';
+      }
+
+      // Crée un nouveau type en BDD (ou réutilise un existant) et le retourne
+      async function createAccountTypeIfMissing(label) {
+        const trimmed = (label || '').trim();
+        if (!trimmed) return null;
+        const slug = slugifyType(trimmed);
+        // 1. Cherche d'abord dans le cache local
+        const existing = getAllAccountTypes().find(t =>
+          t.value === slug || t.label.toLowerCase() === trimmed.toLowerCase()
+        );
+        if (existing) return existing;
+        // 2. Sinon, tente de créer en BDD
+        if (currentUserId) {
+          try {
+            const { data, error } = await supabaseClient
+              .from('account_types')
+              .insert({ user_id: currentUserId, value: slug, label: trimmed })
+              .select('value,label')
+              .single();
+            if (error) console.warn('createAccountTypeIfMissing:', error.message);
+            else if (data) {
+              // Ajoute le nouveau type au cache local (en dédupliquant)
+              const withoutDup = D.accountTypes.filter(t => t.value !== data.value);
+              D.accountTypes = [...withoutDup, data];
+              return data;
+            }
+          } catch (e) {
+            console.warn('createAccountTypeIfMissing exception:', e.message);
+          }
+        }
+        // 3. Fallback : ajout local uniquement
+        const newType = { value: slug, label: trimmed };
+        const withoutDup = D.accountTypes.filter(t => t.value !== slug);
+        D.accountTypes = [...withoutDup, newType];
+        return newType;
+      }
+
+      // ================================================================
+      // SYSTÈME DE CATÉGORIES PERSONNALISÉES (transaction_categories)
+      // ================================================================
+      // 4 catégories par défaut : Épargne, Revenu, Retrait, Virement
+      // L'utilisateur peut en ajouter depuis le formulaire d'ajout
+      // de transaction (option "Catégorie personnalisée...").
+      // Stockées dans la table Supabase `transaction_categories`.
+      // ================================================================
+      const DEFAULT_TX_CATEGORIES = ['Épargne', 'Revenu', 'Retrait', 'Virement'];
+      D.txCategories = [...DEFAULT_TX_CATEGORIES];
+
+      async function loadTxCategories() {
+        if (!currentUserId) return [...DEFAULT_TX_CATEGORIES];
+        try {
+          const { data, error } = await supabaseClient
+            .from('transaction_categories')
+            .select('label')
+            .order('created_at', { ascending: true });
+          if (error) {
+            console.warn('loadTxCategories:', error.message);
+            D.txCategories = [...DEFAULT_TX_CATEGORIES];
+          } else {
+            D.txCategories = [...DEFAULT_TX_CATEGORIES, ...(data || []).map(r => r.label)];
+          }
+        } catch (e) {
+          D.txCategories = [...DEFAULT_TX_CATEGORIES];
+        }
+        return D.txCategories;
+      }
+
+      function getAllTxCategories() {
+        return D.txCategories || DEFAULT_TX_CATEGORIES;
+      }
+
+      function populateTxCategorySelect(modalKind) {
+        const sel = document.getElementById(modalKind === 'add' ? 'txCat' : 'editTxCat');
+        if (!sel) return;
+        const cats = getAllTxCategories();
+        const currentVal = sel.value;
+        sel.innerHTML = cats
+          .map(c => `<option>${escapeHtml(c)}</option>`)
+          .join('') + `<option value="__custom__">＋ Catégorie personnalisée...</option>`;
+        if (currentVal && cats.includes(currentVal)) sel.value = currentVal;
+        else if (cats[0]) sel.value = cats[0];
+      }
+
+      // Quand l'utilisateur choisit "Catégorie personnalisée..." dans le select
+      function onTxCatSelectChange(modalKind) {
+        const sel = document.getElementById(modalKind === 'add' ? 'txCat' : 'editTxCat');
+        const group = document.getElementById(modalKind === 'add' ? 'newTxCatCustomGroup' : 'editTxCatCustomGroup');
+        const input = document.getElementById(modalKind === 'add' ? 'newTxCustomCat' : 'editTxCustomCat');
+        if (!sel || !group) return;
+        if (sel.value === '__custom__') {
+          group.style.display = '';
+          if (input) setTimeout(() => input.focus(), 50);
+        } else {
+          group.style.display = 'none';
+          if (input) input.value = '';
+        }
+      }
+
+      async function createTxCategoryIfMissing(label) {
+        const trimmed = (label || '').trim();
+        if (!trimmed) return null;
+        const cats = getAllTxCategories();
+        // 1. Cherche d'abord dans le cache local (case-insensitive)
+        const existing = cats.find(c => c.toLowerCase() === trimmed.toLowerCase());
+        if (existing) return existing;
+        // 2. Sinon, tente de créer en BDD
+        if (currentUserId) {
+          try {
+            const { error } = await supabaseClient
+              .from('transaction_categories')
+              .insert({ user_id: currentUserId, label: trimmed });
+            if (error) console.warn('createTxCategoryIfMissing:', error.message);
+          } catch (e) {
+            console.warn('createTxCategoryIfMissing exception:', e.message);
+          }
+        }
+        // 3. Fallback : ajout local
+        D.txCategories = [...D.txCategories, trimmed];
+        return trimmed;
+      }
+
+      // Utilitaire d'échappement HTML (sécurité contre injection
+      // via labels de types custom saisis par l'utilisateur)
+      function escapeHtml(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // ================================================================
 
       function init() {
         const now = new Date();
@@ -7056,6 +7768,6 @@
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a258ad4d0c2a016f',t:'MTc4NTc5NTI4NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d2edbdbf9700e',t:'MTc4NTg0MjUzMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
