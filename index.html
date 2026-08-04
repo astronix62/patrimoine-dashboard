@@ -565,24 +565,11 @@
     }
 
     .page {
-      display: none;
-      animation: fadeIn 0.25s ease
+      display: none
     }
 
     .page.active {
       display: block
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(6px)
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0)
-      }
     }
 
     /* KPI CARDS — sans pseudo-element rond */
@@ -1337,84 +1324,83 @@
     }
 
     /* ============================================
-       FIX SIDEBAR QUI TREMBLE À LA NAVIGATION
+       SYNCHRONISATION SIDEBAR ↔ SCROLL DE LA PAGE
        ============================================
-       Symptôme : quand on change de page, la sidebar
-       (desktop) se déplace de quelques pixels verticalement
-       (saut vers le haut ou le bas).
+       Symptômes résolus par cette version :
+       1. (Ancien) La sidebar "tremblait" de quelques pixels
+          verticalement au changement de page.
+          → Cause : .page avait une animation fadeIn (translateY
+          6px → 0) qui forçait le navigateur à recalculer la
+          position sticky de la sidebar à chaque frame.
+          → Correctif : l'animation fadeIn sur .page a été
+          SUPPRIMÉE (voir plus haut dans le CSS).
+       2. (Récent) La sidebar en position: fixed restait figée
+          en haut du viewport pendant que l'utilisateur scrollait
+          la page, ce qui rendait les éléments du bas de la
+          sidebar (filtres, score, citation) inaccessibles.
+          → Correctif : on remet position: sticky (top: 56px)
+          pour que la sidebar défile naturellement avec la page,
+          tout en restant TOUJOURS visible pendant le scroll de
+          la zone sidebar elle-même (overflow-y: auto sur la
+          sidebar + height: calc(100vh - 56px) garantissent
+          qu'elle ne déborde pas du viewport).
 
-       Cause racine : la sidebar était en position: sticky,
-       top: 56px. Le contenu à côté (page qui change) avait
-       une animation fadeIn (translateY 6px → 0) qui forçait
-       le navigateur à recalculer la position sticky de la
-       sidebar à chaque frame, provoquant un "saut" visible.
-
-       Solution définitive : passer la sidebar en
-       position: fixed (comme sur mobile). Elle est ainsi
-       TOTALEMENT INDÉPENDANTE du reflow du contenu, peu
-       importe la hauteur des pages ou les animations.
-
-       Le padding-left de .content compense la largeur de
-       la sidebar (190px) pour que le texte ne soit pas
-       masqué. Quand la sidebar est repliée (collapsed),
-       le padding passe à 0 grâce à :has().
+       Conséquences :
+       - La sidebar est dans le flux normal du document
+         (display: flex du .main-layout) → le padding-left
+         du .content n'est plus nécessaire
+       - Le tremblement au changement de page NE PEUT PLUS se
+         produire car il n'y a plus d'animation sur .page
+       - Tout le reste du CSS (transition, :has(), fallback
+         body.sidebar-collapsed) reste compatible
        ============================================ */
     html {
       /* Réserve l'espace pour la scrollbar verticale en permanence */
       scrollbar-gutter: stable;
     }
     .sidebar {
-      /* Position FIXED au lieu de sticky : la sidebar ne dépend
-         plus du contexte de scroll ni de la hauteur du contenu.
-         Elle reste collée au viewport, immobile, peu importe
-         ce qui se passe à droite. */
-      position: fixed;
+      /* Position STICKY (au lieu de fixed) : la sidebar défile
+         naturellement avec la page. Elle reste collée sous
+         le header (top: 56px) tant qu'on n'a pas scrollé
+         au-delà, et son scroll interne (overflow-y: auto) est
+         indépendant du scroll de la page. */
+      position: sticky;
       top: 56px;
-      left: 0;
-      /* Hauteur = viewport moins le header sticky */
+      /* Hauteur = viewport moins le header sticky. Combiné à
+         overflow-y: auto, cela permet à la sidebar d'avoir
+         son propre scroll si son contenu dépasse 100vh-56px,
+         SANS bouger quand on scrolle la page principale. */
       height: calc(100vh - 56px);
       height: calc(100dvh - 56px);
+      align-self: flex-start;
       /* Le z-index doit être < celui du header (200) pour ne pas
          masquer le header quand on scrolle, mais > au contenu */
       z-index: 100;
-      will-change: width;
     }
-    /* Le contenu principal commence APRÈS la sidebar (190px).
-       Quand la sidebar est repliée (width: 0), on retire le
-       padding grâce à :has() — supporté par tous les navigateurs
-       modernes (Chrome 105+, Safari 15.4+, Firefox 121+). */
+    /* Le contenu n'a plus besoin de padding-left compensatoire
+       puisque la sidebar est de nouveau dans le flux flex du
+       .main-layout (elle occupe sa place normalement). */
     .main-layout > .content {
-      padding-left: 190px;
-      transition: padding-left 0.25s ease;
+      /* Pas de padding-left : le flex layout fait le travail */
     }
+    /* Quand la sidebar est repliée (width: 0), le .content
+       prend toute la place automatiquement grâce au flex. */
     .main-layout:has(> .sidebar.collapsed) > .content {
-      padding-left: 0;
+      /* Rien à faire : le flex s'occupe de tout */
     }
     /* Fallback pour les très vieux navigateurs qui ne supportent
        pas :has() : le JS ajoute/retire la classe .sidebar-collapsed
-       sur <body> en miroir de .sidebar.collapsed. */
-    body.sidebar-collapsed .main-layout > .content {
-      padding-left: 0;
-    }
-    .sidebar.collapsed {
-      /* Sur desktop, on désactive les transitions inutiles
-         sur transform/opacity pour la sidebar collapsed */
-      transition: none !important;
-    }
+       sur <body> en miroir de .sidebar.collapsed.
+       Le flex layout fait que le .content prend la pleine largeur
+       automatiquement — pas besoin de sélecteur spécifique ici. */
     .content {
       scrollbar-gutter: stable;
     }
-    .page {
-      animation-fill-mode: both;
-    }
-    /* Sur mobile : la sidebar est en position fixed, le problème
-       ne s'y pose pas. On garde juste la transition propre. */
+    /* Sur mobile (≤ 768px) : la sidebar est en position fixed
+       (menu hamburger) — pas de synchronisation à gérer. */
     @media (max-width: 768px) {
       .main-layout {
         align-items: stretch;
-      }
-      .main-layout > .content {
-        padding-left: 0;
       }
     }
 
@@ -5045,32 +5031,15 @@
       });
 
       // ================================================================
-      // FIX SIDEBAR QUI TREMBLE — mise à jour du padding du contenu
+      // SUPPRESSION DE L'ANCIEN PADDING-LEFT (obsolète depuis le sticky)
       // ================================================================
-      // La sidebar est désormais en position: fixed. Le padding-left
-      // de .content compense sa largeur (190px) pour éviter que le
-      // texte ne passe dessous. Le CSS gère ça via :has() (moderne).
-      // Pour les vieux navigateurs sans :has(), on observe la classe
-      // .sidebar.collapsed et on applique le padding via JS.
-      (function setupSidebarContentPadding() {
-        if (typeof CSS === 'undefined' || !CSS.supports('selector(:has(*))')) {
-          // Fallback : observer + application directe
-          const sidebar = document.getElementById('sidebar');
-          const content = document.querySelector('.main-layout > .content');
-          if (!sidebar || !content) return;
-          const apply = () => {
-            const isCollapsed = sidebar.classList.contains('collapsed');
-            const isMobile = isMobileView();
-            content.style.paddingLeft = (isMobile || isCollapsed) ? '0' : '190px';
-          };
-          // Observer les changements de classe sur la sidebar
-          new MutationObserver(apply).observe(sidebar, { attributes: true, attributeFilter: ['class'] });
-          // Observer aussi les changements de taille de fenêtre (mobile ↔ desktop)
-          window.addEventListener('resize', apply);
-          // Application initiale (après que init() ait configuré D.sidebarOpen)
-          setTimeout(apply, 0);
-        }
-      })();
+      // L'IIFE `setupSidebarContentPadding` a été supprimée : elle servait
+      // à forcer padding-left: 190px sur .content quand la sidebar était
+      // en position: fixed. Depuis le passage en position: sticky, la
+      // sidebar est de nouveau dans le flux flex du .main-layout et le
+      // padding-left n'est plus nécessaire. Le CSS gère tout via flex.
+      // (Voir bloc CSS "SYNCHRONISATION SIDEBAR ↔ SCROLL DE LA PAGE".)
+      // ================================================================
 
       function onPeriodChange() {
         const val = document.getElementById('filterPeriod').value;
@@ -7768,6 +7737,6 @@
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d2edbdbf9700e',t:'MTc4NTg0MjUzMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
