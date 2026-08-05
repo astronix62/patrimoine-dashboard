@@ -1526,6 +1526,49 @@
       margin-bottom: 10px; padding-bottom: 10px;
       border-bottom: 1px solid var(--border);
     }
+    /* ────────────────────────────────────────────────
+       Détails des critères (scores détaillés)
+       Par défaut, les scores détaillés sont CACHÉS pour
+       alléger visuellement le verdict. Un bouton "Détail"
+       permet de les afficher/masquer à la demande.
+       ──────────────────────────────────────────────── */
+    .expense-detail-toggle {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 10.5px;
+      cursor: pointer;
+      font-family: inherit;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    .expense-detail-toggle:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .expense-detail-toggle-arrow {
+      display: inline-block;
+      font-size: 9px;
+      transition: transform 0.25s ease;
+    }
+    .expense-detail-toggle.expanded .expense-detail-toggle-arrow {
+      transform: rotate(90deg);
+    }
+    .expense-detail-section {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, opacity 0.25s ease, margin-bottom 0.25s ease;
+      opacity: 0;
+      margin-bottom: 0;
+    }
+    .expense-detail-section.expanded {
+      max-height: 1200px;
+      opacity: 1;
+      margin-bottom: 10px;
+    }
     .expense-criterion {
       display: flex; align-items: center; gap: 8px;
       font-size: 11px; color: var(--text2);
@@ -7192,8 +7235,14 @@
             </div>
           </div>
           ${warningHtml}
-          <div class="expense-criteria">${criteriaHtml}</div>
           <div class="expense-comments">${commentsHtml}</div>
+          <button class="expense-detail-toggle" id="expenseDetailToggle" onclick="toggleExpenseDetails()">
+            <span class="expense-detail-toggle-arrow">▶</span>
+            <span>Détail (${criteria.length} critères)</span>
+          </button>
+          <div class="expense-detail-section" id="expenseDetailSection">
+            <div class="expense-criteria">${criteriaHtml}</div>
+          </div>
           <div class="expense-actions-row">
             ${addBtnHtml}
             <button class="btn btn-ghost btn-sm" onclick="resetExpenseTool()">🔄 Nouvelle analyse</button>
@@ -7208,7 +7257,8 @@
         document.getElementById('expAmount').value = '';
         document.getElementById('expType').selectedIndex = 0;
         document.getElementById('expRecurrence').selectedIndex = 0;
-        document.getElementById('expDate').value = '';
+        // Date d'aujourd'hui par défaut (l'utilisateur peut la modifier)
+        document.getElementById('expDate').value = new Date().toISOString().slice(0, 10);
         document.getElementById('expCharacter').selectedIndex = 0;
         document.getElementById('expContext').selectedIndex = 0;
         // Réinitialise le résultat à l'état "empty"
@@ -7222,6 +7272,27 @@
             <div>Remplissez le formulaire et cliquez sur <strong style="color:var(--gold)">Analyser la dépense</strong> pour obtenir un verdict personnalisé basé sur votre profil, vos comptes et votre historique.</div>
           </div>
         `;
+      }
+
+      // ===========================================================
+      // TOGGLE DES DÉTAILS (scores détaillés)
+      // ===========================================================
+      // Affiche/masque la section dépliable contenant les barres
+      // de scores pour chaque critère. L'état "expanded" est sauvegardé
+      // sur le bouton pour pouvoir le fermer lors d'une autre analyse.
+      // ===========================================================
+      function toggleExpenseDetails() {
+        const section = document.getElementById('expenseDetailSection');
+        const btn = document.getElementById('expenseDetailToggle');
+        if (!section || !btn) return;
+        const isExpanded = section.classList.contains('expanded');
+        if (isExpanded) {
+          section.classList.remove('expanded');
+          btn.classList.remove('expanded');
+        } else {
+          section.classList.add('expanded');
+          btn.classList.add('expanded');
+        }
       }
 
       // ===========================================================
@@ -8632,6 +8703,10 @@
         }, 60 * 1000);
         const txDate = document.getElementById('txDate');
         if (txDate) txDate.value = now.toISOString().slice(0, 10);
+        // Date d'aujourd'hui par défaut pour l'outil "Évaluer une dépense"
+        // (l'utilisateur peut toujours la modifier avant l'analyse)
+        const expDate = document.getElementById('expDate');
+        if (expDate) expDate.value = now.toISOString().slice(0, 10);
         const cf = document.getElementById('customFrom');
         const ct = document.getElementById('customTo');
         if (cf) cf.value = now.toISOString().slice(0, 7);
@@ -8669,6 +8744,6 @@
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a267a44c0d47d6c6',t:'MTc4NTk1MjIwMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a267bb0d4a9500bb',t:'MTc4NTk1MzEzMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
