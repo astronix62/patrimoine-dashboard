@@ -337,7 +337,7 @@
     .main-layout {
       display: flex;
       flex: 1;
-      overflow: hidden
+      min-height: 0;
     }
 
     .sidebar {
@@ -348,9 +348,12 @@
       position: sticky;
       top: 56px;
       height: calc(100vh - 56px);
+      height: calc(100dvh - 56px);
       overflow-y: auto;
       flex-shrink: 0;
-      transition: width 0.25s ease, padding 0.25s ease, opacity 0.2s
+      align-self: flex-start;
+      z-index: 100;
+      transition: width 0.25s ease, padding 0.25s ease, opacity 0.2s;
     }
 
     .sidebar.collapsed {
@@ -1323,81 +1326,12 @@
       }
     }
 
-    /* ============================================
-       SYNCHRONISATION SIDEBAR ↔ SCROLL DE LA PAGE
-       ============================================
-       Symptômes résolus par cette version :
-       1. (Ancien) La sidebar "tremblait" de quelques pixels
-          verticalement au changement de page.
-          → Cause : .page avait une animation fadeIn (translateY
-          6px → 0) qui forçait le navigateur à recalculer la
-          position sticky de la sidebar à chaque frame.
-          → Correctif : l'animation fadeIn sur .page a été
-          SUPPRIMÉE (voir plus haut dans le CSS).
-       2. (Récent) La sidebar en position: fixed restait figée
-          en haut du viewport pendant que l'utilisateur scrollait
-          la page, ce qui rendait les éléments du bas de la
-          sidebar (filtres, score, citation) inaccessibles.
-          → Correctif : on remet position: sticky (top: 56px)
-          pour que la sidebar défile naturellement avec la page,
-          tout en restant TOUJOURS visible pendant le scroll de
-          la zone sidebar elle-même (overflow-y: auto sur la
-          sidebar + height: calc(100vh - 56px) garantissent
-          qu'elle ne déborde pas du viewport).
-
-       Conséquences :
-       - La sidebar est dans le flux normal du document
-         (display: flex du .main-layout) → le padding-left
-         du .content n'est plus nécessaire
-       - Le tremblement au changement de page NE PEUT PLUS se
-         produire car il n'y a plus d'animation sur .page
-       - Tout le reste du CSS (transition, :has(), fallback
-         body.sidebar-collapsed) reste compatible
-       ============================================ */
     html {
-      /* Réserve l'espace pour la scrollbar verticale en permanence */
       scrollbar-gutter: stable;
     }
-    .sidebar {
-      /* Position STICKY (au lieu de fixed) : la sidebar défile
-         naturellement avec la page. Elle reste collée sous
-         le header (top: 56px) tant qu'on n'a pas scrollé
-         au-delà, et son scroll interne (overflow-y: auto) est
-         indépendant du scroll de la page. */
-      position: sticky;
-      top: 56px;
-      /* Hauteur = viewport moins le header sticky. Combiné à
-         overflow-y: auto, cela permet à la sidebar d'avoir
-         son propre scroll si son contenu dépasse 100vh-56px,
-         SANS bouger quand on scrolle la page principale. */
-      height: calc(100vh - 56px);
-      height: calc(100dvh - 56px);
-      align-self: flex-start;
-      /* Le z-index doit être < celui du header (200) pour ne pas
-         masquer le header quand on scrolle, mais > au contenu */
-      z-index: 100;
-    }
-    /* Le contenu n'a plus besoin de padding-left compensatoire
-       puisque la sidebar est de nouveau dans le flux flex du
-       .main-layout (elle occupe sa place normalement). */
-    .main-layout > .content {
-      /* Pas de padding-left : le flex layout fait le travail */
-    }
-    /* Quand la sidebar est repliée (width: 0), le .content
-       prend toute la place automatiquement grâce au flex. */
-    .main-layout:has(> .sidebar.collapsed) > .content {
-      /* Rien à faire : le flex s'occupe de tout */
-    }
-    /* Fallback pour les très vieux navigateurs qui ne supportent
-       pas :has() : le JS ajoute/retire la classe .sidebar-collapsed
-       sur <body> en miroir de .sidebar.collapsed.
-       Le flex layout fait que le .content prend la pleine largeur
-       automatiquement — pas besoin de sélecteur spécifique ici. */
     .content {
       scrollbar-gutter: stable;
     }
-    /* Sur mobile (≤ 768px) : la sidebar est en position fixed
-       (menu hamburger) — pas de synchronisation à gérer. */
     @media (max-width: 768px) {
       .main-layout {
         align-items: stretch;
@@ -3137,14 +3071,6 @@
 <body>
   <div class="app">
 
-    <div id="authStatusBar" style="display:flex;align-items:center;gap:10px;padding:8px 12px">
-      <button id="openAuth" class="auth-open-btn">Connexion / Inscription</button>
-      <div id="userBar" style="display:none;align-items:center;gap:10px">
-        <span id="userEmailLabel" style="color:var(--gold);font-size:12px;font-weight:600"></span>
-        <button id="logoutBtn" class="auth-open-btn">Déconnexion</button>
-      </div>
-    </div>
-
     <div id="authModal" class="auth-modal">
       <div class="auth-backdrop"></div>
 
@@ -3241,6 +3167,14 @@
         <div class="header-date">
           <div class="date" id="headerDate"></div>
           <div class="auto">Mise à jour automatique</div>
+        </div>
+        <!-- Auth intégré dans le header : stable, hauteur fixe 56px -->
+        <div id="authStatusBar" style="display:flex;align-items:center;gap:8px">
+          <button id="openAuth" class="auth-open-btn" style="padding:6px 12px;font-size:12px">Connexion</button>
+          <div id="userBar" style="display:none;align-items:center;gap:8px">
+            <span id="userEmailLabel" style="color:var(--gold);font-size:12px;font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+            <button id="logoutBtn" class="auth-open-btn" style="padding:6px 12px;font-size:12px">Déconnexion</button>
+          </div>
         </div>
         <button class="sidebar-toggle" onclick="toggleSidebar()" title="Masquer/Afficher la sidebar"
           id="sidebarToggleBtn">☰</button>
