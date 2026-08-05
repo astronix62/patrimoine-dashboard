@@ -2976,6 +2976,16 @@
         grid-template-columns: 1fr
       }
 
+      /* Auth : email tronqué pour éviter le débordement horizontal */
+      #authStatusBar { padding: 5px 8px !important; gap: 6px !important; }
+      #authStatusBar .auth-open-btn { padding: 6px 10px !important; font-size: 11px !important; }
+      #userEmailLabel {
+        max-width: 130px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
       .header {
         padding: 0 8px
       }
@@ -3070,6 +3080,18 @@
 
 <body>
   <div class="app">
+
+    <!-- Barre d'authentification : positionnée AU-DESSUS du header
+         (et non plus dans le header-right, pour ne pas perturber
+         la disposition date + bouton hamburger). L'utilisateur la voit
+         immédiatement en haut de la page, peu importe l'appareil. -->
+    <div id="authStatusBar" style="display:flex;align-items:center;gap:10px;padding:8px 12px">
+      <button id="openAuth" class="auth-open-btn">Connexion / Inscription</button>
+      <div id="userBar" style="display:none;align-items:center;gap:10px">
+        <span id="userEmailLabel" style="color:var(--gold);font-size:12px;font-weight:600"></span>
+        <button id="logoutBtn" class="auth-open-btn">Déconnexion</button>
+      </div>
+    </div>
 
     <div id="authModal" class="auth-modal">
       <div class="auth-backdrop"></div>
@@ -3167,14 +3189,6 @@
         <div class="header-date">
           <div class="date" id="headerDate"></div>
           <div class="auto">Mise à jour automatique</div>
-        </div>
-        <!-- Auth intégré dans le header : stable, hauteur fixe 56px -->
-        <div id="authStatusBar" style="display:flex;align-items:center;gap:8px">
-          <button id="openAuth" class="auth-open-btn" style="padding:6px 12px;font-size:12px">Connexion</button>
-          <div id="userBar" style="display:none;align-items:center;gap:8px">
-            <span id="userEmailLabel" style="color:var(--gold);font-size:12px;font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-            <button id="logoutBtn" class="auth-open-btn" style="padding:6px 12px;font-size:12px">Déconnexion</button>
-          </div>
         </div>
         <button class="sidebar-toggle" onclick="toggleSidebar()" title="Masquer/Afficher la sidebar"
           id="sidebarToggleBtn">☰</button>
