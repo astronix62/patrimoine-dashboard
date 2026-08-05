@@ -160,7 +160,6 @@
     html.is-tablet .proj-sliders { grid-template-columns: 1fr 1fr !important }
 
     /* Très petit mobile (≤ 380px) */
-    #authStatusBar { padding-top: max(8px, env(safe-area-inset-top)); }
     html.is-tiny .kpi-row { grid-template-columns: 1fr !important }
     html.is-tiny .kpi-value { font-size: 19px !important }
     html.is-tiny .indicators { grid-template-columns: 1fr !important }
@@ -1380,6 +1379,204 @@
       margin-top: 4px;
       flex-wrap: wrap;
       justify-content: center;
+    }
+
+    /* ============================================
+       OUTIL "ÉVALUER UNE DÉPENSE" (Analyse)
+       ============================================
+       Outil évolué qui prend en compte tous les facteurs
+       disponibles dans l'app (profil, settings, comptes,
+       historique, indicateurs) pour évaluer si une dépense
+       future est raisonnable. Verdict multi-critères pondéré
+       + 8+ commentaires contextualisés.
+       ============================================ */
+    .expense-tool {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .expense-tool-form {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .expense-tool-form-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .expense-tool-form-title-icon { font-size: 18px; }
+    .expense-tool-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .expense-tool-row-amount { grid-template-columns: 1fr; }
+    .expense-tool-field { display: flex; flex-direction: column; gap: 4px; }
+    .expense-tool-label {
+      font-size: 10px; color: var(--text3); letter-spacing: 0.3px;
+    }
+    .expense-tool-input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 5px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .expense-tool-input:focus { border-color: var(--gold); }
+    .expense-tool-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .expense-tool-disclaimer {
+      font-size: 10px; color: var(--text3); font-style: italic;
+      margin-top: 8px; line-height: 1.4;
+    }
+    .expense-tool-result {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+    }
+    .expense-tool-result.empty {
+      align-items: center;
+      justify-content: center;
+      color: var(--text3);
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.6;
+      min-height: 240px;
+    }
+    .expense-tool-result-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .expense-verdict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+    .expense-verdict-badge[data-level="excellent"] {
+      background: rgba(76, 175, 80, 0.15); color: var(--green);
+      border: 1px solid rgba(76, 175, 80, 0.4);
+    }
+    .expense-verdict-badge[data-level="good"] {
+      background: rgba(33, 150, 243, 0.15); color: var(--blue);
+      border: 1px solid rgba(33, 150, 243, 0.4);
+    }
+    .expense-verdict-badge[data-level="warn"] {
+      background: rgba(255, 152, 0, 0.15); color: var(--amber);
+      border: 1px solid rgba(255, 152, 0, 0.4);
+    }
+    .expense-verdict-badge[data-level="risky"] {
+      background: rgba(255, 152, 0, 0.25); color: #ff7e00;
+      border: 1px solid rgba(255, 152, 0, 0.5);
+    }
+    .expense-verdict-badge[data-level="excess"] {
+      background: rgba(244, 67, 54, 0.15); color: var(--red);
+      border: 1px solid rgba(244, 67, 54, 0.4);
+    }
+    .expense-score {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .expense-score-value {
+      font-size: 24px; font-weight: 700;
+      color: var(--text); line-height: 1;
+    }
+    .expense-score-value small {
+      font-size: 11px; color: var(--text3); font-weight: 400;
+    }
+    .expense-gauge {
+      width: 100%; height: 6px;
+      background: var(--border);
+      border-radius: 3px; overflow: hidden;
+    }
+    .expense-gauge-fill {
+      height: 100%; border-radius: 3px;
+      transition: width 0.4s ease, background 0.3s ease;
+    }
+    .expense-criteria {
+      display: flex; flex-direction: column; gap: 6px;
+      margin-bottom: 10px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .expense-criterion {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; color: var(--text2);
+    }
+    .expense-criterion-label { flex: 1; }
+    .expense-criterion-bar {
+      width: 80px; height: 4px;
+      background: var(--border);
+      border-radius: 2px; overflow: hidden; flex-shrink: 0;
+    }
+    .expense-criterion-fill {
+      height: 100%; border-radius: 2px;
+      transition: width 0.4s ease, background 0.3s ease;
+    }
+    .expense-criterion-score {
+      font-weight: 600; font-size: 11px;
+      width: 28px; text-align: right; flex-shrink: 0;
+    }
+    .expense-comments {
+      display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;
+    }
+    .expense-comment {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 11.5px; line-height: 1.5; color: var(--text2);
+      padding: 8px 10px; background: var(--bg3);
+      border-left: 2px solid var(--border); border-radius: 4px;
+    }
+    .expense-comment-icon {
+      flex-shrink: 0; font-size: 14px; line-height: 1.2;
+    }
+    .expense-comment-text { flex: 1; }
+    .expense-comment-text strong { color: var(--text); font-weight: 600; }
+    .expense-actions-row {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-top: auto; padding-top: 8px;
+    }
+    .expense-data-warning {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--amber);
+      padding: 6px 10px;
+      background: rgba(255, 152, 0, 0.08);
+      border: 1px solid rgba(255, 152, 0, 0.2);
+      border-radius: 4px; margin-bottom: 8px;
+    }
+    @media (max-width: 900px) {
+      .expense-tool { grid-template-columns: 1fr; }
+      .expense-tool-result.empty { min-height: 120px; }
+    }
+    @media (max-width: 480px) {
+      .expense-tool-row { grid-template-columns: 1fr; }
+      .expense-tool-form, .expense-tool-result { padding: 12px; }
     }
 
     /* ============================================
@@ -3520,6 +3717,125 @@
               <div class="chart-wrap h200"><canvas id="catChart"></canvas></div>
             </div>
           </div>
+
+          <!-- ============================================
+               OUTIL "ÉVALUER UNE DÉPENSE"
+               ============================================
+               Outil évolué d'aide à la décision qui prend en
+               compte tous les facteurs du profil utilisateur,
+               des settings, des comptes, de l'historique et
+               des indicateurs pour analyser une dépense future.
+               Verdict multi-critères pondéré + commentaires
+               contextualisés. Disclaimer : non un conseil financier.
+               ============================================ -->
+          <div class="expense-tool">
+            <!-- COLONNE GAUCHE : Formulaire de saisie -->
+            <div class="expense-tool-form">
+              <div class="expense-tool-form-title">
+                <span class="expense-tool-form-title-icon">🧠</span>
+                <span>ÉVALUER UNE DÉPENSE FUTURE</span>
+              </div>
+
+              <!-- Ligne 1 : Montant (pleine largeur) -->
+              <div class="expense-tool-row expense-tool-row-amount">
+                <div class="expense-tool-field">
+                  <label class="expense-tool-label" for="expAmount">Montant (€)</label>
+                  <input type="number" id="expAmount" class="expense-tool-input" min="0" step="0.01" placeholder="Ex: 850">
+                </div>
+              </div>
+
+              <!-- Ligne 2 : Type + Récurrence -->
+              <div class="expense-tool-row">
+                <div class="expense-tool-field">
+                  <label class="expense-tool-label" for="expType">Type de dépense</label>
+                  <select id="expType" class="expense-tool-input">
+                    <option value="logement">🏠 Logement</option>
+                    <option value="alimentation">🍔 Alimentation</option>
+                    <option value="transport">🚗 Transport</option>
+                    <option value="energie">💡 Énergie &amp; Services</option>
+                    <option value="sante">🏥 Santé</option>
+                    <option value="education">📚 Éducation &amp; Formation</option>
+                    <option value="loisirs">🎮 Loisirs &amp; Sorties</option>
+                    <option value="habillement">👕 Habillement</option>
+                    <option value="cadeaux">🎁 Cadeaux &amp; Dons</option>
+                    <option value="credits">💳 Crédits &amp; Remboursements</option>
+                    <option value="animaux">🐾 Animaux</option>
+                    <option value="equipement">📦 Équipement &amp; Maison</option>
+                    <option value="professionnel">💼 Frais professionnels</option>
+                    <option value="epargne_invest">💰 Épargne &amp; Investissement</option>
+                    <option value="autre">📌 Autre</option>
+                  </select>
+                </div>
+                <div class="expense-tool-field">
+                  <label class="expense-tool-label" for="expRecurrence">Récurrence</label>
+                  <select id="expRecurrence" class="expense-tool-input">
+                    <option value="unique">Unique (ponctuel)</option>
+                    <option value="mensuel">Mensuel</option>
+                    <option value="annuel">Annuel</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Ligne 3 : Date + Moyen de paiement -->
+              <div class="expense-tool-row">
+                <div class="expense-tool-field">
+                  <label class="expense-tool-label" for="expDate">Date prévue</label>
+                  <input type="date" id="expDate" class="expense-tool-input">
+                </div>
+                <div class="expense-tool-field">
+                  <label class="expense-tool-label" for="expPayment">Moyen de paiement</label>
+                  <select id="expPayment" class="expense-tool-input">
+                    <!-- Option "Patrimoine total" = pioche dans tous les comptes
+                         (équivalent d'un paiement depuis l'épargne globale) -->
+                    <option value="__total__">💎 Patrimoine total (tous comptes)</option>
+                    <!-- Les comptes existants sont injectés dynamiquement par JS -->
+                  </select>
+                </div>
+              </div>
+
+              <!-- Ligne 4 : Caractère + Contexte social -->
+              <div class="expense-tool-row">
+                <div class="expense-tool-field">
+                  <label class="expense-tool-label" for="expCharacter">Caractère</label>
+                  <select id="expCharacter" class="expense-tool-input">
+                    <option value="necessaire">Nécessaire (besoin vital)</option>
+                    <option value="confort">Confort (amélioration du quotidien)</option>
+                    <option value="plaisir">Plaisir (envie, hobby)</option>
+                    <option value="impulsion">Impulsion (non réfléchi)</option>
+                  </select>
+                </div>
+                <div class="expense-tool-field">
+                  <label class="expense-tool-label" for="expContext">Contexte</label>
+                  <select id="expContext" class="expense-tool-input">
+                    <option value="seul">Seul(e)</option>
+                    <option value="famille">Famille / couple</option>
+                    <option value="amis">Amis</option>
+                    <option value="pro">Professionnel</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Bouton d'analyse -->
+              <div class="expense-tool-actions">
+                <button class="btn btn-gold btn-sm" onclick="evaluateExpense()">Analyser la dépense</button>
+                <button class="btn btn-ghost btn-sm" onclick="resetExpenseTool()">Réinitialiser</button>
+              </div>
+
+              <div class="expense-tool-disclaimer">
+                ⚠️ Cet outil est une aide à la décision, pas un conseil financier personnalisé.
+              </div>
+            </div>
+
+            <!-- COLONNE DROITE : Carte résultat -->
+            <div id="expenseResult" class="expense-tool-result empty">
+              <div>
+                <div style="font-size:32px;margin-bottom:8px">💡</div>
+                <div style="font-weight:600;color:var(--text2);margin-bottom:4px">Aucune dépense analysée</div>
+                <div>Remplissez le formulaire et cliquez sur <strong style="color:var(--gold)">Analyser la dépense</strong> pour obtenir un verdict personnalisé basé sur votre profil, vos comptes et votre historique.</div>
+              </div>
+            </div>
+          </div>
+
           <div class="panel">
             <div class="panel-header">
               <div class="panel-title">ANALYSE MENSUELLE — DONNÉES MODIFIABLES</div>
@@ -5809,6 +6125,10 @@
         const sel = document.getElementById('txAccount');
         if (!sel) return;
         sel.innerHTML = D.accounts.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+        // Met aussi à jour le select "Moyen de paiement" de l'outil d'analyse
+        if (typeof refreshExpensePaymentSelect === 'function') {
+          refreshExpensePaymentSelect();
+        }
       }
 
       async function addAccount() {
@@ -6279,6 +6599,669 @@
       </div></td>
     </tr>`;
         }).join('');
+      }
+
+      // ================================================================
+      // OUTIL "ÉVALUER UNE DÉPENSE" (page Analyse)
+      // ================================================================
+      // Outil évolué d'aide à la décision. Prend en compte :
+      //   - Profil utilisateur (âge, situation, horizon, charges)
+      //   - Settings (revenu, budget, objectif patrimoine)
+      //   - Comptes (soldes, types)
+      //   - Indicateurs (épargne moyenne, meilleur/pire mois)
+      //   - Historique du patrimoine (12+ mois)
+      //   - Objectifs en cours
+      //
+      // Logique multi-critères pondérée (10 critères, 5-20% chacun),
+      // verdict 0-100 → 5 niveaux, 8+ commentaires contextualisés.
+      // ================================================================
+
+      // Couleurs des niveaux de verdict (réutilisées pour jauges et badges)
+      const EXPENSE_LEVELS = {
+        excellent: { label: 'Raisonnable', emoji: '✅', color: '#4CAF50', min: 80 },
+        good:      { label: 'Acceptable',  emoji: '👍', color: '#2196F3', min: 60 },
+        warn:      { label: 'À réfléchir',  emoji: '⚠️', color: '#FF9800', min: 40 },
+        risky:     { label: 'Risqué',       emoji: '🔶', color: '#ff7e00', min: 20 },
+        excess:    { label: 'Excessif',     emoji: '🚨', color: '#F44336', min:  0 },
+      };
+
+      // Renvoie le niveau de verdict en fonction du score
+      function getExpenseLevel(score) {
+        if (score >= EXPENSE_LEVELS.excellent.min) return 'excellent';
+        if (score >= EXPENSE_LEVELS.good.min)      return 'good';
+        if (score >= EXPENSE_LEVELS.warn.min)      return 'warn';
+        if (score >= EXPENSE_LEVELS.risky.min)     return 'risky';
+        return 'excess';
+      }
+
+      // Helpers : récupère un compte par nom, ou null
+      function getAccountByName(name) {
+        if (!D.accounts) return null;
+        return D.accounts.find(a => a.name === name) || null;
+      }
+
+      // Solde total = somme de tous les comptes (utilisé pour le select "Patrimoine total")
+      function getTotalBalance() {
+        if (!D.accounts) return 0;
+        return D.accounts.reduce((s, a) => s + (parseFloat(a.balance) || 0), 0);
+      }
+
+      // Met à jour le select "Moyen de paiement" avec les comptes de l'utilisateur
+      // (en plus de l'option "Patrimoine total" qui est déjà dans le HTML).
+      // À appeler après chaque changement de comptes (renderComptes).
+      function refreshExpensePaymentSelect() {
+        const sel = document.getElementById('expPayment');
+        if (!sel) return;
+        // On garde l'option "Patrimoine total" + ajoute les comptes existants
+        const currentVal = sel.value;
+        const totalOption = '<option value="__total__">💎 Patrimoine total (tous comptes)</option>';
+        const accountOptions = (D.accounts || []).map(a => {
+          const icon = a.icon || (a.type === 'livret' ? '🏦' : a.type === 'banque' ? '💳' : a.type === 'especes' ? '💵' : '📦');
+          return `<option value="${escapeHtml(a.name)}">${icon} ${escapeHtml(a.name)} (${fmt(a.balance)})</option>`;
+        }).join('');
+        sel.innerHTML = totalOption + accountOptions;
+        // Restaure la sélection si possible
+        if (currentVal && Array.from(sel.options).some(o => o.value === currentVal)) {
+          sel.value = currentVal;
+        } else {
+          sel.value = '__total__';
+        }
+      }
+
+      // Crée un élément DOM de manière concise
+      function el(tag, attrs = {}, ...children) {
+        const e = document.createElement(tag);
+        for (const k in attrs) {
+          if (k === 'class') e.className = attrs[k];
+          else if (k === 'style') e.setAttribute('style', attrs[k]);
+          else if (k.startsWith('on') && typeof attrs[k] === 'function') {
+            e.addEventListener(k.slice(2).toLowerCase(), attrs[k]);
+          } else if (k === 'data' && typeof attrs[k] === 'object') {
+            for (const dk in attrs[k]) e.dataset[dk] = attrs[k][dk];
+          } else {
+            e.setAttribute(k, attrs[k]);
+          }
+        }
+        for (const c of children) {
+          if (c == null) continue;
+          e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+        }
+        return e;
+      }
+
+      // Échapper du HTML (sécurité contre injection)
+      function escHtml(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      // Calcule le score 0-100 pour un critère selon un ratio
+      // Le score est 100 si ratio <= 5%, dégressif selon les seuils
+      function scoreByRatio(ratio, thresholds) {
+        // thresholds = [{ max, score }, ...] trié par max croissant
+        for (const t of thresholds) {
+          if (ratio <= t.max) return t.score;
+        }
+        return 0;
+      }
+
+      // Convertit un score 0-100 en couleur (rouge → vert)
+      function scoreToColor(score) {
+        if (score >= 80) return '#4CAF50';
+        if (score >= 60) return '#2196F3';
+        if (score >= 40) return '#FF9800';
+        if (score >= 20) return '#ff7e00';
+        return '#F44336';
+      }
+
+      // ===========================================================
+      // FONCTION PRINCIPALE : evaluateExpense()
+      // ===========================================================
+      // Lit le formulaire, calcule les 10 critères pondérés, choisit
+      // 3-4 commentaires contextualisés et affiche le résultat.
+      // ===========================================================
+      function evaluateExpense() {
+        // 1. Lecture des inputs
+        const montant = parseFloat(document.getElementById('expAmount').value);
+        if (!montant || montant <= 0) {
+          showToast('Veuillez saisir un montant supérieur à 0', 'error');
+          return;
+        }
+        const type        = document.getElementById('expType').value;
+        const recurrence  = document.getElementById('expRecurrence').value;
+        const datePrevue  = document.getElementById('expDate').value;
+        const payment     = document.getElementById('expPayment').value;
+        const character   = document.getElementById('expCharacter').value;
+        const context     = document.getElementById('expContext').value;
+
+        // 2. Récupération des données de l'app (avec défauts si manquantes)
+        const settings   = D.settings || {};
+        const profile    = D.profile || {};
+        const indicators = D.indicators || {};
+        const objectives = D.objectives || [];
+        const total      = getTotalBalance();
+        const totalPatrimoine = getTotal();
+        const revenu     = parseFloat(settings.revenu) || 0;
+        const budget     = parseFloat(settings.budget) || 0;
+        const goal       = parseFloat(settings.goal) || 0;
+        const epargneMoy = parseFloat(indicators.avgEpargne) || 0;
+        const charges    = parseFloat(profile.charges) || (budget * 0.6) || 0;
+        const age        = parseInt(profile.age) || 30;
+        const situation  = profile.situation || 'salarie';
+        const horizon    = profile.horizon || 'moyen';
+        const prenom     = profile.prenom || '';
+        const prenomAff  = prenom ? `, ${prenom}` : '';
+
+        // Avertissement si données manquantes
+        const dataInsufficient = (revenu === 0 && budget === 0 && epargneMoy === 0 && totalPatrimoine === 0);
+
+        // 3. Ajustement du montant selon la récurrence
+        // (on analyse TOUJOURS l'impact mensuel pour comparer ce qui est comparable)
+        let montantMensuel = montant;
+        let montantAnnuel = montant;
+        let recurrenceLabel = 'unique';
+        if (recurrence === 'mensuel') {
+          montantAnnuel = montant * 12;
+          recurrenceLabel = 'mensuel';
+        } else if (recurrence === 'annuel') {
+          montantMensuel = montant / 12;
+          recurrenceLabel = 'annuel';
+        }
+
+        // 4. Calcul des 10 critères pondérés
+        const criteria = [];
+        let dataWarning = null;
+
+        // 1) Ratio sur le budget mensuel (poids 20%)
+        if (budget > 0) {
+          const ratio = (montantMensuel / budget) * 100;
+          const score = scoreByRatio(ratio, [
+            { max: 5,  score: 100 },
+            { max: 15, score: 70  },
+            { max: 30, score: 40  },
+            { max: 50, score: 10  },
+          ]);
+          criteria.push({
+            label: 'Budget mensuel',
+            score,
+            detail: `${ratio.toFixed(0)}% du budget`
+          });
+        } else {
+          dataWarning = 'budget';
+        }
+
+        // 2) Ratio sur le revenu mensuel (poids 15%)
+        if (revenu > 0) {
+          const ratio = (montantMensuel / revenu) * 100;
+          const score = scoreByRatio(ratio, [
+            { max: 5,  score: 100 },
+            { max: 20, score: 70  },
+            { max: 40, score: 40  },
+          ]);
+          criteria.push({
+            label: 'Revenu mensuel',
+            score,
+            detail: `${ratio.toFixed(0)}% du revenu`
+          });
+        } else {
+          if (!dataWarning) dataWarning = 'revenu';
+        }
+
+        // 3) Ratio sur l'épargne moyenne (poids 15%)
+        if (epargneMoy > 0) {
+          const ratio = montant / epargneMoy;
+          let score;
+          if (ratio <= 1) score = 100;
+          else if (ratio <= 3) score = 60;
+          else if (ratio <= 6) score = 20;
+          else score = 0;
+          criteria.push({
+            label: 'Épargne mensuelle',
+            score,
+            detail: `${ratio.toFixed(1)}× l'épargne moyenne (${fmt(epargneMoy)}€)`
+          });
+        } else {
+          if (!dataWarning) dataWarning = 'épargne';
+        }
+
+        // 4) Impact sur le patrimoine actuel (poids 10%)
+        if (totalPatrimoine > 0) {
+          const ratio = (montant / totalPatrimoine) * 100;
+          const score = scoreByRatio(ratio, [
+            { max: 1,  score: 100 },
+            { max: 5,  score: 70  },
+            { max: 15, score: 30  },
+          ]);
+          criteria.push({
+            label: 'Patrimoine actuel',
+            score,
+            detail: `${ratio.toFixed(1)}% du patrimoine (${fmt(totalPatrimoine)}€)`
+          });
+        } else {
+          if (!dataWarning) dataWarning = 'patrimoine';
+        }
+
+        // 5) Ratio sur les charges fixes (poids 10%)
+        const chargesRef = charges > 0 ? charges : (budget * 0.6);
+        if (chargesRef > 0) {
+          const ratio = (montantMensuel / chargesRef) * 100;
+          const score = scoreByRatio(ratio, [
+            { max: 10, score: 100 },
+            { max: 30, score: 70  },
+            { max: 60, score: 30  },
+          ]);
+          criteria.push({
+            label: 'Charges fixes',
+            score,
+            detail: `${ratio.toFixed(0)}% des charges (${fmt(chargesRef)}€)`
+          });
+        } else {
+          if (!dataWarning) dataWarning = 'charges';
+        }
+
+        // 6) Adéquation à la situation (poids 10%)
+        let situationScore = 60; // base neutre
+        const situationDetails = [];
+        if (situation === 'etudiant') {
+          if (type === 'education') { situationScore += 20; situationDetails.push('+éducation'); }
+          if (type === 'loisirs')  { situationScore += 10; situationDetails.push('+loisirs'); }
+          if (type === 'credits')  { situationScore -= 30; situationDetails.push('−crédit'); }
+        } else if (situation === 'independant') {
+          if (type === 'professionnel') { situationScore += 30; situationDetails.push('+frais pro'); }
+          if (type === 'equipement')     { situationScore += 10; situationDetails.push('+équipement'); }
+        } else if (situation === 'salarie') {
+          if (type === 'professionnel') { situationScore -= 20; situationDetails.push('−non applicable'); }
+        } else if (situation === 'retraite') {
+          if (type === 'sante')   { situationScore += 20; situationDetails.push('+santé'); }
+          if (type === 'loisirs') { situationScore += 15; situationDetails.push('+loisirs'); }
+        } else if (situation === 'sans_emploi') {
+          if (['logement','alimentation','energie','sante'].includes(type)) {
+            situationScore += 30; situationDetails.push('+essentiel');
+          } else {
+            situationScore -= 10;
+          }
+          if (type === 'loisirs') { situationScore -= 40; situationDetails.push('−loisirs'); }
+          if (type === 'credits') { situationScore -= 20; situationDetails.push('−crédit'); }
+        }
+        criteria.push({
+          label: `Situation (${situation})`,
+          score: Math.max(0, Math.min(100, situationScore)),
+          detail: situationDetails.length ? situationDetails.join(' ') : 'neutre'
+        });
+
+        // 7) Adéquation à l'horizon (poids 10%)
+        let horizonScore = 60;
+        const horizonDetails = [];
+        if (horizon === 'court') {
+          // Valorise épargne, pénalise engagements longs
+          if (type === 'epargne_invest') { horizonScore += 25; horizonDetails.push('+épargne'); }
+          if (['credits', 'equipement'].includes(type)) { horizonScore -= 15; horizonDetails.push('−engagement'); }
+        } else if (horizon === 'moyen') {
+          horizonScore += 5; // neutre-positif
+        } else if (horizon === 'long') {
+          if (type === 'epargne_invest') { horizonScore += 25; horizonDetails.push('+investissement'); }
+          if (type === 'logement') { horizonScore += 10; horizonDetails.push('+patrimoine'); }
+          if (type === 'credits') { horizonScore -= 5; }
+        }
+        criteria.push({
+          label: `Horizon (${horizon})`,
+          score: Math.max(0, Math.min(100, horizonScore)),
+          detail: horizonDetails.length ? horizonDetails.join(' ') : 'neutre'
+        });
+
+        // 8) Adéquation à l'âge (poids 5%)
+        let ageScore = 60;
+        const ageDetails = [];
+        if (age < 25) {
+          if (type === 'education')  { ageScore += 20; ageDetails.push('+formation'); }
+          if (type === 'credits')    { ageScore -= 10; ageDetails.push('−prudence'); }
+        } else if (age >= 25 && age < 40) {
+          if (['logement', 'equipement'].includes(type)) { ageScore += 15; ageDetails.push('+installation'); }
+        } else if (age >= 40 && age < 60) {
+          if (type === 'epargne_invest') { ageScore += 20; ageDetails.push('+préparation retraite'); }
+          if (type === 'loisirs')         { ageScore += 10; ageDetails.push('+loisirs'); }
+        } else if (age >= 60) {
+          if (type === 'sante')   { ageScore += 25; ageDetails.push('+santé'); }
+          if (type === 'loisirs') { ageScore += 15; ageDetails.push('+loisirs'); }
+          if (type === 'credits') { ageScore -= 30; ageDetails.push('−crédit'); }
+        }
+        criteria.push({
+          label: `Âge (${age} ans)`,
+          score: Math.max(0, Math.min(100, ageScore)),
+          detail: ageDetails.length ? ageDetails.join(' ') : 'neutre'
+        });
+
+        // 9) Caractère de la dépense (poids 5%)
+        let characterScore = 60;
+        const characterDetails = [];
+        if (character === 'necessaire') { characterScore += 15; characterDetails.push('+nécessaire'); }
+        else if (character === 'plaisir') {
+          if (['loisirs', 'habillement'].includes(type) && budget > 0 && (montantMensuel / budget) * 100 > 15) {
+            characterScore -= 10; characterDetails.push('−plaisir excessif');
+          } else { characterDetails.push('plaisir modéré'); }
+        }
+        else if (character === 'impulsion') { characterScore -= 25; characterDetails.push('−impulsion'); }
+        criteria.push({
+          label: `Caractère (${character})`,
+          score: characterScore,
+          detail: characterDetails.join(' ') || 'standard'
+        });
+
+        // 10) Contexte social (poids 5%)
+        let contextScore = 60;
+        const contextDetails = [];
+        if (context === 'famille') { contextScore += 10; contextDetails.push('+famille'); }
+        else if (context === 'pro') {
+          if (type === 'professionnel') { contextScore += 20; contextDetails.push('+pro'); }
+          else { contextScore += 5; }
+        }
+        else if (context === 'amis') {
+          if (character === 'plaisir' && budget > 0 && (montantMensuel / budget) * 100 > 10) {
+            contextScore -= 5;
+          }
+        }
+        criteria.push({
+          label: `Contexte (${context})`,
+          score: contextScore,
+          detail: contextDetails.join(' ') || 'standard'
+        });
+
+        // 5. Calcul du score final pondéré
+        const weights = {
+          budget: 20, revenu: 15, epargne: 15, patrimoine: 10, charges: 10,
+          situation: 10, horizon: 10, age: 5, character: 5, context: 5
+        };
+        // Map critère → poids
+        const criteriaWeights = {
+          'Budget mensuel': weights.budget,
+          'Revenu mensuel': weights.revenu,
+          'Épargne mensuelle': weights.epargne,
+          'Patrimoine actuel': weights.patrimoine,
+          'Charges fixes': weights.charges,
+        };
+        // Les critères "dynamiques" (situation, horizon, age, character, context)
+        // ont leur label qui commence par leur nom de variable
+        const dynWeights = {
+          'Situation': weights.situation,
+          'Horizon':   weights.horizon,
+          'Âge':       weights.age,
+          'Caractère': weights.character,
+          'Contexte':   weights.context,
+        };
+        let totalWeight = 0;
+        let totalScore = 0;
+        for (const c of criteria) {
+          let w = criteriaWeights[c.label] || 0;
+          if (!w) {
+            for (const prefix in dynWeights) {
+              if (c.label.startsWith(prefix)) { w = dynWeights[prefix]; break; }
+            }
+          }
+          totalWeight += w;
+          totalScore += c.score * w;
+        }
+        const scoreFinal = totalWeight > 0 ? Math.round(totalScore / totalWeight) : 50;
+        const level = getExpenseLevel(scoreFinal);
+        const levelInfo = EXPENSE_LEVELS[level];
+
+        // 6. Sélection des commentaires contextualisés (3-5 max)
+        const comments = [];
+        // Commentaire 1 : verdict principal (toujours)
+        comments.push({
+          icon: levelInfo.emoji,
+          type: 'verdict',
+          text: `Cette dépense${recurrenceLabel !== 'unique' ? ' ' + recurrenceLabel : ''} de ${fmt(montant)}${prenomAff ? ' représente ${prenomAff}'.replace('${prenomAff}', prenomAff) : ''} est <strong>${levelInfo.label.toLowerCase()}</strong>${recurrenceLabel === 'mensuel' ? ` (${fmt(montantAnnuel)}€/an)` : recurrenceLabel === 'annuel' ? ` (≈${fmt(montantMensuel)}€/mois)` : ''}. Score global : <strong>${scoreFinal}/100</strong>.`
+        });
+
+        // Commentaire 2 : comparaison budget
+        if (budget > 0) {
+          const pctBudget = (montantMensuel / budget) * 100;
+          if (pctBudget > 20) {
+            comments.push({
+              icon: '💰',
+              type: 'budget',
+              text: `Cette dépense représente <strong>${pctBudget.toFixed(0)}% de votre budget mensuel</strong> (${fmt(budget)}€). Au-dessus de 20%, cela commence à peser significativement sur vos marges.`
+            });
+          }
+        }
+
+        // Commentaire 3 : comparaison patrimoine
+        if (totalPatrimoine > 0) {
+          const pctPat = (montant / totalPatrimoine) * 100;
+          if (pctPat >= 3) {
+            comments.push({
+              icon: '📊',
+              type: 'patrimoine',
+              text: `Cette dépense représente <strong>${pctPat.toFixed(1)}% de votre patrimoine actuel</strong> (${fmt(totalPatrimoine)}€). Un impact notable sur votre trajectoire financière.`
+            });
+          }
+        }
+
+        // Commentaire 4 : comparaison épargne
+        if (epargneMoy > 0 && montant > epargneMoy * 3) {
+          const ratio = (montant / epargneMoy).toFixed(1);
+          comments.push({
+            icon: '🐷',
+            type: 'epargne',
+            text: `C'est <strong>${ratio}× plus élevé</strong> que votre épargne mensuelle moyenne (${fmt(epargneMoy)}€). Cela correspond à ${Math.round(montant / epargneMoy)} mois d'épargne.`
+          });
+        }
+
+        // Commentaire 5 : alerte situation
+        if (situation === 'etudiant' && type === 'credits') {
+          comments.push({ icon: '🎓', type: 'situation', text: `En tant qu'étudiant, les crédits à long terme peuvent peser sur votre avenir financier. Privilégiez l'épargne de précaution.` });
+        } else if (situation === 'sans_emploi' && !['logement', 'alimentation', 'energie', 'sante'].includes(type)) {
+          comments.push({ icon: '⚠️', type: 'situation', text: `Sans emploi actuellement, cette dépense non-essentielle peut fragiliser votre trésorerie. Pouvez-vous la reporter ?` });
+        } else if (situation === 'retraite' && age >= 65) {
+          comments.push({ icon: '👴', type: 'situation', text: `À ${age} ans, privilégiez les dépenses de confort et de santé plutôt que les crédits longs.` });
+        } else if (situation === 'independant' && type === 'professionnel') {
+          comments.push({ icon: '💼', type: 'situation', text: `En tant qu'indépendant, ces frais professionnels sont déductibles de vos revenus. Pensez à conserver toutes les factures.` });
+        }
+
+        // Commentaire 6 : alerte horizon
+        if (horizon === 'court' && (type === 'credits' || type === 'equipement')) {
+          const months = epargneMoy > 0 ? Math.round(montant / epargneMoy) : null;
+          comments.push({
+            icon: '⏳',
+            type: 'horizon',
+            text: `Vous visez un objectif à <strong>court terme</strong>. Cet achat peut le retarder${months ? ` de ${months} mois` : ''}.`
+          });
+        }
+
+        // Commentaire 7 : suggestion de fractionnement
+        if (budget > 0 && (montantMensuel / budget) * 100 > 30) {
+          const n = Math.ceil((montantMensuel / budget) * 100 / 20);
+          const part = Math.ceil(montant / n);
+          comments.push({
+            icon: '💡',
+            type: 'suggestion',
+            text: `💡 <strong>Suggestion :</strong> vous pourriez étaler cette dépense en <strong>${n} mensualités de ${fmt(part)}€</strong> pour lisser l'impact sur votre budget.`
+          });
+        }
+
+        // Commentaire 8 : suggestion d'alternative
+        if (type === 'loisirs' && montant > 100) {
+          comments.push({
+            icon: '🎯',
+            type: 'alternative',
+            text: `💡 <strong>Alternative :</strong> avez-vous considéré des loisirs gratuits ou peu coûteux (parcs, bibliothèques, événements gratuits) ?`
+          });
+        } else if (type === 'equipement' && montant > 200) {
+          comments.push({
+            icon: '🛒',
+            type: 'alternative',
+            text: `💡 <strong>Astuce :</strong> comparer les prix en ligne et attendre une promotion peut faire économiser 15-30% sur ce type d'achat.`
+          });
+        }
+
+        // Commentaire 9 : impact sur les objectifs
+        if (objectives.length > 0) {
+          const mainObj = objectives.find(o => o.isMain === true) || objectives[0];
+          if (mainObj && mainObj.target > 0 && epargneMoy > 0) {
+            const months = Math.round(montant / epargneMoy);
+            comments.push({
+              icon: '🎯',
+              type: 'objectif',
+              text: `Cette dépense retarderait votre objectif <strong>« ${escHtml(mainObj.name)} »</strong>${months > 0 ? ` de <strong>${months} mois</strong>` : ''}.`
+            });
+          }
+        }
+
+        // Commentaire 10 : alerte récurrence
+        if (recurrence === 'mensuel' && montant > 0) {
+          comments.push({
+            icon: '📅',
+            type: 'recurrence',
+            text: `⚠️ <strong>En mensuel</strong>, cela représente <strong>${fmt(montantAnnuel)}€/an</strong>${revenu > 0 ? `, soit ${((montantAnnuel / (revenu * 12)) * 100).toFixed(0)}% de votre revenu annuel` : ''}.`
+          });
+        }
+
+        // Commentaire 11 : avertissement timing
+        if (datePrevue && payment !== '__total__') {
+          const acc = getAccountByName(payment);
+          if (acc && acc.balance < montant) {
+            const dateStr = new Date(datePrevue).toLocaleDateString('fr-FR');
+            comments.push({
+              icon: '💳',
+              type: 'timing',
+              text: `⚠️ Votre compte "${escHtml(payment)}" n'aura que ${fmt(acc.balance)}€ le ${dateStr}, ce qui est <strong>insuffisant pour cette dépense</strong> (manque ${fmt(montant - acc.balance)}€).`
+            });
+          }
+        }
+
+        // Commentaire 12 : suggestion épargne
+        if (chargesRef > 0 && epargneMoy < chargesRef * 3 && scoreFinal < 70) {
+          const moisCoussin = epargneMoy > 0 ? (epargneMoy / chargesRef).toFixed(1) : 0;
+          comments.push({
+            icon: '🛡️',
+            type: 'coussin',
+            text: `💡 Votre coussin de sécurité est faible (${moisCoussin} mois de charges, recommandé : 3-6 mois). Reporter cet achat renforcerait d'abord votre épargne de précaution.`
+          });
+        }
+
+        // 7. Construction du HTML résultat
+        const resultEl = document.getElementById('expenseResult');
+        resultEl.classList.remove('empty');
+
+        // Bouton "Ajouter comme transaction" : pré-remplit
+        // Si l'utilisateur a choisi "Patrimoine total" (sentinel __total__),
+        // on ne peut pas pré-sélectionner un compte spécifique ; on désactive le bouton.
+        const canAddAsTx = payment !== '__total__' && payment !== '';
+        const addBtnHtml = canAddAsTx
+          ? `<button class="btn btn-gold btn-sm" onclick="addExpenseAsTransaction()">💾 Ajouter comme transaction</button>`
+          : `<button class="btn btn-ghost btn-sm" disabled title="Sélectionnez un compte spécifique pour enregistrer">💾 Ajouter comme transaction</button>`;
+
+        // Stocker temporairement le résultat pour addExpenseAsTransaction()
+        resultEl._lastAnalysis = { montant, type, recurrence, datePrevue, payment, character, context };
+
+        // Construction des barres de critères
+        const criteriaHtml = criteria.map(c => {
+          const color = scoreToColor(c.score);
+          return `<div class="expense-criterion">
+            <span class="expense-criterion-label">${escHtml(c.label)}</span>
+            <div class="expense-criterion-bar">
+              <div class="expense-criterion-fill" style="width:${c.score}%;background:${color}"></div>
+            </div>
+            <span class="expense-criterion-score" style="color:${color}">${c.score}</span>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:-2px;margin-left:4px">${escHtml(c.detail)}</div>`;
+        }).join('');
+
+        // Construction des commentaires (max 5 pour la lisibilité)
+        const commentsToShow = comments.slice(0, 5);
+        const commentsHtml = commentsToShow.map(c =>
+          `<div class="expense-comment">
+            <span class="expense-comment-icon">${c.icon}</span>
+            <span class="expense-comment-text">${c.text}</span>
+          </div>`
+        ).join('');
+
+        const warningHtml = dataInsufficient
+          ? `<div class="expense-data-warning">⚠️ Données insuffisantes (revenu, budget, épargne, patrimoine). L'analyse reste indicative — complétez votre profil et vos comptes pour un verdict plus précis.</div>`
+          : (dataWarning
+            ? `<div class="expense-data-warning">ℹ️ Analyse partielle (manque : ${dataWarning}). Les autres critères sont pris en compte.</div>`
+            : '');
+
+        resultEl.innerHTML = `
+          <div class="expense-tool-result-header">
+            <div class="expense-verdict-badge" data-level="${level}">${levelInfo.emoji} ${levelInfo.label}</div>
+            <div class="expense-score">
+              <div class="expense-score-value">${scoreFinal}<small>/100</small></div>
+              <div class="expense-gauge"><div class="expense-gauge-fill" style="width:${scoreFinal}%;background:${levelInfo.color}"></div></div>
+            </div>
+          </div>
+          ${warningHtml}
+          <div class="expense-criteria">${criteriaHtml}</div>
+          <div class="expense-comments">${commentsHtml}</div>
+          <div class="expense-actions-row">
+            ${addBtnHtml}
+            <button class="btn btn-ghost btn-sm" onclick="resetExpenseTool()">🔄 Nouvelle analyse</button>
+          </div>
+        `;
+      }
+
+      // ===========================================================
+      // RESET DU FORMULAIRE
+      // ===========================================================
+      function resetExpenseTool() {
+        document.getElementById('expAmount').value = '';
+        document.getElementById('expType').selectedIndex = 0;
+        document.getElementById('expRecurrence').selectedIndex = 0;
+        document.getElementById('expDate').value = '';
+        document.getElementById('expCharacter').selectedIndex = 0;
+        document.getElementById('expContext').selectedIndex = 0;
+        // Réinitialise le résultat à l'état "empty"
+        const resultEl = document.getElementById('expenseResult');
+        resultEl.classList.add('empty');
+        resultEl._lastAnalysis = null;
+        resultEl.innerHTML = `
+          <div>
+            <div style="font-size:32px;margin-bottom:8px">💡</div>
+            <div style="font-weight:600;color:var(--text2);margin-bottom:4px">Aucune dépense analysée</div>
+            <div>Remplissez le formulaire et cliquez sur <strong style="color:var(--gold)">Analyser la dépense</strong> pour obtenir un verdict personnalisé basé sur votre profil, vos comptes et votre historique.</div>
+          </div>
+        `;
+      }
+
+      // ===========================================================
+      // AJOUTER LA DÉPENSE COMME TRANSACTION
+      // ===========================================================
+      // Pré-remplit la modale d'ajout de transaction avec les données
+      // de la dernière analyse. Si "Patrimoine total" était choisi,
+      // le bouton est désactivé (géré dans evaluateExpense).
+      // ===========================================================
+      function addExpenseAsTransaction() {
+        const resultEl = document.getElementById('expenseResult');
+        const a = resultEl && resultEl._lastAnalysis;
+        if (!a) {
+          showToast('Aucune analyse récente à convertir', 'error');
+          return;
+        }
+        // Renseigne les champs de la modale d'ajout de transaction
+        const dateInput = document.getElementById('txDate');
+        if (dateInput) {
+          dateInput.value = a.datePrevue || new Date().toISOString().slice(0, 10);
+        }
+        const amountInput = document.getElementById('txAmount');
+        if (amountInput) {
+          // Convertit le montant en valeur absolue (le type gère le signe)
+          amountInput.value = Math.abs(a.montant);
+        }
+        const descInput = document.getElementById('txDesc');
+        if (descInput) {
+          // Récapitule le type de dépense dans la description
+          const typeLabel = document.getElementById('expType').selectedOptions[0]?.text || '';
+          descInput.value = `[Analyse] ${typeLabel}`.trim();
+        }
+        const typeSelect = document.getElementById('txType');
+        if (typeSelect) {
+          // Par défaut, on l'enregistre comme sortie
+          typeSelect.value = 'expense';
+        }
+        // Ouvre la modale d'ajout
+        openModal('addTx');
+        showToast('Transaction pré-remplie, validez pour enregistrer', 'success');
       }
 
       // Ouvre la modal de sélection du mois à modifier (depuis la page Évolution)
@@ -7686,6 +8669,6 @@
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a267a44c0d47d6c6',t:'MTc4NTk1MjIwMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
