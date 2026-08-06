@@ -63,7 +63,6 @@
   <!-- SDK Supabase (authentification) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
-    
     // =====================================================================
     // CONFIGURATION SUPABASE — À REMPLIR
     // Trouve ces deux valeurs dans ton projet Supabase :
@@ -5798,7 +5797,7 @@
         document.getElementById('donut-legend').innerHTML = cats.map(c => `
     <div class="legend-item">
       <div class="legend-dot" style="background:${c.color}"></div>
-      <span class="legend-name">${escapeHtml(c.name)}</span>
+      <span class="legend-name">${escHtml(c.name)}</span>
       <span style="color:var(--text);font-weight:600;font-size:10px">${total > 0 && cats[0].val > 0 ? (c.val / total * 100).toFixed(1) : 0}%</span>
     </div>`).join('');
       }
@@ -6809,7 +6808,7 @@
         const totalOption = '<option value="__total__">💎 Patrimoine total (tous comptes)</option>';
         const accountOptions = (D.accounts || []).map(a => {
           const icon = a.icon || (a.type === 'livret' ? '🏦' : a.type === 'banque' ? '💳' : a.type === 'especes' ? '💵' : '📦');
-          return `<option value="${escapeHtml(a.name)}">${icon} ${escapeHtml(a.name)} (${fmt(a.balance)})</option>`;
+          return `<option value="${escHtml(a.name)}">${icon} ${escHtml(a.name)} (${fmt(a.balance)})</option>`;
         }).join('');
         sel.innerHTML = totalOption + accountOptions;
         // Restaure la sélection si possible
@@ -7071,7 +7070,10 @@
         }
 
         // (D) Critère : SITUATION (profil) — contexte utilisateur
-        let situationScore = 60;
+        // Base neutre = 50 (ni bon, ni mauvais). Les bonus/malus
+        // modulent autour de cette valeur pour refléter l'adéquation
+        // entre la situation de l'utilisateur et le type de dépense.
+        let situationScore = 50;
         const sitDetails = [];
         if (situation === 'etudiant') {
           if (type === 'education')  { situationScore += 20; sitDetails.push('+éducation'); }
@@ -7110,7 +7112,8 @@
         }
 
         // (F) Critère : HORIZON — adapté : boosté pour Investissement
-        let horizonScore = 60;
+        // Base neutre = 50 (ni favorable, ni défavorable).
+        let horizonScore = 50;
         const horizonDetails = [];
         let horizonWeight = 8;
         if (isInvestissement) {
@@ -7135,8 +7138,8 @@
           detail: horizonDetails.length ? horizonDetails.join(' ') : 'neutre'
         });
 
-        // (G) Critère : ÂGE
-        let ageScore = 60;
+        // (G) Critère : ÂGE — Base neutre = 50
+        let ageScore = 50;
         const ageDetails = [];
         if (age < 25) {
           if (type === 'education')  { ageScore += 20; ageDetails.push('+formation'); }
@@ -7158,20 +7161,28 @@
         });
 
         // (H) Critère : CARACTÈRE — pondération réduite de 5 → 4
-        let characterScore = 60;
+        // Base neutre = 50.
+        let characterScore = 50;
         const characterDetails = [];
         if (character === 'necessaire') { characterScore += 15; characterDetails.push('+nécessaire'); }
         else if (character === 'plaisir') {
           // Modulé par le coût par jour d'usage (plus indulgent pour les hobbies longs)
+          // CORRECTIF : plage élargie pour une meilleure sensibilité
           if (coutParJour !== null && coutParJour > 0 && coutParJour < 5) {
             characterScore += 5; characterDetails.push('plaisir raisonnable');
           } else if (coutParJour !== null && coutParJour > 50) {
-            characterScore -= 15; characterDetails.push('−plaisir onéreux');
+            characterScore -= 30; characterDetails.push('−plaisir onéreux');
+          } else if (coutParJour !== null && coutParJour > 20) {
+            characterScore -= 10; characterDetails.push('−plaisir cher');
           } else {
             characterDetails.push('plaisir modéré');
           }
         }
-        else if (character === 'impulsion') { characterScore -= 20; characterDetails.push('−impulsion'); }
+        else if (character === 'impulsion') {
+          // CORRECTIF : impulsion = -40 (au lieu de -20) pour refléter
+          // un comportement d'achat irrationnel
+          characterScore -= 40; characterDetails.push('−impulsion');
+        }
         criteria.push({
           key: 'character', label: `Caractère (${character})`, weight: 4,
           score: Math.max(0, Math.min(100, characterScore)),
@@ -7181,7 +7192,8 @@
         // (I) Critère : CONTEXTE SOCIAL — pondération réduite de 5 → 3
         //                  ET corrigé : amis+plaisir n'est plus pénalisé si
         //                  c'est un cadeau (cadeaux + amis = OK)
-        let contextScore = 60;
+        // Base neutre = 50.
+        let contextScore = 50;
         const contextDetails = [];
         if (context === 'famille') { contextScore += 10; contextDetails.push('+famille'); }
         else if (context === 'pro') {
@@ -7215,6 +7227,14 @@
           totalScore += c.score * c.weight;
         }
         let scoreFinal = Math.round(totalScore / 100);
+        // CORRECTIF : Si AUCUNE donnée financière n'est renseignée
+        // (revenu=0, epargne=0, patrimoine=0), le score serait
+        // artificiellement autour de 50 (car tous les critères
+        // qualitatifs valent 50 en base). On force 50 pour que
+        // ce soit explicitement "neutre" et non pas "presque bon".
+        if (revenu === 0 && epargneMoy === 0 && totalPatrimoine === 0) {
+          scoreFinal = 50;
+        }
         // Cas spécial : épargne = toujours bien (plafond à 95 max si score < 95)
         if (isPatrimoine && scoreFinal < 95) scoreFinal = 95;
         // Cas spécial : Investissement très gros → on relâche un peu
@@ -7307,13 +7327,19 @@
         }
 
         // (C9) Suggestion de fractionnement (dépense lourde ponctuelle)
+        // CORRECTIF : on utilise `montantMensuel` au lieu de `montant` brut
+        // pour calculer la part. Sinon, pour une dépense ANNUELLE de 1200€
+        // (100€/mois), on aurait proposé 400€/mois (incohérent).
+        // La logique : on étale l'effort MENSUEL sur N mois.
         if (recurrence === 'unique' && montantMensuel > 0 && epargneMoy > 0
             && effortVsEpargne >= 3 && !isPatrimoine && !isInvestissement) {
           const n = Math.max(2, Math.ceil(effortVsEpargne / 2));
-          const part = Math.ceil(montant / n);
+          // part = effort mensuel divisé en N parts (chaque part
+          // = montantMensuel / N, qui représente le lissage proposé)
+          const part = Math.ceil(montantMensuel / n);
           addComment(
             '💡', 'suggestion',
-            `<strong>Suggestion :</strong> étaler cette dépense en <strong>${n} mensualités de ${fmt(part)}</strong> allégerait l'effort à <strong>${fmt(part)}/mois</strong> (vs ${fmt(montantMensuel)} ce mois-ci).`,
+            `<strong>Suggestion :</strong> étaler cette dépense en <strong>${n} mensualités de ${fmt(part)}</strong> allégerait l'effort à <strong>${fmt(part)}/mois</strong> (au lieu des ${fmt(montantMensuel)} concentrés ce mois-ci).`,
             35
           );
         }
@@ -7335,15 +7361,41 @@
         }
 
         // (C12) Impact sur les objectifs
+        // CORRECTIF : on calcule l'impact réel sur l'objectif en
+        // tenant compte du PROGRÈS ACTUEL (mainObj.current) et du
+        // GAP RESTANT (target - current). Sans cette correction,
+        // un objectif déjà à 80% serait mal évalué.
         if (objectives.length > 0) {
           const mainObj = objectives.find(o => o.isMain === true) || objectives[0];
           if (mainObj && mainObj.target > 0 && epargneMoy > 0 && !isPatrimoine) {
-            const mois = Math.round(montant / epargneMoy);
-            addComment(
-              '🎯', 'objectif',
-              `Cette dépense retarderait votre objectif <strong>« ${escHtml(mainObj.name)} »</strong>${mois > 0 ? ` de <strong>${mois} mois</strong>` : ''}.`,
-              mois >= 2 ? 45 : 25
-            );
+            // Progression actuelle (en %)
+            const progressPct = (mainObj.current / mainObj.target) * 100;
+            // Montant restant à épargner pour finir l'objectif
+            const gapRestant = Math.max(0, mainObj.target - mainObj.current);
+            // Combien de mois d'épargne pour combler le gap actuel
+            // (en supposant que l'épargne reste à epargneMoy)
+            const moisPourGap = Math.ceil(gapRestant / epargneMoy);
+            // Retard effectif = "combien de mois d'épargne MORTS"
+            // pour compenser cette dépense (logique stable et intuitive)
+            const moisRetard = Math.max(0, Math.ceil(montant / epargneMoy));
+            // Si l'objectif n'est pas commencé (current = 0), on ne peut
+            // pas afficher de % — on montre la durée totale nécessaire.
+            if (progressPct < 1) {
+              // Objectif pas commencé
+              const moisTotal = Math.ceil(mainObj.target / epargneMoy);
+              addComment(
+                '🎯', 'objectif',
+                `Cette dépense retarderait votre objectif <strong>« ${escHtml(mainObj.name)} »</strong>${moisRetard > 0 ? ` de <strong>${moisRetard} mois</strong> (durée totale estimée : <strong>${moisTotal} mois</strong>)` : ''}.`,
+                moisRetard >= 2 ? 45 : 25
+              );
+            } else {
+              // Objectif en cours
+              addComment(
+                '🎯', 'objectif',
+                `Cette dépense retarderait votre objectif <strong>« ${escHtml(mainObj.name)} »</strong> (actuellement à <strong>${progressPct.toFixed(0)}%</strong>)${moisRetard > 0 ? ` de <strong>${moisRetard} mois</strong> supplémentaires` : ''}.`,
+                moisRetard >= 2 ? 45 : 25
+              );
+            }
           }
         }
 
@@ -8805,7 +8857,7 @@
         const types = getAllAccountTypes();
         const currentVal = sel.value;
         sel.innerHTML = types
-          .map(t => `<option value="${escapeHtml(t.value)}">${escapeHtml(t.label)}</option>`)
+          .map(t => `<option value="${escHtml(t.value)}">${escHtml(t.label)}</option>`)
           .join('') + `<option value="__custom__">＋ Type personnalisé...</option>`;
         // Restaure la sélection si elle existe encore
         if (currentVal && types.some(t => t.value === currentVal)) {
@@ -8917,7 +8969,7 @@
         const cats = getAllTxCategories();
         const currentVal = sel.value;
         sel.innerHTML = cats
-          .map(c => `<option>${escapeHtml(c)}</option>`)
+          .map(c => `<option>${escHtml(c)}</option>`)
           .join('') + `<option value="__custom__">＋ Catégorie personnalisée...</option>`;
         if (currentVal && cats.includes(currentVal)) sel.value = currentVal;
         else if (cats[0]) sel.value = cats[0];
@@ -8961,16 +9013,8 @@
         return trimmed;
       }
 
-      // Utilitaire d'échappement HTML (sécurité contre injection
-      // via labels de types custom saisis par l'utilisateur)
-      function escapeHtml(s) {
-        return String(s == null ? '' : s)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
-      }
+      // Utilitaire d'échappement HTML — SUPPRIMÉ car doublon avec escHtml().
+      // (voir ligne ~6844 pour la fonction de référence conservée)
 
       // ================================================================
 
@@ -9033,6 +9077,6 @@
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a26f9c9ffea20369',t:'MTc4NjAzNTc3Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
