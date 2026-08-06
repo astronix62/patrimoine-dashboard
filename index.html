@@ -63,7 +63,6 @@
   <!-- SDK Supabase (authentification) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
-   
     // =====================================================================
     // CONFIGURATION SUPABASE — À REMPLIR
     // Trouve ces deux valeurs dans ton projet Supabase :
@@ -1591,6 +1590,107 @@
     .expense-comments {
       display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;
     }
+    /* ────────────────────────────────────────────────
+       Commentaire principal (mis en avant) et secondaires
+       Le commentaire le plus pertinent est affiché en grand
+       (style "highlighted"). Les autres sont dans une
+       section dépliable "Autres commentaires" (repliée par défaut).
+       ──────────────────────────────────────────────── */
+    .expense-comment-primary {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 12.5px; line-height: 1.55; color: var(--text);
+      padding: 12px 14px;
+      background: var(--bg3);
+      border-left: 3px solid var(--gold);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .expense-comment-primary .expense-comment-icon {
+      font-size: 18px;
+    }
+    .expense-comment-primary strong {
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .expense-comment-secondary {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 11.5px; line-height: 1.5; color: var(--text2);
+      padding: 8px 10px; background: var(--bg3);
+      border-left: 2px solid var(--border); border-radius: 4px;
+    }
+    .expense-comment-secondary .expense-comment-icon {
+      flex-shrink: 0; font-size: 14px; line-height: 1.2;
+    }
+    .expense-comment-secondary strong { color: var(--text); font-weight: 600; }
+    /* Compatibilité descendante : si on garde .expense-comment (ancien nom) */
+    .expense-comment {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 11.5px; line-height: 1.5; color: var(--text2);
+      padding: 8px 10px; background: var(--bg3);
+      border-left: 2px solid var(--border); border-radius: 4px;
+    }
+    .expense-comment-icon {
+      flex-shrink: 0; font-size: 14px; line-height: 1.2;
+    }
+    .expense-comment-text { flex: 1; }
+    .expense-comment-text strong { color: var(--text); font-weight: 600; }
+    /* Toggle "Autres commentaires" (identique au toggle "Détail") */
+    .expense-others-toggle {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 10.5px;
+      cursor: pointer;
+      font-family: inherit;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    .expense-others-toggle:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .expense-others-toggle-arrow {
+      display: inline-block;
+      font-size: 9px;
+      transition: transform 0.25s ease;
+    }
+    .expense-others-toggle.expanded .expense-others-toggle-arrow {
+      transform: rotate(90deg);
+    }
+    .expense-others-section {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, opacity 0.25s ease, margin-bottom 0.25s ease;
+      opacity: 0;
+      margin-bottom: 0;
+    }
+    .expense-others-section.expanded {
+      max-height: 2000px;
+      opacity: 1;
+      margin-bottom: 10px;
+    }
+    .expense-others-list {
+      display: flex; flex-direction: column; gap: 6px;
+      padding-top: 6px;
+    }
+    /* Bloc synthèse intelligente (capacité d'achat restante, etc.) */
+    .expense-insight {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11.5px; line-height: 1.5; color: var(--text2);
+      padding: 8px 12px;
+      background: rgba(33, 150, 243, 0.08);
+      border-left: 2px solid var(--blue);
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .expense-insight-icon {
+      flex-shrink: 0; font-size: 14px;
+    }
+    .expense-insight strong { color: var(--text); font-weight: 600; }
     .expense-comment {
       display: flex; align-items: flex-start; gap: 8px;
       font-size: 11.5px; line-height: 1.5; color: var(--text2);
@@ -6748,14 +6848,14 @@
       }
 
       // Calcule le score 0-100 pour un critère selon un ratio
-      // Le score est 100 si ratio <= 5%, dégressif selon les seuils
-      function scoreByRatio(ratio, thresholds) {
-        // thresholds = [{ max, score }, ...] trié par max croissant
-        for (const t of thresholds) {
-          if (ratio <= t.max) return t.score;
-        }
-        return 0;
-      }
+      // (ANCIEN SYSTÈME — remplacé par scoreFromRatioLog, conservé
+      // temporairement pour référence)
+      // function scoreByRatio(ratio, thresholds) {
+      //   for (const t of thresholds) {
+      //     if (ratio <= t.max) return t.score;
+      //   }
+      //   return 0;
+      // }
 
       // Convertit un score 0-100 en couleur (rouge → vert)
       function scoreToColor(score) {
@@ -6772,6 +6872,87 @@
       // Lit le formulaire, calcule les 10 critères pondérés, choisit
       // 3-4 commentaires contextualisés et affiche le résultat.
       // ===========================================================
+      // ===========================================================
+      // PROFILS PAR TYPE DE DÉPENSE (système intelligent stable)
+      // ===========================================================
+      // Chaque type de dépense a un profil fixe : durée de vie moyenne,
+      // valeur résiduelle (revente), et catégorie (Investissement /
+      // Courant / Quotidien / Engagement). Ces propriétés sont
+      // APPLIQUÉES de manière stable, elles ne changent PAS selon
+      // les actions de l'utilisateur. Cela permet de calculer :
+      //   - coût par jour d'usage
+      //   - valeur nette ajustée (après revente)
+      //   - taux d'effort réel (vs capacité journalière)
+      // Sources : moyennes observées (durée de vie biens durables, taux
+      // de revente marché de l'occasion, ratio charges/revenu type).
+      // ===========================================================
+      const EXPENSE_TYPE_PROFILES = {
+        logement:        { life: 25*365, residual: 0.80, category: 'Investissement',  label: 'Logement' },
+        transport:       { life: 8*365,  residual: 0.40, category: 'Investissement',  label: 'Transport' },
+        equipement:      { life: 7*365,  residual: 0.30, category: 'Investissement',  label: 'Équipement' },
+        energie:         { life: 365,    residual: 0.00, category: 'Courant',         label: 'Énergie & Services' },
+        alimentation:    { life: 7,      residual: 0.00, category: 'Quotidien',       label: 'Alimentation' },
+        sante:           { life: 365,    residual: 0.00, category: 'Critique',        label: 'Santé' },
+        education:       { life: 5*365,  residual: 0.60, category: 'Investissement',  label: 'Éducation' },
+        loisirs:         { life: 365,    residual: 0.00, category: 'Variable',        label: 'Loisirs & Sorties' },
+        habillement:     { life: 3*365,  residual: 0.05, category: 'Courant',         label: 'Habillement' },
+        cadeaux:         { life: 1,      residual: 0.00, category: 'Exceptionnel',   label: 'Cadeaux & Dons' },
+        credits:         { life: 365,    residual: 0.00, category: 'Engagement',      label: 'Crédits & Remboursements' },
+        animaux:         { life: 12*365, residual: 0.00, category: 'Quotidien',       label: 'Animaux' },
+        professionnel:    { life: 3*365,  residual: 0.50, category: 'Investissement',  label: 'Frais professionnels' },
+        epargne_invest:  { life: null,   residual: 1.00, category: 'Patrimoine',      label: 'Épargne & Investissement' },
+        autre:           { life: 365,    residual: 0.00, category: 'Neutre',          label: 'Autre' },
+      };
+
+      // Renvoie le profil d'un type (avec fallback sur "autre")
+      function getExpenseProfile(type) {
+        return EXPENSE_TYPE_PROFILES[type] || EXPENSE_TYPE_PROFILES.autre;
+      }
+
+      // Calcule le coût par jour d'usage (null si durée = null = épargne)
+      function getCostPerDay(montant, profile) {
+        if (!profile.life || profile.life <= 0) return null;
+        return montant / profile.life;
+      }
+
+      // Calcule la valeur nette ajustée (après revente)
+      function getAdjustedNetValue(montant, profile) {
+        return montant * (1 - profile.residual);
+      }
+
+      // ===========================================================
+      // NOUVEAUX CALCULATEURS (remplacent scoreByRatio pour les
+      // critères quantitatifs, avec une courbe plus naturelle)
+      // ===========================================================
+      // scoreFromRatioLog(ratio) : courbe logarithmique décroissante
+      //   ratio = 0    → 100
+      //   ratio = 0.1  → 91
+      //   ratio = 0.5  → 76
+      //   ratio = 1    → 67
+      //   ratio = 3    → 52
+      //   ratio = 10   → 35
+      //   ratio = 30   → 20
+      //   ratio = 100  →  2
+      // Utilise 100 - 33 * log10(1 + 9*ratio) pour une décroissance
+      // régulière et plus parlante que les seuils durs.
+      // ===========================================================
+      function scoreFromRatioLog(ratio) {
+        if (ratio <= 0) return 100;
+        const s = 100 - 33 * Math.log10(1 + 9 * ratio);
+        return Math.max(0, Math.min(100, Math.round(s)));
+      }
+
+      // ===========================================================
+      // FONCTION PRINCIPALE : evaluateExpense()
+      // ===========================================================
+      // Refonte complète du système de calcul :
+      //  - Profils par type de dépense (durée de vie, valeur résiduelle)
+      //  - Taux d'effort = montant_mensualisé / revenu_mensuel
+      //  - Capacité journalière = revenu / 30
+      //  - Score composite pondéré (nouveau barème)
+      //  - Commentaires hiérarchisés par pertinence
+      //  - Le plus pertinent en grand, les autres dans "Autres commentaires"
+      // ===========================================================
       function evaluateExpense() {
         // 1. Lecture des inputs
         const montant = parseFloat(document.getElementById('expAmount').value);
@@ -6786,29 +6967,31 @@
         const character   = document.getElementById('expCharacter').value;
         const context     = document.getElementById('expContext').value;
 
-        // 2. Récupération des données de l'app (avec défauts si manquantes)
+        // 2. Récupération des données de l'app
         const settings   = D.settings || {};
         const profile    = D.profile || {};
         const indicators = D.indicators || {};
         const objectives = D.objectives || [];
-        const total      = getTotalBalance();
         const totalPatrimoine = getTotal();
         const revenu     = parseFloat(settings.revenu) || 0;
-        const budget     = parseFloat(settings.budget) || 0;
-        const goal       = parseFloat(settings.goal) || 0;
         const epargneMoy = parseFloat(indicators.avgEpargne) || 0;
-        const charges    = parseFloat(profile.charges) || (budget * 0.6) || 0;
+        const charges    = parseFloat(profile.charges) || 0;
         const age        = parseInt(profile.age) || 30;
         const situation  = profile.situation || 'salarie';
         const horizon    = profile.horizon || 'moyen';
         const prenom     = profile.prenom || '';
-        const prenomAff  = prenom ? `, ${prenom}` : '';
 
-        // Avertissement si données manquantes
-        const dataInsufficient = (revenu === 0 && budget === 0 && epargneMoy === 0 && totalPatrimoine === 0);
+        // 3. Profil de la dépense
+        const epProfile = getExpenseProfile(type);
+        const isInvestissement = (epProfile.category === 'Investissement');
+        const isPatrimoine     = (epProfile.category === 'Patrimoine');
+        const isCourantQuotidien = (epProfile.category === 'Courant'
+                                  || epProfile.category === 'Quotidien'
+                                  || epProfile.category === 'Critique');
+        const isEngagement = (epProfile.category === 'Engagement');
+        const isExceptionnel = (epProfile.category === 'Exceptionnel');
 
-        // 3. Ajustement du montant selon la récurrence
-        // (on analyse TOUJOURS l'impact mensuel pour comparer ce qui est comparable)
+        // 4. Ajustement du montant selon la récurrence
         let montantMensuel = montant;
         let montantAnnuel = montant;
         let recurrenceLabel = 'unique';
@@ -6820,148 +7003,138 @@
           recurrenceLabel = 'annuel';
         }
 
-        // 4. Calcul des 10 critères pondérés
+        // 5. Calcul des valeurs concrètes (système intelligent stable)
+        const capaciteJour = revenu > 0 ? revenu / 30 : 0;
+        const coutParJour  = getCostPerDay(montant, epProfile);  // null pour épargne
+        const valeurNette  = getAdjustedNetValue(montant, epProfile);
+        const tauxEffort   = revenu > 0 ? (montantMensuel / revenu) * 100 : 0; // %
+        const effortVsEpargne = epargneMoy > 0 ? (montantMensuel / epargneMoy) : 0; // ratio
+        const pctPatrimoine = totalPatrimoine > 0 ? (montant / totalPatrimoine) * 100 : 0;
+        const pctCharges   = charges > 0 ? (montantMensuel / charges) * 100 : 0;
+
+        // 6. Avertissement si données insuffisantes
+        const dataInsufficient = (revenu === 0 && epargneMoy === 0 && totalPatrimoine === 0);
+
+        // 7. Calcul du SCORE COMPOSITE (nouveau barème)
+        //    On construit un objet "criteria" avec score 0-100 et poids.
+        //    Les poids somment à 100 et sont ADAPTÉS au contexte :
+        //      - Si "Investissement" → horizon+patrimoine boostés, revenu+épargne réduits
+        //      - Si "Patrimoine" (épargne) → on inverse : critère quasi toujours 100
+        //      - Sinon → barème standard
         const criteria = [];
         let dataWarning = null;
 
-        // 1) Ratio sur le budget mensuel (poids 20%)
-        if (budget > 0) {
-          const ratio = (montantMensuel / budget) * 100;
-          const score = scoreByRatio(ratio, [
-            { max: 5,  score: 100 },
-            { max: 15, score: 70  },
-            { max: 30, score: 40  },
-            { max: 50, score: 10  },
-          ]);
+        // Construction d'un "poids de base" par critère
+        const baseWeights = {
+          epargne: 25, patrimoine: 20, charges: 15, situation: 12,
+          revenu: 8,  horizon: 8,    age: 5,     character: 4,
+          context: 3,
+        };
+
+        // (A) Critère : ÉPARGNE — indicateur #1 de la santé financière
+        if (isPatrimoine) {
+          // Pour l'épargne, c'est toujours bien
+          criteria.push({ key: 'epargne', label: 'Épargne mensuelle', score: 100, weight: 25, detail: 'Vous épargnez, c\'est excellent' });
+        } else if (epargneMoy > 0) {
+          const score = scoreFromRatioLog(effortVsEpargne);
           criteria.push({
-            label: 'Budget mensuel',
-            score,
-            detail: `${ratio.toFixed(0)}% du budget`
+            key: 'epargne', label: 'Épargne mensuelle', weight: 25, score,
+            detail: `${effortVsEpargne.toFixed(1)}× votre épargne (${fmt(epargneMoy)})`
           });
         } else {
-          dataWarning = 'budget';
+          dataWarning = 'épargne';
         }
 
-        // 2) Ratio sur le revenu mensuel (poids 15%)
-        if (revenu > 0) {
-          const ratio = (montantMensuel / revenu) * 100;
-          const score = scoreByRatio(ratio, [
-            { max: 5,  score: 100 },
-            { max: 20, score: 70  },
-            { max: 40, score: 40  },
-          ]);
+        // (B) Critère : PATRIMOINE — marge de manœuvre réelle
+        if (isPatrimoine) {
+          criteria.push({ key: 'patrimoine', label: 'Patrimoine actuel', score: 100, weight: 20, detail: 'Augmente votre patrimoine' });
+        } else if (totalPatrimoine > 0) {
+          const score = scoreFromRatioLog(pctPatrimoine / 100);
           criteria.push({
-            label: 'Revenu mensuel',
-            score,
-            detail: `${ratio.toFixed(0)}% du revenu`
-          });
-        } else {
-          if (!dataWarning) dataWarning = 'revenu';
-        }
-
-        // 3) Ratio sur l'épargne moyenne (poids 15%)
-        if (epargneMoy > 0) {
-          const ratio = montant / epargneMoy;
-          let score;
-          if (ratio <= 1) score = 100;
-          else if (ratio <= 3) score = 60;
-          else if (ratio <= 6) score = 20;
-          else score = 0;
-          criteria.push({
-            label: 'Épargne mensuelle',
-            score,
-            detail: `${ratio.toFixed(1)}× l'épargne moyenne (${fmt(epargneMoy)}€)`
-          });
-        } else {
-          if (!dataWarning) dataWarning = 'épargne';
-        }
-
-        // 4) Impact sur le patrimoine actuel (poids 10%)
-        if (totalPatrimoine > 0) {
-          const ratio = (montant / totalPatrimoine) * 100;
-          const score = scoreByRatio(ratio, [
-            { max: 1,  score: 100 },
-            { max: 5,  score: 70  },
-            { max: 15, score: 30  },
-          ]);
-          criteria.push({
-            label: 'Patrimoine actuel',
-            score,
-            detail: `${ratio.toFixed(1)}% du patrimoine (${fmt(totalPatrimoine)}€)`
+            key: 'patrimoine', label: 'Patrimoine actuel', weight: 20, score,
+            detail: `${pctPatrimoine.toFixed(1)}% du patrimoine (${fmt(totalPatrimoine)})`
           });
         } else {
           if (!dataWarning) dataWarning = 'patrimoine';
         }
 
-        // 5) Ratio sur les charges fixes (poids 10%)
-        const chargesRef = charges > 0 ? charges : (budget * 0.6);
-        if (chargesRef > 0) {
-          const ratio = (montantMensuel / chargesRef) * 100;
-          const score = scoreByRatio(ratio, [
-            { max: 10, score: 100 },
-            { max: 30, score: 70  },
-            { max: 60, score: 30  },
-          ]);
+        // (C) Critère : CHARGES FIXES — capacité d'absorption
+        if (charges > 0) {
+          const score = scoreFromRatioLog(pctCharges / 100);
           criteria.push({
-            label: 'Charges fixes',
-            score,
-            detail: `${ratio.toFixed(0)}% des charges (${fmt(chargesRef)}€)`
+            key: 'charges', label: 'Charges fixes', weight: 15, score,
+            detail: `${pctCharges.toFixed(0)}% des charges (${fmt(charges)})`
           });
         } else {
           if (!dataWarning) dataWarning = 'charges';
         }
 
-        // 6) Adéquation à la situation (poids 10%)
-        let situationScore = 60; // base neutre
-        const situationDetails = [];
+        // (D) Critère : SITUATION (profil) — contexte utilisateur
+        let situationScore = 60;
+        const sitDetails = [];
         if (situation === 'etudiant') {
-          if (type === 'education') { situationScore += 20; situationDetails.push('+éducation'); }
-          if (type === 'loisirs')  { situationScore += 10; situationDetails.push('+loisirs'); }
-          if (type === 'credits')  { situationScore -= 30; situationDetails.push('−crédit'); }
+          if (type === 'education')  { situationScore += 20; sitDetails.push('+éducation'); }
+          if (type === 'loisirs')    { situationScore += 10; sitDetails.push('+loisirs'); }
+          if (type === 'credits')    { situationScore -= 30; sitDetails.push('−crédit'); }
         } else if (situation === 'independant') {
-          if (type === 'professionnel') { situationScore += 30; situationDetails.push('+frais pro'); }
-          if (type === 'equipement')     { situationScore += 10; situationDetails.push('+équipement'); }
+          if (type === 'professionnel') { situationScore += 30; sitDetails.push('+frais pro'); }
+          if (type === 'equipement')     { situationScore += 10; sitDetails.push('+équipement'); }
         } else if (situation === 'salarie') {
-          if (type === 'professionnel') { situationScore -= 20; situationDetails.push('−non applicable'); }
+          if (type === 'professionnel') { situationScore -= 20; sitDetails.push('−pro'); }
         } else if (situation === 'retraite') {
-          if (type === 'sante')   { situationScore += 20; situationDetails.push('+santé'); }
-          if (type === 'loisirs') { situationScore += 15; situationDetails.push('+loisirs'); }
+          if (type === 'sante')   { situationScore += 20; sitDetails.push('+santé'); }
+          if (type === 'loisirs') { situationScore += 15; sitDetails.push('+loisirs'); }
         } else if (situation === 'sans_emploi') {
           if (['logement','alimentation','energie','sante'].includes(type)) {
-            situationScore += 30; situationDetails.push('+essentiel');
-          } else {
-            situationScore -= 10;
-          }
-          if (type === 'loisirs') { situationScore -= 40; situationDetails.push('−loisirs'); }
-          if (type === 'credits') { situationScore -= 20; situationDetails.push('−crédit'); }
+            situationScore += 30; sitDetails.push('+essentiel');
+          } else { situationScore -= 10; }
+          if (type === 'loisirs') { situationScore -= 40; sitDetails.push('−loisirs'); }
+          if (type === 'credits') { situationScore -= 20; sitDetails.push('−crédit'); }
         }
         criteria.push({
-          label: `Situation (${situation})`,
+          key: 'situation', label: `Situation (${situation})`, weight: 12,
           score: Math.max(0, Math.min(100, situationScore)),
-          detail: situationDetails.length ? situationDetails.join(' ') : 'neutre'
+          detail: sitDetails.length ? sitDetails.join(' ') : 'neutre'
         });
 
-        // 7) Adéquation à l'horizon (poids 10%)
+        // (E) Critère : REVENU — réduit de 15 → 8
+        if (revenu > 0) {
+          const score = scoreFromRatioLog((montantMensuel / revenu));
+          criteria.push({
+            key: 'revenu', label: 'Revenu mensuel', weight: 8, score,
+            detail: `${tauxEffort.toFixed(0)}% du revenu`
+          });
+        } else {
+          if (!dataWarning) dataWarning = 'revenu';
+        }
+
+        // (F) Critère : HORIZON — adapté : boosté pour Investissement
         let horizonScore = 60;
         const horizonDetails = [];
-        if (horizon === 'court') {
-          // Valorise épargne, pénalise engagements longs
-          if (type === 'epargne_invest') { horizonScore += 25; horizonDetails.push('+épargne'); }
-          if (['credits', 'equipement'].includes(type)) { horizonScore -= 15; horizonDetails.push('−engagement'); }
-        } else if (horizon === 'moyen') {
-          horizonScore += 5; // neutre-positif
-        } else if (horizon === 'long') {
-          if (type === 'epargne_invest') { horizonScore += 25; horizonDetails.push('+investissement'); }
-          if (type === 'logement') { horizonScore += 10; horizonDetails.push('+patrimoine'); }
-          if (type === 'credits') { horizonScore -= 5; }
+        let horizonWeight = 8;
+        if (isInvestissement) {
+          // Un investissement long terme est cohérent avec un horizon long
+          horizonScore += 20; horizonDetails.push('+investissement');
+          if (horizon === 'long') { horizonScore += 15; horizonDetails.push('+horizon long'); }
+        } else {
+          if (horizon === 'court') {
+            if (type === 'epargne_invest') { horizonScore += 25; horizonDetails.push('+épargne'); }
+            if (['credits','equipement'].includes(type)) { horizonScore -= 15; horizonDetails.push('−engagement'); }
+          } else if (horizon === 'moyen') {
+            horizonScore += 5;
+          } else if (horizon === 'long') {
+            if (type === 'epargne_invest') { horizonScore += 25; horizonDetails.push('+investissement'); }
+            if (type === 'logement')        { horizonScore += 10; horizonDetails.push('+patrimoine'); }
+            if (type === 'credits')          { horizonScore -= 5;  }
+          }
         }
         criteria.push({
-          label: `Horizon (${horizon})`,
+          key: 'horizon', label: `Horizon (${horizon})`, weight: horizonWeight,
           score: Math.max(0, Math.min(100, horizonScore)),
           detail: horizonDetails.length ? horizonDetails.join(' ') : 'neutre'
         });
 
-        // 8) Adéquation à l'âge (poids 5%)
+        // (G) Critère : ÂGE
         let ageScore = 60;
         const ageDetails = [];
         if (age < 25) {
@@ -6978,28 +7151,35 @@
           if (type === 'credits') { ageScore -= 30; ageDetails.push('−crédit'); }
         }
         criteria.push({
-          label: `Âge (${age} ans)`,
+          key: 'age', label: `Âge (${age} ans)`, weight: 5,
           score: Math.max(0, Math.min(100, ageScore)),
           detail: ageDetails.length ? ageDetails.join(' ') : 'neutre'
         });
 
-        // 9) Caractère de la dépense (poids 5%)
+        // (H) Critère : CARACTÈRE — pondération réduite de 5 → 4
         let characterScore = 60;
         const characterDetails = [];
         if (character === 'necessaire') { characterScore += 15; characterDetails.push('+nécessaire'); }
         else if (character === 'plaisir') {
-          if (['loisirs', 'habillement'].includes(type) && budget > 0 && (montantMensuel / budget) * 100 > 15) {
-            characterScore -= 10; characterDetails.push('−plaisir excessif');
-          } else { characterDetails.push('plaisir modéré'); }
+          // Modulé par le coût par jour d'usage (plus indulgent pour les hobbies longs)
+          if (coutParJour !== null && coutParJour > 0 && coutParJour < 5) {
+            characterScore += 5; characterDetails.push('plaisir raisonnable');
+          } else if (coutParJour !== null && coutParJour > 50) {
+            characterScore -= 15; characterDetails.push('−plaisir onéreux');
+          } else {
+            characterDetails.push('plaisir modéré');
+          }
         }
-        else if (character === 'impulsion') { characterScore -= 25; characterDetails.push('−impulsion'); }
+        else if (character === 'impulsion') { characterScore -= 20; characterDetails.push('−impulsion'); }
         criteria.push({
-          label: `Caractère (${character})`,
-          score: characterScore,
+          key: 'character', label: `Caractère (${character})`, weight: 4,
+          score: Math.max(0, Math.min(100, characterScore)),
           detail: characterDetails.join(' ') || 'standard'
         });
 
-        // 10) Contexte social (poids 5%)
+        // (I) Critère : CONTEXTE SOCIAL — pondération réduite de 5 → 3
+        //                  ET corrigé : amis+plaisir n'est plus pénalisé si
+        //                  c'est un cadeau (cadeaux + amis = OK)
         let contextScore = 60;
         const contextDetails = [];
         if (context === 'famille') { contextScore += 10; contextDetails.push('+famille'); }
@@ -7008,205 +7188,242 @@
           else { contextScore += 5; }
         }
         else if (context === 'amis') {
-          if (character === 'plaisir' && budget > 0 && (montantMensuel / budget) * 100 > 10) {
-            contextScore -= 5;
+          // Cadeaux entre amis = normal, pas de pénalité
+          if (type === 'cadeaux') { contextScore += 5; contextDetails.push('+cadeau'); }
+          else if (character === 'plaisir') {
+            // Plaisir entre amis : on conserve un petit malus mais léger
+            contextScore -= 3;
           }
         }
         criteria.push({
-          label: `Contexte (${context})`,
-          score: contextScore,
+          key: 'context', label: `Contexte (${context})`, weight: 3,
+          score: Math.max(0, Math.min(100, contextScore)),
           detail: contextDetails.join(' ') || 'standard'
         });
 
-        // 5. Calcul du score final pondéré
-        const weights = {
-          budget: 20, revenu: 15, epargne: 15, patrimoine: 10, charges: 10,
-          situation: 10, horizon: 10, age: 5, character: 5, context: 5
-        };
-        // Map critère → poids
-        const criteriaWeights = {
-          'Budget mensuel': weights.budget,
-          'Revenu mensuel': weights.revenu,
-          'Épargne mensuelle': weights.epargne,
-          'Patrimoine actuel': weights.patrimoine,
-          'Charges fixes': weights.charges,
-        };
-        // Les critères "dynamiques" (situation, horizon, age, character, context)
-        // ont leur label qui commence par leur nom de variable
-        const dynWeights = {
-          'Situation': weights.situation,
-          'Horizon':   weights.horizon,
-          'Âge':       weights.age,
-          'Caractère': weights.character,
-          'Contexte':   weights.context,
-        };
-        let totalWeight = 0;
+        // 8. Re-normalisation des poids (le total doit sommer à 100)
+        const totalW = criteria.reduce((s, c) => s + c.weight, 0);
+        if (totalW > 0 && totalW !== 100) {
+          const k = 100 / totalW;
+          criteria.forEach(c => c.weight = Math.round(c.weight * k * 10) / 10);
+        }
+
+        // 9. Calcul du score final pondéré
         let totalScore = 0;
         for (const c of criteria) {
-          let w = criteriaWeights[c.label] || 0;
-          if (!w) {
-            for (const prefix in dynWeights) {
-              if (c.label.startsWith(prefix)) { w = dynWeights[prefix]; break; }
-            }
-          }
-          totalWeight += w;
-          totalScore += c.score * w;
+          totalScore += c.score * c.weight;
         }
-        const scoreFinal = totalWeight > 0 ? Math.round(totalScore / totalWeight) : 50;
+        let scoreFinal = Math.round(totalScore / 100);
+        // Cas spécial : épargne = toujours bien (plafond à 95 max si score < 95)
+        if (isPatrimoine && scoreFinal < 95) scoreFinal = 95;
+        // Cas spécial : Investissement très gros → on relâche un peu
+        if (isInvestissement && montant > (revenu * 5) && scoreFinal < 40) scoreFinal = 40;
         const level = getExpenseLevel(scoreFinal);
         const levelInfo = EXPENSE_LEVELS[level];
 
-        // 6. Sélection des commentaires contextualisés (3-5 max)
+        // 10. CONSTRUCTION DES COMMENTAIRES avec SCORE DE PERTINENCE
+        // Chaque commentaire a un "pertinence" (0-100). On trie, le premier
+        // est affiché en GRAND, les autres dans "Autres commentaires".
         const comments = [];
-        // Commentaire 1 : verdict principal (toujours)
-        comments.push({
-          icon: levelInfo.emoji,
-          type: 'verdict',
-          text: `Cette dépense${recurrenceLabel !== 'unique' ? ' ' + recurrenceLabel : ''} de ${fmt(montant)}${prenomAff ? ' représente ${prenomAff}'.replace('${prenomAff}', prenomAff) : ''} est <strong>${levelInfo.label.toLowerCase()}</strong>${recurrenceLabel === 'mensuel' ? ` (${fmt(montantAnnuel)}€/an)` : recurrenceLabel === 'annuel' ? ` (≈${fmt(montantMensuel)}€/mois)` : ''}. Score global : <strong>${scoreFinal}/100</strong>.`
-        });
 
-        // Commentaire 2 : comparaison budget
-        if (budget > 0) {
-          const pctBudget = (montantMensuel / budget) * 100;
-          if (pctBudget > 20) {
-            comments.push({
-              icon: '💰',
-              type: 'budget',
-              text: `Cette dépense représente <strong>${pctBudget.toFixed(0)}% de votre budget mensuel</strong> (${fmt(budget)}€). Au-dessus de 20%, cela commence à peser significativement sur vos marges.`
-            });
-          }
+        // Helpers internes
+        const addComment = (icon, type, text, pertinence) => {
+          comments.push({ icon, type, text, pertinence });
+        };
+
+        // (C1) Verdict principal — toujours présent, pertinence max
+        const verdictText = buildVerdictText(montant, recurrenceLabel, montantAnnuel, montantMensuel, prenom, scoreFinal, levelInfo);
+        addComment(levelInfo.emoji, 'verdict', verdictText, 100);
+
+        // (C2) Capacité d'achat restante (synthèse concrète)
+        if (revenu > 0 && epargneMoy > 0 && !isPatrimoine) {
+          const epargneFuture = Math.max(0, epargneMoy - montantMensuel);
+          addComment(
+            '💡', 'insight',
+            `Après cette dépense, votre capacité d'épargne mensuelle passerait de <strong>${fmt(epargneMoy)}</strong> à environ <strong>${fmt(epargneFuture)}</strong>${epargneFuture === 0 ? ' <em>(plus aucune marge)</em>' : ''}.`,
+            35
+          );
         }
 
-        // Commentaire 3 : comparaison patrimoine
-        if (totalPatrimoine > 0) {
-          const pctPat = (montant / totalPatrimoine) * 100;
-          if (pctPat >= 3) {
-            comments.push({
-              icon: '📊',
-              type: 'patrimoine',
-              text: `Cette dépense représente <strong>${pctPat.toFixed(1)}% de votre patrimoine actuel</strong> (${fmt(totalPatrimoine)}€). Un impact notable sur votre trajectoire financière.`
-            });
-          }
+        // (C3) Bonus épargne
+        if (isPatrimoine) {
+          addComment(
+            '💰', 'positivity',
+            `<strong>Bonne décision :</strong> vous épargnez <strong>${fmt(montant)}</strong>. À ce rythme${montantMensuel > 0 ? ` (${fmt(montantMensuel)}/mois), sur un an, vous auriez accumulé <strong>${fmt(montantAnnuel)}</strong>` : ''}.`,
+            70
+          );
         }
 
-        // Commentaire 4 : comparaison épargne
-        if (epargneMoy > 0 && montant > epargneMoy * 3) {
-          const ratio = (montant / epargneMoy).toFixed(1);
-          comments.push({
-            icon: '🐷',
-            type: 'epargne',
-            text: `C'est <strong>${ratio}× plus élevé</strong> que votre épargne mensuelle moyenne (${fmt(epargneMoy)}€). Cela correspond à ${Math.round(montant / epargneMoy)} mois d'épargne.`
-          });
+        // (C4) Commentaire Investissement (logement, transport, équipement, etc.)
+        if (isInvestissement && epProfile.life) {
+          const years = (epProfile.life / 365).toFixed(0);
+          const dailyCost = getCostPerDay(montant, epProfile);
+          addComment(
+            '🏠', 'investissement',
+            `C'est un <strong>Investissement</strong> (durée de vie ~${years} ans, valeur de revente ~${Math.round(epProfile.residual*100)}%). ` +
+            `Coût réel par jour d'usage : <strong>${fmt(dailyCost)}</strong>` +
+            `${epProfile.residual > 0 ? `, soit un coût net après revente de <strong>${fmt(valeurNette)}</strong> sur ${years} ans.` : '.'}`,
+            65
+          );
         }
 
-        // Commentaire 5 : alerte situation
-        if (situation === 'etudiant' && type === 'credits') {
-          comments.push({ icon: '🎓', type: 'situation', text: `En tant qu'étudiant, les crédits à long terme peuvent peser sur votre avenir financier. Privilégiez l'épargne de précaution.` });
-        } else if (situation === 'sans_emploi' && !['logement', 'alimentation', 'energie', 'sante'].includes(type)) {
-          comments.push({ icon: '⚠️', type: 'situation', text: `Sans emploi actuellement, cette dépense non-essentielle peut fragiliser votre trésorerie. Pouvez-vous la reporter ?` });
-        } else if (situation === 'retraite' && age >= 65) {
-          comments.push({ icon: '👴', type: 'situation', text: `À ${age} ans, privilégiez les dépenses de confort et de santé plutôt que les crédits longs.` });
-        } else if (situation === 'independant' && type === 'professionnel') {
-          comments.push({ icon: '💼', type: 'situation', text: `En tant qu'indépendant, ces frais professionnels sont déductibles de vos revenus. Pensez à conserver toutes les factures.` });
+        // (C5) Commentaire patrimoine (% du patrimoine)
+        if (totalPatrimoine > 0 && !isPatrimoine && pctPatrimoine >= 1) {
+          addComment(
+            '📊', 'patrimoine',
+            `Cette dépense représente <strong>${pctPatrimoine.toFixed(1)}% de votre patrimoine</strong> actuel (${fmt(totalPatrimoine)}).`,
+            pctPatrimoine >= 5 ? 60 : 30
+          );
         }
 
-        // Commentaire 6 : alerte horizon
-        if (horizon === 'court' && (type === 'credits' || type === 'equipement')) {
-          const months = epargneMoy > 0 ? Math.round(montant / epargneMoy) : null;
-          comments.push({
-            icon: '⏳',
-            type: 'horizon',
-            text: `Vous visez un objectif à <strong>court terme</strong>. Cet achat peut le retarder${months ? ` de ${months} mois` : ''}.`
-          });
+        // (C6) Commentaire épargne (ratio)
+        if (epargneMoy > 0 && !isPatrimoine && effortVsEpargne >= 1) {
+          const ratioStr = effortVsEpargne.toFixed(1);
+          const mois = effortVsEpargne >= 1 ? Math.round(effortVsEpargne) : 1;
+          addComment(
+            '🐷', 'epargne',
+            `C'est <strong>${ratioStr}× votre épargne mensuelle moyenne</strong> (${fmt(epargneMoy)}), soit l'équivalent de <strong>${mois} mois</strong> d'épargne.`,
+            effortVsEpargne >= 3 ? 55 : 30
+          );
         }
 
-        // Commentaire 7 : suggestion de fractionnement
-        if (budget > 0 && (montantMensuel / budget) * 100 > 30) {
-          const n = Math.ceil((montantMensuel / budget) * 100 / 20);
+        // (C7) Commentaire charges
+        if (charges > 0 && !isPatrimoine && pctCharges >= 30) {
+          addComment(
+            '💸', 'charges',
+            `Cette dépense représente <strong>${pctCharges.toFixed(0)}% de vos charges fixes</strong> (${fmt(charges)}). Un ratio élevé peut mettre en tension votre budget.`,
+            pctCharges >= 60 ? 45 : 25
+          );
+        }
+
+        // (C8) Alerte abonnement (loisir petit + récurrent)
+        if (type === 'loisirs' && recurrence === 'mensuel' && montant < 30) {
+          addComment(
+            '🔁', 'abonnement',
+            `<strong>Pensez à résilier facilement</strong> les abonnements de ce type si vous ne les utilisez plus — c'est l'un des postes où l'on "fuit" le plus d'argent sans s'en rendre compte.`,
+            40
+          );
+        }
+
+        // (C9) Suggestion de fractionnement (dépense lourde ponctuelle)
+        if (recurrence === 'unique' && montantMensuel > 0 && epargneMoy > 0
+            && effortVsEpargne >= 3 && !isPatrimoine && !isInvestissement) {
+          const n = Math.max(2, Math.ceil(effortVsEpargne / 2));
           const part = Math.ceil(montant / n);
-          comments.push({
-            icon: '💡',
-            type: 'suggestion',
-            text: `💡 <strong>Suggestion :</strong> vous pourriez étaler cette dépense en <strong>${n} mensualités de ${fmt(part)}€</strong> pour lisser l'impact sur votre budget.`
-          });
+          addComment(
+            '💡', 'suggestion',
+            `<strong>Suggestion :</strong> étaler cette dépense en <strong>${n} mensualités de ${fmt(part)}</strong> allégerait l'effort à <strong>${fmt(part)}/mois</strong> (vs ${fmt(montantMensuel)} ce mois-ci).`,
+            35
+          );
         }
 
-        // Commentaire 8 : suggestion d'alternative
-        if (type === 'loisirs' && montant > 100) {
-          comments.push({
-            icon: '🎯',
-            type: 'alternative',
-            text: `💡 <strong>Alternative :</strong> avez-vous considéré des loisirs gratuits ou peu coûteux (parcs, bibliothèques, événements gratuits) ?`
-          });
-        } else if (type === 'equipement' && montant > 200) {
-          comments.push({
-            icon: '🛒',
-            type: 'alternative',
-            text: `💡 <strong>Astuce :</strong> comparer les prix en ligne et attendre une promotion peut faire économiser 15-30% sur ce type d'achat.`
-          });
+        // (C10) Alerte situation
+        if (situation === 'etudiant' && type === 'credits') {
+          addComment('🎓', 'situation', `En tant qu'étudiant, les crédits longs pèsent sur votre avenir. Privilégiez l'épargne de précaution.`, 50);
+        } else if (situation === 'sans_emploi' && !['logement','alimentation','energie','sante'].includes(type)) {
+          addComment('⚠️', 'situation', `Sans emploi, cette dépense non-essentielle peut fragiliser votre trésorerie. Pouvez-vous la reporter ?`, 55);
+        } else if (situation === 'retraite' && age >= 65 && type === 'credits') {
+          addComment('👴', 'situation', `À ${age} ans, privilégiez le confort et la santé plutôt que les crédits longs.`, 50);
+        } else if (situation === 'independant' && type === 'professionnel') {
+          addComment('💼', 'situation', `En tant qu'indépendant, ces frais sont <strong>déductibles</strong> de vos revenus. Conservez factures et justificatifs.`, 45);
         }
 
-        // Commentaire 9 : impact sur les objectifs
+        // (C11) Alerte horizon court
+        if (horizon === 'court' && (type === 'credits' || type === 'equipement')) {
+          addComment('⏳', 'horizon', `Vous visez un objectif à <strong>court terme</strong> : cet achat peut le retarder${epargneMoy > 0 ? ` de <strong>${Math.round(montant / epargneMoy)} mois</strong>` : ''}.`, 40);
+        }
+
+        // (C12) Impact sur les objectifs
         if (objectives.length > 0) {
           const mainObj = objectives.find(o => o.isMain === true) || objectives[0];
-          if (mainObj && mainObj.target > 0 && epargneMoy > 0) {
-            const months = Math.round(montant / epargneMoy);
-            comments.push({
-              icon: '🎯',
-              type: 'objectif',
-              text: `Cette dépense retarderait votre objectif <strong>« ${escHtml(mainObj.name)} »</strong>${months > 0 ? ` de <strong>${months} mois</strong>` : ''}.`
-            });
+          if (mainObj && mainObj.target > 0 && epargneMoy > 0 && !isPatrimoine) {
+            const mois = Math.round(montant / epargneMoy);
+            addComment(
+              '🎯', 'objectif',
+              `Cette dépense retarderait votre objectif <strong>« ${escHtml(mainObj.name)} »</strong>${mois > 0 ? ` de <strong>${mois} mois</strong>` : ''}.`,
+              mois >= 2 ? 45 : 25
+            );
           }
         }
 
-        // Commentaire 10 : alerte récurrence
-        if (recurrence === 'mensuel' && montant > 0) {
-          comments.push({
-            icon: '📅',
-            type: 'recurrence',
-            text: `⚠️ <strong>En mensuel</strong>, cela représente <strong>${fmt(montantAnnuel)}€/an</strong>${revenu > 0 ? `, soit ${((montantAnnuel / (revenu * 12)) * 100).toFixed(0)}% de votre revenu annuel` : ''}.`
-          });
-        }
-
-        // Commentaire 11 : avertissement timing
+        // (C13) Avertissement timing (compte sélectionné)
         if (datePrevue && payment !== '__total__') {
           const acc = getAccountByName(payment);
           if (acc && acc.balance < montant) {
             const dateStr = new Date(datePrevue).toLocaleDateString('fr-FR');
-            comments.push({
-              icon: '💳',
-              type: 'timing',
-              text: `⚠️ Votre compte "${escHtml(payment)}" n'aura que ${fmt(acc.balance)}€ le ${dateStr}, ce qui est <strong>insuffisant pour cette dépense</strong> (manque ${fmt(montant - acc.balance)}€).`
-            });
+            addComment(
+              '💳', 'timing',
+              `Votre compte <strong>« ${escHtml(payment)} »</strong> n'aura que ${fmt(acc.balance)} le ${dateStr} : <strong>insuffisant</strong> (manque ${fmt(montant - acc.balance)}).`,
+              50
+            );
           }
         }
 
-        // Commentaire 12 : suggestion épargne
-        if (chargesRef > 0 && epargneMoy < chargesRef * 3 && scoreFinal < 70) {
-          const moisCoussin = epargneMoy > 0 ? (epargneMoy / chargesRef).toFixed(1) : 0;
-          comments.push({
-            icon: '🛡️',
-            type: 'coussin',
-            text: `💡 Votre coussin de sécurité est faible (${moisCoussin} mois de charges, recommandé : 3-6 mois). Reporter cet achat renforcerait d'abord votre épargne de précaution.`
-          });
+        // (C14) Coussin de sécurité faible
+        if (charges > 0 && epargneMoy > 0 && epargneMoy < charges * 3 && !isPatrimoine) {
+          const moisCoussin = (epargneMoy / charges).toFixed(1);
+          addComment(
+            '🛡️', 'coussin',
+            `Votre coussin de sécurité est faible (<strong>${moisCoussin} mois de charges</strong>, recommandé : 3-6 mois). Reporter cet achat renforcerait d'abord votre épargne de précaution.`,
+            40
+          );
         }
 
-        // 7. Construction du HTML résultat
+        // (C15) Catégorie "cadeaux" + amis : rassure
+        if (type === 'cadeaux' && context === 'amis') {
+          addComment(
+            '🎁', 'cadeau',
+            `<strong>Cadeau entre amis :</strong> c'est un geste social normal et voulu. Aucun malus n'est appliqué.`,
+            30
+          );
+        }
+
+        // 11. TRI PAR PERTINENCE — le plus pertinent en premier
+        comments.sort((a, b) => b.pertinence - a.pertinence);
+
+        // 12. Construction du HTML résultat
         const resultEl = document.getElementById('expenseResult');
         resultEl.classList.remove('empty');
 
-        // Bouton "Ajouter comme transaction" : pré-remplit
-        // Si l'utilisateur a choisi "Patrimoine total" (sentinel __total__),
-        // on ne peut pas pré-sélectionner un compte spécifique ; on désactive le bouton.
+        // Bouton "Ajouter comme transaction" : désactivé si Patrimoine total
         const canAddAsTx = payment !== '__total__' && payment !== '';
         const addBtnHtml = canAddAsTx
           ? `<button class="btn btn-gold btn-sm" onclick="addExpenseAsTransaction()">💾 Ajouter comme transaction</button>`
           : `<button class="btn btn-ghost btn-sm" disabled title="Sélectionnez un compte spécifique pour enregistrer">💾 Ajouter comme transaction</button>`;
 
-        // Stocker temporairement le résultat pour addExpenseAsTransaction()
+        // Stocke l'analyse pour addExpenseAsTransaction()
         resultEl._lastAnalysis = { montant, type, recurrence, datePrevue, payment, character, context };
 
-        // Construction des barres de critères
+        // Construit le HTML des commentaires : 1 primary + N secondaires
+        const primary = comments[0];
+        const secondaries = comments.slice(1);
+
+        // Synthèse (insight) en premier, puis commentaire principal
+        const insights = comments.filter(c => c.type === 'insight');
+        const insightsHtml = insights.map(c => `
+          <div class="expense-insight">
+            <span class="expense-insight-icon">${c.icon}</span>
+            <span>${c.text}</span>
+          </div>
+        `).join('');
+
+        // Commentaire principal (le plus pertinent)
+        const primaryHtml = `
+          <div class="expense-comment-primary">
+            <span class="expense-comment-icon">${primary.icon}</span>
+            <span>${primary.text}</span>
+          </div>
+        `;
+
+        // Commentaires secondaires
+        const secondariesHtml = secondaries.map(c => `
+          <div class="expense-comment-secondary">
+            <span class="expense-comment-icon">${c.icon}</span>
+            <span>${c.text}</span>
+          </div>
+        `).join('');
+
+        // Barres de critères (HTML inchangé)
         const criteriaHtml = criteria.map(c => {
           const color = scoreToColor(c.score);
           return `<div class="expense-criterion">
@@ -7219,20 +7436,36 @@
           <div style="font-size:10px;color:var(--text3);margin-top:-2px;margin-left:4px">${escHtml(c.detail)}</div>`;
         }).join('');
 
-        // Construction des commentaires (max 5 pour la lisibilité)
-        const commentsToShow = comments.slice(0, 5);
-        const commentsHtml = commentsToShow.map(c =>
-          `<div class="expense-comment">
-            <span class="expense-comment-icon">${c.icon}</span>
-            <span class="expense-comment-text">${c.text}</span>
-          </div>`
-        ).join('');
-
+        // Warning
         const warningHtml = dataInsufficient
-          ? `<div class="expense-data-warning">⚠️ Données insuffisantes (revenu, budget, épargne, patrimoine). L'analyse reste indicative — complétez votre profil et vos comptes pour un verdict plus précis.</div>`
+          ? `<div class="expense-data-warning">⚠️ Données insuffisantes (revenu, épargne, patrimoine). L'analyse reste indicative — complétez votre profil et vos comptes pour un verdict plus précis.</div>`
           : (dataWarning
             ? `<div class="expense-data-warning">ℹ️ Analyse partielle (manque : ${dataWarning}). Les autres critères sont pris en compte.</div>`
             : '');
+
+        // Toggle "Autres commentaires" (secondaires)
+        // État sauvegardé pour persister entre analyses
+        if (typeof window._expenseOthersOpen === 'undefined') {
+          window._expenseOthersOpen = false;
+        }
+        const othersOpen = window._expenseOthersOpen;
+        const othersHtml = (secondaries.length > 0) ? `
+          <button class="expense-others-toggle ${othersOpen ? 'expanded' : ''}" id="expenseOthersToggle" onclick="toggleExpenseOthers()">
+            <span class="expense-others-toggle-arrow">▶</span>
+            <span>Autres commentaires (${secondaries.length})</span>
+          </button>
+          <div class="expense-others-section ${othersOpen ? 'expanded' : ''}" id="expenseOthersSection">
+            <div class="expense-others-list">${secondariesHtml}</div>
+          </div>
+        ` : '';
+
+        // Toggle "Détail" (critères) — état préservé si l'utilisateur
+        // l'a explicitement ouvert lors d'une analyse précédente.
+        // Sinon, par défaut, on le ferme.
+        if (typeof window._expenseDetailsOpen === 'undefined') {
+          window._expenseDetailsOpen = false;
+        }
+        const detailOpen = window._expenseDetailsOpen;
 
         resultEl.innerHTML = `
           <div class="expense-tool-result-header">
@@ -7243,12 +7476,14 @@
             </div>
           </div>
           ${warningHtml}
-          <div class="expense-comments">${commentsHtml}</div>
+          ${insightsHtml}
+          <div class="expense-comments">${primaryHtml}</div>
+          ${othersHtml}
           <button class="expense-detail-toggle" id="expenseDetailToggle" onclick="toggleExpenseDetails()">
             <span class="expense-detail-toggle-arrow">▶</span>
             <span>Détail (${criteria.length} critères)</span>
           </button>
-          <div class="expense-detail-section" id="expenseDetailSection">
+          <div class="expense-detail-section ${detailOpen ? 'expanded' : ''}" id="expenseDetailSection">
             <div class="expense-criteria">${criteriaHtml}</div>
           </div>
           <div class="expense-actions-row">
@@ -7256,6 +7491,12 @@
             <button class="btn btn-ghost btn-sm" onclick="resetExpenseTool()">🔄 Nouvelle analyse</button>
           </div>
         `;
+
+        // Si l'état "Détail" était ouvert, on l'ouvre visuellement
+        if (detailOpen) {
+          const btn = document.getElementById('expenseDetailToggle');
+          if (btn) btn.classList.add('expanded');
+        }
       }
 
       // ===========================================================
@@ -7286,8 +7527,8 @@
       // TOGGLE DES DÉTAILS (scores détaillés)
       // ===========================================================
       // Affiche/masque la section dépliable contenant les barres
-      // de scores pour chaque critère. L'état "expanded" est sauvegardé
-      // sur le bouton pour pouvoir le fermer lors d'une autre analyse.
+      // de scores pour chaque critère. L'état est PERSISTÉ entre
+      // analyses (variable globale window._expenseDetailsOpen).
       // ===========================================================
       function toggleExpenseDetails() {
         const section = document.getElementById('expenseDetailSection');
@@ -7297,10 +7538,43 @@
         if (isExpanded) {
           section.classList.remove('expanded');
           btn.classList.remove('expanded');
+          window._expenseDetailsOpen = false;
         } else {
           section.classList.add('expanded');
           btn.classList.add('expanded');
+          window._expenseDetailsOpen = true;
         }
+      }
+
+      // Affiche/masque la section "Autres commentaires" (commentaires
+      // secondaires, classés par pertinence). L'état est aussi persisté.
+      function toggleExpenseOthers() {
+        const section = document.getElementById('expenseOthersSection');
+        const btn = document.getElementById('expenseOthersToggle');
+        if (!section || !btn) return;
+        const isExpanded = section.classList.contains('expanded');
+        if (isExpanded) {
+          section.classList.remove('expanded');
+          btn.classList.remove('expanded');
+          window._expenseOthersOpen = false;
+        } else {
+          section.classList.add('expanded');
+          btn.classList.add('expanded');
+          window._expenseOthersOpen = true;
+        }
+      }
+
+      // Construit le texte du verdict principal (utilisé dans le commentaire
+      // le plus pertinent). Évite la concaténation tordue qui produisait
+      // "représente , Thomas est..." (bug de l'ancienne version).
+      function buildVerdictText(montant, recurrenceLabel, montantAnnuel, montantMensuel, prenom, scoreFinal, levelInfo) {
+        const prenomPart = prenom ? `, ${prenom}` : '';
+        const recPart = (recurrenceLabel !== 'unique')
+          ? (recurrenceLabel === 'mensuel' ? ` (${fmt(montantAnnuel)}/an)`
+             : recurrenceLabel === 'annuel' ? ` (≈${fmt(montantMensuel)}/mois)`
+             : '')
+          : '';
+        return `Cette dépense${recurrenceLabel !== 'unique' ? ' ' + recurrenceLabel : ''} de <strong>${fmt(montant)}</strong>${prenomPart} est <strong>${levelInfo.label.toLowerCase()}</strong>${recPart}. Score global : <strong>${scoreFinal}/100</strong>.`;
       }
 
       // ===========================================================
@@ -8699,6 +8973,12 @@
 
       // ================================================================
 
+      // Initialisation des variables globales d'état des toggles
+      // de l'outil "Évaluer une dépense". Elles permettent de
+      // persister l'état "ouvert/fermé" entre plusieurs analyses.
+      window._expenseDetailsOpen = false;
+      window._expenseOthersOpen  = false;
+
       function init() {
         const now = new Date();
         document.getElementById('headerDate').textContent = now.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -8752,6 +9032,6 @@
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a26eb75df8196979',t:'MTc4NjAyNjM4Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a26f9c9ffea20369',t:'MTc4NjAzNTc3Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
