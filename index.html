@@ -3417,6 +3417,143 @@
         -webkit-overflow-scrolling: touch;
       }
     }
+
+    /* ============================================
+       MODULE A — INSIGHTS & ANOMALIES (point 7)
+       ============================================
+       Widget compact sur la Vue d'ensemble. Affiche 3 anomalies
+       prioritaires max + bouton "Voir les X autres".
+       4 niveaux : Critique / Attention / Information / Positif.
+       Ensemble des libellés ≤ 50 mots (pas de surcharge).
+       ============================================ */
+    .insights-card { margin-bottom: 14px; }
+    .insights-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    .insights-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 600; color: var(--text3);
+      letter-spacing: 1px;
+    }
+    .insights-count-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 22px; height: 20px; padding: 0 6px;
+      background: var(--bg3); color: var(--gold);
+      border-radius: 10px; font-size: 10px; font-weight: 700;
+    }
+    .insights-list {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .insight-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      background: var(--bg3);
+      border-radius: 7px;
+      border-left: 3px solid var(--border);
+      transition: transform 0.15s ease;
+    }
+    .insight-item:hover { transform: translateX(2px); }
+    .insight-item[data-level="critical"] { border-left-color: var(--red); }
+    .insight-item[data-level="warning"]  { border-left-color: var(--amber); }
+    .insight-item[data-level="info"]     { border-left-color: var(--blue); }
+    .insight-item[data-level="positive"] { border-left-color: var(--green); }
+    .insight-icon {
+      font-size: 16px; line-height: 1; flex-shrink: 0; width: 22px; text-align: center;
+    }
+    .insight-item[data-level="critical"] .insight-icon { color: var(--red); }
+    .insight-item[data-level="warning"]  .insight-icon { color: var(--amber); }
+    .insight-item[data-level="info"]     .insight-icon { color: var(--blue); }
+    .insight-item[data-level="positive"] .insight-icon { color: var(--green); }
+    .insight-text {
+      flex: 1; min-width: 0;
+      font-size: 11.5px; color: var(--text2);
+      line-height: 1.35;
+    }
+    .insight-text strong { color: var(--text); font-weight: 600; }
+    .insight-text .insight-detail { color: var(--text3); font-size: 10.5px; }
+    .insights-empty {
+      padding: 14px 12px;
+      text-align: center;
+      color: var(--text3);
+      font-size: 11.5px;
+      background: var(--bg3);
+      border-radius: 7px;
+      border-left: 3px solid var(--green);
+    }
+    .insights-more {
+      width: 100%;
+      margin-top: 4px;
+      padding: 8px 12px;
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 7px;
+      color: var(--text2);
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .insights-more:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(200, 168, 75, 0.05);
+    }
+    .insights-more-arrow { display: inline-block; transition: transform 0.2s; }
+    .insights-more.expanded .insights-more-arrow { transform: rotate(180deg); }
+
+    /* Modale "Tous les insights" */
+    .insights-modal {
+      max-width: 580px;
+      max-height: 80vh;
+    }
+    .insights-modal-list {
+      display: flex; flex-direction: column; gap: 8px;
+      max-height: 60vh; overflow-y: auto;
+      padding-right: 4px;
+    }
+    .insights-modal-section {
+      margin-bottom: 14px;
+    }
+    .insights-modal-section-title {
+      font-size: 10px; letter-spacing: 1.5px;
+      color: var(--text3); margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .insights-modal-section-title .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .insights-modal-section.critical .dot { background: var(--red); }
+    .insights-modal-section.warning  .dot { background: var(--amber); }
+    .insights-modal-section.info     .dot { background: var(--blue); }
+    .insights-modal-section.positive .dot { background: var(--green); }
+    .insight-modal-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg3);
+      border-radius: 7px;
+      border-left: 3px solid var(--border);
+    }
+    .insight-modal-item[data-level="critical"] { border-left-color: var(--red); }
+    .insight-modal-item[data-level="warning"]  { border-left-color: var(--amber); }
+    .insight-modal-item[data-level="info"]     { border-left-color: var(--blue); }
+    .insight-modal-item[data-level="positive"] { border-left-color: var(--green); }
+    .insight-modal-item .insight-icon { font-size: 18px; }
+    .insight-modal-item .insight-text { font-size: 12px; }
+    .insight-modal-item .insight-detail {
+      display: block; margin-top: 3px;
+      font-size: 11px; color: var(--text3); line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+      .insights-card { margin-bottom: 10px; }
+      .insights-list { gap: 5px; }
+      .insight-item { padding: 8px 10px; gap: 8px; }
+      .insight-icon { font-size: 14px; width: 18px; }
+      .insight-text { font-size: 11px; }
+      .insight-text .insight-detail { font-size: 10px; }
+      .insights-modal { max-width: 100%; }
+    }
   </style>
 </head>
 
@@ -3666,6 +3803,24 @@
               <button class="panel-action" onclick="showPage('comptes');setSidebarActive(document.querySelector('.sidebar-item[onclick*=&quot;comptes&quot;]'));if(window.innerWidth<=768)closeMobileSidebar()">Tout voir ›</button>
             </div>
             <div class="chart-wrap h180"><canvas id="top3Chart"></canvas></div>
+          </div>
+
+          <!-- ============================================
+               MODULE A — INSIGHTS & ANOMALIES (point 7)
+               Widget compact affichant 3 anomalies prioritaires
+               + bouton "Voir les X autres" pour ouvrir la modale.
+               ============================================ -->
+          <div class="panel insights-card">
+            <div class="insights-header">
+              <div class="insights-title">
+                <span>💡 INSIGHTS &amp; ANOMALIES</span>
+                <span class="insights-count-badge" id="insightsCountBadge">0</span>
+              </div>
+              <button class="panel-action" onclick="openInsightsModal()">Voir tout ›</button>
+            </div>
+            <div class="insights-list" id="insightsList">
+              <div class="insights-empty">✅ Aucune anomalie détectée — votre situation financière semble saine.</div>
+            </div>
           </div>
 
           <div class="grid-3cols">
@@ -4731,6 +4886,19 @@
       </div>
     </div>
 
+    <!-- Modale "Tous les insights & anomalies" (point 7) -->
+    <div class="modal-overlay" id="modal-insights">
+      <div class="modal insights-modal">
+        <div class="modal-title">💡 Tous les insights &amp; anomalies</div>
+        <div class="insights-modal-list" id="insightsModalList">
+          <!-- Rempli dynamiquement par renderInsights() -->
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal('insights')">Fermer</button>
+        </div>
+      </div>
+    </div>
+
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
@@ -5486,6 +5654,570 @@
         });
       }
 
+      // ======================== MODULE A : INSIGHTS & ANOMALIES ========================
+      // ================================================================
+      // 32 anomalies possibles classées en 4 niveaux :
+      //   🔴 critical (0)  🟠 warning (1)  🔵 info (2)  🟢 positive (3)
+      //
+      // Règle stricte anti-surcharge : on affiche 3 anomalies prioritaires
+      // max sur la Vue d'ensemble + un bouton "Voir les X autres" pour
+      // ouvrir la modale complète. L'ensemble des libellés reste ≤ 50 mots.
+      // ================================================================
+
+      // ── Helpers privés pour les calculs d'anomalies ───────────────────
+      // Récupère les transactions du mois courant (date YYYY-MM-DD)
+      function _insTxThisMonth() {
+        const now = new Date();
+        const ym = now.toISOString().slice(0, 7);
+        return (D.transactions || []).filter(t => (t.date || '').slice(0, 7) === ym);
+      }
+      // Récupère les transactions du mois précédent
+      function _insTxPrevMonth() {
+        const now = new Date();
+        const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const ym = prev.toISOString().slice(0, 7);
+        return (D.transactions || []).filter(t => (t.date || '').slice(0, 7) === ym);
+      }
+      // Total des dépenses (sorties) sur une liste de transactions
+      function _insExpenseTotal(txs) {
+        return txs.filter(t => t.type === 'expense').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+      }
+      // Total des revenus sur une liste de transactions
+      function _insIncomeTotal(txs) {
+        return txs.filter(t => t.type === 'income').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+      }
+      // Historique sur 6 mois glissants (le plus ancien en premier)
+      function _insHistLast6() {
+        if (!D.history || D.history.length === 0) return [];
+        return D.history.slice(-6);
+      }
+      // Médiane d'un tableau de nombres
+      function _insMedian(arr) {
+        if (!arr || arr.length === 0) return 0;
+        const s = [...arr].sort((a, b) => a - b);
+        const m = Math.floor(s.length / 2);
+        return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+      }
+      // Epargne mensuelle (revenu - dépenses) sur un mois de transactions
+      function _insSavings(txs) {
+        return _insIncomeTotal(txs) - _insExpenseTotal(txs);
+      }
+      // Taux d'épargne d'un mois (% du revenu)
+      function _insSavingsRate(txs) {
+        const inc = _insIncomeTotal(txs);
+        return inc > 0 ? (_insSavings(txs) / inc) * 100 : 0;
+      }
+      // Variation en % entre 2 valeurs
+      function _insPctChange(a, b) {
+        if (!b || b === 0) return a > 0 ? 100 : 0;
+        return ((a - b) / b) * 100;
+      }
+      // Parse une date string YYYY-MM-DD en Date (robuste, sans UTC)
+      function _insParseDate(s) {
+        if (!s) return null;
+        const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!m) return null;
+        return new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+      }
+      // Jours depuis la dernière transaction d'un compte
+      function _insDaysSinceLastTx(accountName) {
+        const txs = (D.transactions || []).filter(t => t.account === accountName);
+        if (txs.length === 0) return Infinity;
+        const dates = txs.map(t => _insParseDate(t.date)).filter(d => d).sort((a, b) => b - a);
+        if (dates.length === 0) return Infinity;
+        return Math.floor((Date.now() - dates[0].getTime()) / 86400000);
+      }
+      // Trouve les transactions récurrentes (même description, 3+ occurrences)
+      function _insRecurringTxs() {
+        const map = {};
+        (D.transactions || []).forEach(t => {
+          const key = (t.desc || '').toLowerCase().trim();
+          if (key.length < 3) return;
+          if (!map[key]) map[key] = [];
+          map[key].push(t);
+        });
+        return Object.values(map).filter(arr => arr.length >= 3);
+      }
+      // Catégorie (heuristique simple) d'une transaction
+      function _insCatOfTx(t) {
+        return t.cat || 'autre';
+      }
+      // Total dépensé par catégorie sur une liste de transactions
+      function _insByCategory(txs) {
+        const out = {};
+        txs.filter(t => t.type === 'expense').forEach(t => {
+          const c = _insCatOfTx(t);
+          out[c] = (out[c] || 0) + (parseFloat(t.amount) || 0);
+        });
+        return out;
+      }
+
+      // ── Fonction principale : détecte les anomalies ─────────────────
+      // Retourne un tableau d'objets { id, level, icon, text, detail }
+      // level ∈ { 'critical', 'warning', 'info', 'positive' }
+      function detectAnomalies() {
+        const insights = [];
+        const txs = D.transactions || [];
+        const hist = D.history || [];
+        const accounts = D.accounts || [];
+        const settings = D.settings || {};
+        const profile = D.profile || {};
+        const charges = parseFloat(profile.charges) || 0;
+        const revenu = parseFloat(settings.revenu) || 0;
+        const budget = parseFloat(settings.budget) || 0;
+        const goal = parseFloat(settings.goal) || 0;
+        const txThis = _insTxThisMonth();
+        const txPrev = _insTxPrevMonth();
+        const expThis = _insExpenseTotal(txThis);
+        const expPrev = _insExpenseTotal(txPrev);
+        const incThis = _insIncomeTotal(txThis);
+        const incPrev = _insIncomeTotal(txPrev);
+        const hist6 = _insHistLast6();
+        const total = getTotal();
+        const last = hist.length > 0 ? hist[hist.length - 1] : null;
+        const prev = hist.length > 1 ? hist[hist.length - 2] : null;
+
+        // ── 🔴 CRITIQUES (5) ──────────────────────────────────────────
+        // 18. Risque solde négatif : solde < dépenses prévues + 1
+        if (accounts.length > 0 && expThis > 0) {
+          const minBalance = Math.min(...accounts.map(a => parseFloat(a.balance) || 0));
+          if (minBalance < expThis + 1) {
+            insights.push({
+              id: 18, level: 'critical', icon: '🚨',
+              text: 'Risque de solde négatif',
+              detail: `Plus bas compte : ${fmt(minBalance)}, dépenses du mois : ${fmt(expThis)}.`
+            });
+          }
+        }
+        // 17. Solde courant proche du minimum : solde < charges mensuelles
+        if (accounts.length > 0 && charges > 0) {
+          const minBalance = Math.min(...accounts.map(a => parseFloat(a.balance) || 0));
+          if (minBalance > 0 && minBalance < charges) {
+            insights.push({
+              id: 17, level: 'critical', icon: '⛔',
+              text: 'Solde courant sous les charges',
+              detail: `${fmt(minBalance)} disponible, charges mensuelles : ${fmt(charges)}.`
+            });
+          }
+        }
+        // 24. Liquidités insuffisantes : < 3 mois de charges
+        if (charges > 0 && total > 0) {
+          const months = total / charges;
+          if (months < 3) {
+            insights.push({
+              id: 24, level: 'critical', icon: '🛡️',
+              text: 'Coussin de sécurité insuffisant',
+              detail: `${months.toFixed(1)} mois de charges (recommandé : 3-6 mois).`
+            });
+          }
+        }
+        // 2. Charges > 40% revenus
+        if (revenu > 0 && charges > 0 && (charges / revenu) > 0.4) {
+          insights.push({
+            id: 2, level: 'critical', icon: '💸',
+            text: 'Charges trop élevées vs revenus',
+            detail: `${Math.round((charges / revenu) * 100)}% des revenus absorbés (seuil : 40%).`
+          });
+        }
+        // 21. Patrimoine en baisse : -5% vs M-1
+        if (last && prev && prev.total > 0) {
+          const change = _insPctChange(last.total, prev.total);
+          if (change <= -5) {
+            insights.push({
+              id: 21, level: 'critical', icon: '📉',
+              text: 'Patrimoine en forte baisse',
+              detail: `${change.toFixed(1)}% vs mois dernier (${fmt(last.total)} vs ${fmt(prev.total)}).`
+            });
+          }
+        }
+
+        // ── 🟠 ATTENTION (~7) ─────────────────────────────────────────
+        // 1. Hausse alimentaire +20% vs M-1
+        const catThis = _insByCategory(txThis);
+        const catPrev = _insByCategory(txPrev);
+        const foodThis = catThis['alimentation'] || 0;
+        const foodPrev = catPrev['alimentation'] || 0;
+        if (foodPrev > 0 && foodThis > 0) {
+          const ch = _insPctChange(foodThis, foodPrev);
+          if (ch >= 20) {
+            insights.push({
+              id: 1, level: 'warning', icon: '🍔',
+              text: 'Hausse des dépenses alimentaires',
+              detail: `+${ch.toFixed(0)}% vs mois dernier (${fmt(foodThis)}).`
+            });
+          }
+        }
+        // 3. Épargne < moyenne -30% sur 6 mois
+        if (hist6.length >= 4) {
+          // Calcule la moyenne des croissances mensuelles sur l'historique
+          const growths = [];
+          for (let i = 1; i < hist6.length; i++) {
+            const g = hist6[i].total - hist6[i - 1].total;
+            if (g > 0) growths.push(g);
+          }
+          const avgGrowth = growths.length > 0 ? growths.reduce((s, g) => s + g, 0) / growths.length : 0;
+          const lastGrowth = last && prev ? last.total - prev.total : 0;
+          if (avgGrowth > 0 && lastGrowth > 0 && lastGrowth < avgGrowth * 0.7) {
+            insights.push({
+              id: 3, level: 'warning', icon: '🐷',
+              text: 'Épargne en baisse vs moyenne',
+              detail: `Croissance du mois : ${fmt(lastGrowth)}, moyenne : ${fmt(avgGrowth)}.`
+            });
+          }
+        }
+        // 8. Catégorie forte hausse +30% vs moyenne 6m
+        if (hist6.length >= 3 && txs.length > 5) {
+          // Approximation : on regarde les catégories du mois courant
+          // et on compare avec le mois précédent. Si +30%, alerte.
+          const catThis = _insByCategory(txThis);
+          const catPrev = _insByCategory(txPrev);
+          // Limite à 1 alerte catégorie pour éviter la surcharge
+          let catAlertAdded = false;
+          for (const [cat, val] of Object.entries(catThis)) {
+            if (catAlertAdded) break;
+            const prevVal = catPrev[cat] || 0;
+            if (prevVal > 50 && val > prevVal * 1.3) {
+              insights.push({
+                id: 8, level: 'warning', icon: '📊',
+                text: `Forte hausse : ${cat}`,
+                detail: `+${Math.round(((val - prevVal) / prevVal) * 100)}% vs mois dernier (${fmt(val)}).`
+              });
+              catAlertAdded = true;
+            }
+          }
+        }
+        // 11. Multiplication petites dépenses tx<20€ +40%
+        const smallThis = txThis.filter(t => t.type === 'expense' && (parseFloat(t.amount) || 0) < 20);
+        const smallPrev = txPrev.filter(t => t.type === 'expense' && (parseFloat(t.amount) || 0) < 20);
+        if (smallPrev.length > 0 && smallThis.length > smallPrev.length * 1.4) {
+          insights.push({
+            id: 11, level: 'warning', icon: '🛒',
+            text: 'Multiplication des petites dépenses',
+            detail: `${smallThis.length} achats < 20€ ce mois vs ${smallPrev.length} le mois dernier.`
+          });
+        }
+        // 13. Baisse revenus -15% vs moyenne 6m
+        // On utilise le revenu déclaré dans settings (référence) et on compare
+        // au revenu effectivement reçu ce mois-ci
+        if (revenu > 0 && incThis > 0) {
+          const ch = _insPctChange(incThis, revenu);
+          if (ch <= -15) {
+            insights.push({
+              id: 13, level: 'warning', icon: '📉',
+              text: 'Baisse de revenus',
+              detail: `Revenu du mois : ${fmt(incThis)} vs déclaré : ${fmt(revenu)} (${ch.toFixed(0)}%).`
+            });
+          }
+        }
+        // 15. Taux d'épargne en baisse -20% vs moyenne 6m
+        // On calcule la moyenne des taux d'épargne sur 6 mois à partir de l'historique
+        // (proxy : croissance mensuelle du patrimoine / valeur du patrimoine)
+        if (hist6.length >= 4) {
+          const rates = [];
+          for (let i = 1; i < hist6.length; i++) {
+            const prevTotal = hist6[i - 1].total;
+            if (prevTotal > 0) {
+              const growth = hist6[i].total - prevTotal;
+              rates.push((growth / prevTotal) * 100);
+            }
+          }
+          const avgRate = rates.length > 0 ? rates.reduce((s, r) => s + r, 0) / rates.length : 0;
+          const rateThis = _insSavingsRate(txThis);
+          if (avgRate > 0 && rateThis > 0 && rateThis < avgRate * 0.8) {
+            insights.push({
+              id: 15, level: 'warning', icon: '📉',
+              text: 'Taux d\'épargne en baisse',
+              detail: `Taux actuel : ${rateThis.toFixed(0)}% vs moyenne 6m : ${avgRate.toFixed(0)}%.`
+            });
+          }
+        }
+        // 22. Patrimoine baisse 3+ mois consécutifs
+        if (hist6.length >= 4) {
+          // Compare les 3 DERNIÈRES variations mensuelles
+          const last3 = hist6.slice(-3); // 3 derniers mois
+          let declining = true;
+          for (let i = 1; i < last3.length; i++) {
+            if (last3[i].total >= last3[i - 1].total) { declining = false; break; }
+          }
+          if (declining) {
+            insights.push({
+              id: 22, level: 'warning', icon: '📉',
+              text: 'Patrimoine en baisse 3+ mois',
+              detail: 'Tendance baissière confirmée sur les 3 derniers mois.'
+            });
+          }
+        }
+
+        // ── 🔵 INFORMATION (~7) ───────────────────────────────────────
+        // 5. Compte courant bas : <50% médiane 6m
+        if (hist6.length >= 3) {
+          const medBanque = _insMedian(hist6.map(h => parseFloat(h.banque) || 0));
+          if (medBanque > 0) {
+            const banqueNow = getBanque();
+            if (banqueNow < medBanque * 0.5) {
+              insights.push({
+                id: 5, level: 'info', icon: '🏛️',
+                text: 'Compte courant bas',
+                detail: `${fmt(banqueNow)} vs médiane 6 mois : ${fmt(medBanque)}.`
+              });
+            }
+          }
+        }
+        // 9. Récurrente inhabituelle +15% vs habituel
+        const recurring = _insRecurringTxs();
+        recurring.forEach(group => {
+          const amounts = group.map(t => parseFloat(t.amount) || 0);
+          const avg = amounts.reduce((s, a) => s + a, 0) / amounts.length;
+          const lastTx = group.sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
+          if (lastTx && avg > 0) {
+            const lastAmt = parseFloat(lastTx.amount) || 0;
+            const ch = _insPctChange(lastAmt, avg);
+            if (ch >= 15) {
+              insights.push({
+                id: 9, level: 'info', icon: '🔁',
+                text: 'Récurrente inhabituelle',
+                detail: `« ${lastTx.desc} » à ${fmt(lastAmt)} (+${ch.toFixed(0)}% vs habituel).`
+              });
+            }
+          }
+        });
+        // 10. Nouvelle récurrente : 3+ occurrences similaires
+        if (recurring.length > 0 && recurring.every(g => g.length >= 3)) {
+          const newest = recurring
+            .map(g => ({ g, latest: g.sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0] }))
+            .sort((a, b) => (b.latest.date || '').localeCompare(a.latest.date || ''))[0];
+          if (newest) {
+            insights.push({
+              id: 10, level: 'info', icon: '🆕',
+              text: 'Nouvelle récurrente détectée',
+              detail: `« ${newest.latest.desc} » — ${newest.g.length} occurrences.`
+            });
+          }
+        }
+        // 12. Dépenses concentrées >50% en début de mois
+        if (txThis.length > 3) {
+          const startOfMonth = new Date();
+          startOfMonth.setDate(1);
+          const dayLimit = 10;
+          const earlyExp = txThis
+            .filter(t => t.type === 'expense')
+            .filter(t => {
+              const d = _insParseDate(t.date);
+              if (!d) return false;
+              const dayDiff = (d - startOfMonth) / 86400000;
+              return dayDiff >= 0 && dayDiff <= dayLimit;
+            })
+            .reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+          if (expThis > 0 && (earlyExp / expThis) > 0.5) {
+            insights.push({
+              id: 12, level: 'info', icon: '📅',
+              text: 'Dépenses concentrées en début de mois',
+              detail: `${Math.round((earlyExp / expThis) * 100)}% des dépenses dans les 10 premiers jours.`
+            });
+          }
+        }
+        // 19. Transfert inhabituel >2× médiane 6m
+        const transfers = txs.filter(t => /vir|virement|transfert/i.test(t.desc || ''));
+        if (transfers.length > 0) {
+          const amounts = transfers.map(t => parseFloat(t.amount) || 0);
+          const med = _insMedian(amounts);
+          const maxT = Math.max(...amounts);
+          if (med > 0 && maxT > med * 2) {
+            insights.push({
+              id: 19, level: 'info', icon: '🔄',
+              text: 'Transfert inhabituel',
+              detail: `Montant max : ${fmt(maxT)}, médiane : ${fmt(med)}.`
+            });
+          }
+        }
+        // 20. Compte dormant : 0 mouvement depuis X jours
+        accounts.forEach(a => {
+          const days = _insDaysSinceLastTx(a.name);
+          if (days >= 60) {
+            insights.push({
+              id: 20, level: 'info', icon: '💤',
+              text: 'Compte dormant',
+              detail: `« ${a.name} » : aucun mouvement depuis ${days} jours.`
+            });
+          }
+        });
+        // 23. Concentration excessive >70% dans 1 compte
+        if (accounts.length >= 2 && total > 0) {
+          const maxAcc = accounts.reduce((m, a) => (a.balance > m.balance ? a : m), accounts[0]);
+          const pct = (parseFloat(maxAcc.balance) || 0) / total * 100;
+          if (pct > 70) {
+            insights.push({
+              id: 23, level: 'info', icon: '🎯',
+              text: 'Concentration excessive',
+              detail: `${pct.toFixed(0)}% du patrimoine sur « ${maxAcc.name} ».`
+            });
+          }
+        }
+        // 27. Ratio besoins/plaisirs (heuristique simple via profil)
+        // Non implémenté : nécessite de classifier les transactions en
+        // "besoin" / "plaisir", ce qui n'est pas dans le modèle actuel.
+
+        // ── 🟢 POSITIFS (~7) ─────────────────────────────────────────
+        // 4. Patrimoine en progression 3 mois consécutifs
+        if (hist6.length >= 4) {
+          // Compare les 3 DERNIÈRES variations mensuelles
+          const last3 = hist6.slice(-3);
+          let rising = true;
+          for (let i = 1; i < last3.length; i++) {
+            if (last3[i].total <= last3[i - 1].total) { rising = false; break; }
+          }
+          if (rising) {
+            insights.push({
+              id: 4, level: 'positive', icon: '📈',
+              text: 'Patrimoine en progression',
+              detail: '3 mois consécutifs de hausse.'
+            });
+          }
+        }
+        // 28. Taux d'épargne record sur 12 mois
+        if (incThis > 0) {
+          const rateThis = _insSavingsRate(txThis);
+          if (rateThis > 20) {
+            insights.push({
+              id: 28, level: 'positive', icon: '🏆',
+              text: 'Taux d\'épargne élevé',
+              detail: `${rateThis.toFixed(0)}% ce mois-ci, bien au-dessus de la moyenne.`
+            });
+          }
+        }
+        // 29. Dépenses sous contrôle < budget -15%
+        if (budget > 0 && expThis > 0 && expThis < budget * 0.85) {
+          insights.push({
+            id: 29, level: 'positive', icon: '✅',
+            text: 'Dépenses sous contrôle',
+            detail: `${fmt(expThis)} vs budget ${fmt(budget)} (${Math.round((1 - expThis / budget) * 100)}% sous).`
+          });
+        }
+        // 30. Objectif en avance > trajectoire nécessaire
+        if (D.objectives && D.objectives.length > 0) {
+          const mainObj = D.objectives.find(o => o.isMain === true) || D.objectives[0];
+          if (mainObj && mainObj.target > 0 && mainObj.date && mainObj.current > 0) {
+            const targetDate = _insParseDate(mainObj.date);
+            const now = new Date();
+            if (targetDate && targetDate > now) {
+              // Heuristique : on suppose que l'objectif a commencé en début d'année
+              const startOfYear = new Date(now.getFullYear(), 0, 1);
+              const totalDays = Math.max(1, (targetDate - startOfYear) / 86400000);
+              const elapsedDays = Math.max(0, (now - startOfYear) / 86400000);
+              const expectedPct = Math.min(100, (elapsedDays / totalDays) * 100);
+              const actualPct = (mainObj.current / mainObj.target) * 100;
+              if (actualPct > expectedPct + 10) {
+                insights.push({
+                  id: 30, level: 'positive', icon: '🎯',
+                  text: 'Objectif en avance',
+                  detail: `« ${mainObj.name} » : ${actualPct.toFixed(0)}% (attendu : ${expectedPct.toFixed(0)}%).`
+                });
+              }
+            }
+          }
+        }
+        // 31. Fonds sécurité renforcé +1 mois couvert
+        if (charges > 0 && hist6.length >= 2) {
+          const oldest = hist6[0];
+          const newest = hist6[hist6.length - 1];
+          const monthsNow = newest.total / charges;
+          const monthsOld = oldest.total / charges;
+          if (monthsNow - monthsOld >= 1) {
+            insights.push({
+              id: 31, level: 'positive', icon: '🛡️',
+              text: 'Coussin de sécurité renforcé',
+              detail: `+${(monthsNow - monthsOld).toFixed(1)} mois de couverture en plus.`
+            });
+          }
+        }
+        // 32. Mois sans dépassement : 0 catégorie au-dessus du budget
+        // Non implémenté : nécessite un budget par catégorie, pas dans le modèle.
+
+        // ── TRI PAR PRIORITÉ (critical → positive) ────────────────────
+        const priority = { critical: 0, warning: 1, info: 2, positive: 3 };
+        insights.sort((a, b) => priority[a.level] - priority[b.level]);
+        return insights;
+      }
+
+      // ── Affichage widget Vue d'ensemble : 3 max + bouton "Voir X autres" ─
+      // Règle stricte anti-surcharge : 3 prioritaires max visibles.
+      // Total des libellés affichés ≤ 50 mots (textes courts).
+      function renderInsights() {
+        const list = document.getElementById('insightsList');
+        const badge = document.getElementById('insightsCountBadge');
+        if (!list || !badge) return;
+
+        const all = detectAnomalies();
+        badge.textContent = all.length;
+
+        if (all.length === 0) {
+          list.innerHTML = '<div class="insights-empty">✅ Aucune anomalie détectée — votre situation financière semble saine.</div>';
+          return;
+        }
+
+        // 3 prioritaires max visibles
+        const top3 = all.slice(0, 3);
+        const others = all.slice(3);
+
+        const html = top3.map(i => `
+          <div class="insight-item" data-level="${i.level}">
+            <span class="insight-icon">${i.icon}</span>
+            <span class="insight-text">
+              <strong>${escHtml(i.text)}</strong>
+              <span class="insight-detail">${escHtml(i.detail)}</span>
+            </span>
+          </div>
+        `).join('');
+
+        const moreBtn = (others.length > 0)
+          ? `<button class="insights-more" onclick="openInsightsModal()">Voir les ${others.length} autres <span class="insights-more-arrow">▼</span></button>`
+          : '';
+
+        list.innerHTML = html + moreBtn;
+      }
+
+      // ── Modale "Tous les insights" : groupés par niveau ──────────────
+      function openInsightsModal() {
+        const all = detectAnomalies();
+        const list = document.getElementById('insightsModalList');
+        if (!list) return;
+
+        if (all.length === 0) {
+          list.innerHTML = '<div class="insights-empty">✅ Aucune anomalie détectée — votre situation financière semble saine.</div>';
+        } else {
+          // Groupe par niveau
+          const groups = { critical: [], warning: [], info: [], positive: [] };
+          all.forEach(i => groups[i.level].push(i));
+          const labels = {
+            critical: '🔴 CRITIQUES',
+            warning: '🟠 ATTENTION',
+            info: '🔵 INFORMATION',
+            positive: '🟢 POSITIFS'
+          };
+          const order = ['critical', 'warning', 'info', 'positive'];
+          list.innerHTML = order
+            .filter(k => groups[k].length > 0)
+            .map(k => `
+              <div class="insights-modal-section ${k}">
+                <div class="insights-modal-section-title">
+                  <span class="dot"></span>
+                  <span>${labels[k]} (${groups[k].length})</span>
+                </div>
+                ${groups[k].map(i => `
+                  <div class="insight-modal-item" data-level="${i.level}">
+                    <span class="insight-icon">${i.icon}</span>
+                    <span class="insight-text">
+                      <strong>${escHtml(i.text)}</strong>
+                      <span class="insight-detail">${escHtml(i.detail)}</span>
+                    </span>
+                  </div>
+                `).join('')}
+              </div>
+            `).join('');
+        }
+        openModal('insights');
+      }
+
       // ======================== OVERVIEW ========================
       function renderOverview() {
         const total = getTotal(), livret = getLivret(), banque = getBanque(), esp = getEspeces();
@@ -5563,6 +6295,7 @@
         renderIndicateurs();
         renderApercu(total, delta);
         renderHealth();
+        renderInsights();
         calcScore();
       }
 
@@ -9077,6 +9810,6 @@
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a27f21bbc81d19a5',t:'MTc4NjE5ODUxMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
