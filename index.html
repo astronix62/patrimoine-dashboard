@@ -145,7 +145,13 @@
     html.is-mobile .settings-row .form-input { width: 100% !important }
     html.is-mobile .toast-container { right: 12px !important; left: 12px !important; bottom: 12px !important }
     html.is-mobile .toast { min-width: 0 !important; width: 100% !important }
-    html.is-mobile #authStatusBar { padding: 6px 8px !important }
+    html.is-mobile #authStatusBar {
+      padding: 6px 8px !important;
+      /* Safe-area iPhone (Dynamic Island / PWA écran d'accueil) :
+         on GARDE le décalage safe-area-top même en mobile, sinon
+         le bouton "Connexion" est masqué par la Dynamic Island. */
+      padding-top: max(6px, env(safe-area-inset-top)) !important;
+    }
     html.is-mobile .main-layout { position: relative !important; overflow: visible !important }
     html.is-mobile .sidebar-backdrop { position: fixed !important; top: 52px !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.6) !important; z-index: 250 !important; opacity: 0 !important; pointer-events: none !important; transition: opacity 0.3s !important; backdrop-filter: blur(2px) !important; -webkit-backdrop-filter: blur(2px) !important }
     html.is-mobile .sidebar-backdrop.show { opacity: 1 !important; pointer-events: auto !important }
@@ -3554,6 +3560,249 @@
       .insight-text .insight-detail { font-size: 10px; }
       .insights-modal { max-width: 100%; }
     }
+
+    /* ============================================
+       MODULE B — IMPORT CSV (point 8)
+       ============================================
+       Modale 3 étapes :
+         1) Upload (drag&drop + sélecteur fichier)
+         2) Aperçu (tableau éditable : date, description,
+            montant, catégorie auto-modifiable, compte)
+         3) Validation (import en batch + update soldes)
+       Auto-détection : séparateur (',' ou ';'), décimal
+       ('.' ou ','), formats de date (DD/MM/YYYY, YYYY-MM-DD...).
+       Auto-catégorisation par mots-clés modifiable.
+       Support : BNP, CA, SG, Crédit Mutuel, Boursorama,
+       Revolut, N26, PayPal, CSV natif de l'app.
+       ============================================ */
+    .import-csv-modal {
+      max-width: 720px;
+      max-height: 90vh;
+    }
+    .import-csv-steps {
+      display: flex;
+      gap: 0;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .import-step {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 8px;
+      color: var(--text3);
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      text-align: center;
+      position: relative;
+    }
+    .import-step-num {
+      width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: var(--bg3);
+      color: var(--text3);
+      font-size: 12px; font-weight: 700;
+      border: 1px solid var(--border);
+    }
+    .import-step.active .import-step-num {
+      background: var(--gold);
+      color: #000;
+      border-color: var(--gold);
+    }
+    .import-step.done .import-step-num {
+      background: var(--green);
+      color: #fff;
+      border-color: var(--green);
+    }
+    .import-step.active { color: var(--gold); }
+    .import-step.done { color: var(--green); }
+    .import-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 21px;
+      left: calc(50% + 18px);
+      width: calc(100% - 36px);
+      height: 1px;
+      background: var(--border);
+    }
+    .import-step.done:not(:last-child)::after {
+      background: var(--green);
+    }
+    .import-step-label { font-weight: 600; }
+
+    /* Zone drag & drop */
+    .import-dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--bg3);
+    }
+    .import-dropzone:hover,
+    .import-dropzone.dragover {
+      border-color: var(--gold);
+      background: rgba(200, 168, 75, 0.05);
+    }
+    .import-dropzone-icon {
+      font-size: 40px;
+      line-height: 1;
+      margin-bottom: 8px;
+      opacity: 0.6;
+    }
+    .import-dropzone-text {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 4px;
+    }
+    .import-dropzone-sub {
+      font-size: 11px;
+      color: var(--text3);
+    }
+    .import-dropzone input[type="file"] { display: none; }
+
+    .import-info {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: rgba(33, 150, 243, 0.08);
+      border-left: 2px solid var(--blue);
+      border-radius: 5px;
+      font-size: 11px;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+    .import-info strong { color: var(--blue); }
+    .import-warning {
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: rgba(255, 152, 0, 0.08);
+      border-left: 2px solid var(--amber);
+      border-radius: 5px;
+      font-size: 11px;
+      color: var(--text2);
+    }
+    .import-error {
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: rgba(244, 67, 54, 0.08);
+      border-left: 2px solid var(--red);
+      border-radius: 5px;
+      font-size: 11px;
+      color: var(--red);
+    }
+
+    /* Aperçu tableau éditable */
+    .import-preview {
+      max-height: 50vh;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      margin-top: 10px;
+    }
+    .import-preview table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .import-preview th {
+      background: var(--bg3);
+      color: var(--text3);
+      padding: 6px 8px;
+      text-align: left;
+      font-size: 10px;
+      letter-spacing: 1px;
+      font-weight: 600;
+      position: sticky; top: 0;
+      z-index: 1;
+    }
+    .import-preview td {
+      padding: 5px 6px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .import-preview tr.invalid td {
+      background: rgba(244, 67, 54, 0.05);
+    }
+    .import-preview input,
+    .import-preview select {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: inherit;
+      outline: none;
+    }
+    .import-preview input:focus,
+    .import-preview select:focus { border-color: var(--gold); }
+    .import-preview input[type="date"] { min-height: 28px; }
+    .import-preview input.amount-pos { color: var(--green); }
+    .import-preview input.amount-neg { color: var(--red); }
+    .import-preview .row-actions {
+      display: flex; gap: 3px; justify-content: center;
+    }
+    .import-preview .row-actions button {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text3);
+      width: 22px; height: 22px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .import-preview .row-actions button:hover { border-color: var(--red); color: var(--red); }
+    .import-preview-remove {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0 6px;
+      font-size: 11px;
+      color: var(--text3);
+    }
+    .import-preview-remove button {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .import-preview-remove button:hover { border-color: var(--red); color: var(--red); }
+    .import-summary {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      padding: 10px 12px;
+      background: var(--bg3);
+      border-radius: 7px;
+      margin-top: 10px;
+      font-size: 11px;
+    }
+    .import-summary-item {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .import-summary-item .label {
+      color: var(--text3);
+      font-size: 9.5px;
+      letter-spacing: 0.5px;
+    }
+    .import-summary-item .val { color: var(--text); font-weight: 600; }
+    .import-summary-item .val.pos { color: var(--green); }
+    .import-summary-item .val.neg { color: var(--red); }
+
+    @media (max-width: 768px) {
+      .import-csv-modal { max-width: 100%; padding: 18px 14px; }
+      .import-dropzone { padding: 24px 14px; }
+      .import-dropzone-icon { font-size: 32px; }
+      .import-dropzone-text { font-size: 12px; }
+      .import-step-label { font-size: 9px; }
+      .import-step-num { width: 24px; height: 24px; font-size: 11px; }
+      .import-preview { font-size: 10px; }
+      .import-preview td, .import-preview th { padding: 4px 5px; }
+    }
   </style>
 </head>
 
@@ -3563,8 +3812,16 @@
     <!-- Barre d'authentification : positionnée AU-DESSUS du header
          (et non plus dans le header-right, pour ne pas perturber
          la disposition date + bouton hamburger). L'utilisateur la voit
-         immédiatement en haut de la page, peu importe l'appareil. -->
-    <div id="authStatusBar" style="display:flex;align-items:center;gap:10px;padding:8px 12px">
+         immédiatement en haut de la page, peu importe l'appareil.
+         ──────────────────────────────────────────────────────────────
+         IMPORTANT iPhone (PWA / écran d'accueil Safari) :
+         La Dynamic Island et la zone safe-area-top peuvent masquer
+         le contenu en haut. On utilise `env(safe-area-inset-top)`
+         pour décaler la barre vers le bas en mode standalone, et
+         `viewport-fit=cover` (déjà dans la balise meta viewport).
+         Le bouton de connexion est ainsi toujours visible.
+         ────────────────────────────────────────────────────────────── -->
+    <div id="authStatusBar" style="display:flex;align-items:center;gap:10px;padding:8px 12px;padding-top:max(8px, env(safe-area-inset-top))">
       <button id="openAuth" class="auth-open-btn">Connexion / Inscription</button>
       <div id="userBar" style="display:none;align-items:center;gap:10px">
         <span id="userEmailLabel" style="color:var(--gold);font-size:12px;font-weight:600"></span>
@@ -3805,24 +4062,6 @@
             <div class="chart-wrap h180"><canvas id="top3Chart"></canvas></div>
           </div>
 
-          <!-- ============================================
-               MODULE A — INSIGHTS & ANOMALIES (point 7)
-               Widget compact affichant 3 anomalies prioritaires
-               + bouton "Voir les X autres" pour ouvrir la modale.
-               ============================================ -->
-          <div class="panel insights-card">
-            <div class="insights-header">
-              <div class="insights-title">
-                <span>💡 INSIGHTS &amp; ANOMALIES</span>
-                <span class="insights-count-badge" id="insightsCountBadge">0</span>
-              </div>
-              <button class="panel-action" onclick="openInsightsModal()">Voir tout ›</button>
-            </div>
-            <div class="insights-list" id="insightsList">
-              <div class="insights-empty">✅ Aucune anomalie détectée — votre situation financière semble saine.</div>
-            </div>
-          </div>
-
           <div class="grid-3cols">
             <div class="panel">
               <div class="panel-header">
@@ -3930,6 +4169,26 @@
               </div>
               <div id="apercuList"></div>
               <div class="health-widget" id="healthWidget"></div>
+            </div>
+          </div>
+
+          <!-- ============================================
+               MODULE A — INSIGHTS & ANOMALIES (point 7)
+               Widget compact affichant 3 anomalies prioritaires
+               + bouton "Voir les X autres" pour ouvrir la modale.
+               Placé en BAS de la Vue d'ensemble pour ne pas
+               alourdir visuellement le haut de page.
+               ============================================ -->
+          <div class="panel insights-card">
+            <div class="insights-header">
+              <div class="insights-title">
+                <span>💡 INSIGHTS &amp; ANOMALIES</span>
+                <span class="insights-count-badge" id="insightsCountBadge">0</span>
+              </div>
+              <button class="panel-action" onclick="openInsightsModal()">Voir tout ›</button>
+            </div>
+            <div class="insights-list" id="insightsList">
+              <div class="insights-empty">✅ Aucune anomalie détectée — votre situation financière semble saine.</div>
             </div>
           </div>
         </div>
@@ -4224,7 +4483,10 @@
               <div class="page-title">Comptes & Actifs</div>
               <div class="page-sub">Gérez vos comptes et transactions</div>
             </div>
-            <button class="btn btn-gold btn-sm" onclick="openModal('addAccount')">+ Ajouter un compte</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="openImportCsvModal()">📥 Importer CSV</button>
+              <button class="btn btn-gold btn-sm" onclick="openModal('addAccount')">+ Ajouter un compte</button>
+            </div>
           </div>
           <div class="grid-2eq" style="margin-bottom:14px">
             <div class="panel">
@@ -4895,6 +5157,82 @@
         </div>
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="closeModal('insights')">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modale "Import CSV" (point 8 — Module B) -->
+    <div class="modal-overlay" id="modal-importCsv">
+      <div class="modal import-csv-modal">
+        <div class="modal-title">📥 Importer des transactions (CSV)</div>
+
+        <!-- Stepper 3 étapes -->
+        <div class="import-csv-steps">
+          <div class="import-step active" id="importStep1">
+            <div class="import-step-num">1</div>
+            <div class="import-step-label">UPLOAD</div>
+          </div>
+          <div class="import-step" id="importStep2">
+            <div class="import-step-num">2</div>
+            <div class="import-step-label">APERÇU</div>
+          </div>
+          <div class="import-step" id="importStep3">
+            <div class="import-step-num">3</div>
+            <div class="import-step-label">VALIDATION</div>
+          </div>
+        </div>
+
+        <!-- ÉTAPE 1 : Upload -->
+        <div id="importStep1Body">
+          <label class="import-dropzone" id="importDropzone">
+            <div class="import-dropzone-icon">📁</div>
+            <div class="import-dropzone-text">Glissez votre fichier CSV ici</div>
+            <div class="import-dropzone-sub">ou cliquez pour parcourir</div>
+            <input type="file" id="importFile" accept=".csv,text/csv,application/vnd.ms-excel">
+          </label>
+          <div id="importStep1Info" class="import-info">
+            <strong>Formats supportés :</strong> CSV natif de l'app, BNP Paribas, Crédit Agricole,
+            Société Générale, Crédit Mutuel, Caisse d'Épargne, Boursorama, ING, Revolut, N26, PayPal.
+            <br>Auto-détection du séparateur (<code>,</code> ou <code>;</code>) et de la date.
+          </div>
+          <div id="importStep1Error" class="import-error" style="display:none"></div>
+        </div>
+
+        <!-- ÉTAPE 2 : Aperçu -->
+        <div id="importStep2Body" style="display:none">
+          <div id="importStep2Info" class="import-info"></div>
+          <div class="import-preview-remove">
+            <span id="importPreviewCount">0 ligne(s)</span>
+            <button onclick="clearImportPreview()">Tout supprimer</button>
+          </div>
+          <div class="import-preview">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:90px">Date</th>
+                  <th>Description</th>
+                  <th style="width:90px">Montant</th>
+                  <th style="width:110px">Catégorie</th>
+                  <th style="width:110px">Compte</th>
+                  <th style="width:30px"></th>
+                </tr>
+              </thead>
+              <tbody id="importPreviewBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ÉTAPE 3 : Validation -->
+        <div id="importStep3Body" style="display:none">
+          <div id="importStep3Summary" class="import-summary"></div>
+          <div id="importStep3Info" class="import-info" style="margin-top:12px"></div>
+          <div id="importStep3Error" class="import-error" style="display:none"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeImportCsvModal()">Annuler</button>
+          <button class="btn btn-ghost" id="importPrevBtn" style="display:none" onclick="goToImportStep(2)">← Retour</button>
+          <button class="btn btn-gold" id="importNextBtn" style="display:none" onclick="goToImportStep(3)">Importer N transactions →</button>
         </div>
       </div>
     </div>
@@ -6133,8 +6471,11 @@
         // 32. Mois sans dépassement : 0 catégorie au-dessus du budget
         // Non implémenté : nécessite un budget par catégorie, pas dans le modèle.
 
-        // ── TRI PAR PRIORITÉ (critical → positive) ────────────────────
-        const priority = { critical: 0, warning: 1, info: 2, positive: 3 };
+        // ── TRI PAR PRIORITÉ (ordre demandé : Critique > Attention > Positif > Information) ──
+        // Ordre personnalisé par l'utilisateur : on n'affiche pas les "info"
+        // en priorité (sinon ils noient les alertes importantes). Les positifs
+        // remontent au-dessus des info car ils sont plus "engageants".
+        const priority = { critical: 0, warning: 1, positive: 2, info: 3 };
         insights.sort((a, b) => priority[a.level] - priority[b.level]);
         return insights;
       }
@@ -6216,6 +6557,664 @@
             `).join('');
         }
         openModal('insights');
+      }
+
+      // ================================================================
+      // MODULE B — IMPORT CSV (point 8)
+      // ================================================================
+      // Modale 3 étapes : Upload → Aperçu → Validation.
+      // Auto-détection : séparateur, décimal, format de date.
+      // Auto-catégorisation par mots-clés (modifiable par ligne).
+      // Support : CSV natif + principaux formats bancaires FR/EU.
+      //
+      // État global (réinitialisé à chaque ouverture de la modale) :
+      //   - D._importRows : tableau de lignes parsées
+      //     { date, desc, amount, type, cat, account, accountId, valid }
+      // ================================================================
+
+      // Mapping mots-clés → catégorie (modifiable par l'utilisateur)
+      // 14 catégories, ~150 mots-clés FR. Ordre important : la 1re
+      // correspondance l'emporte. On met les patterns les plus
+      // spécifiques en premier pour éviter les faux positifs.
+      // NOTE : `revenu` doit être testé AVANT `professionnel` (sinon
+      // "salaire" matche "paie" qui est aussi dans professionnel).
+      const KEYWORD_CATEGORIES = [
+        { cat: 'revenu', kw: ['salaire', 'paie', 'paye', 'virementrecu', 'virement recu', 'virement reçu', 'virrecu', 'vir recu', 'virement entrant', 'remuneration', 'rémunération', 'prime', 'bonus', 'indemnite', 'indemnité', 'caf', 'pension', 'allocations', 'pole emploi', 'pôle emploi', 'refund', 'virement salaire', 'dividende', 'dividendes'] },
+        { cat: 'epargne_invest', kw: ['livret a', 'ldds', 'pel', 'cel', 'pea', 'pea pme', 'assurance vie', 'perp', 'madelin', 'epargne', 'épargne', 'investissement', 'degiro', 'etoro', 'trade republic', 'ibkr', 'binance', 'kraken', 'crypto', 'bitcoin', 'ethereum', 'action', 'actions', 'obligation', 'fond', 'fonds', 'sicav', 'fcp', 'versement epargne'] },
+        { cat: 'credits', kw: ['credit', 'crédit', 'emprunt', 'pret ', 'prêt ', 'mensualite', 'mensualité', 'hypotheque', 'hypothèque', 'revolving', 'rachat', 'loa', 'leasing', 'lld', 'echeance', 'échéance', 'banque pret', 'taux'] },
+        { cat: 'logement', kw: ['loyer', 'bail', 'syndic', 'copropriete', 'copropriété', 'taxe habitation', 'taxe foncière', 'taxe fonciere', 'assurance habitation', 'assurance habitation', 'assurance logement', 'assurance maison', 'assurance mr'] },
+        { cat: 'energie', kw: ['edf', 'engie', 'direct energie', 'ekwateur', 'eni gas', 'eni', 'total direct', 'planete oui', 'planète oui', 'mint energie', 'energie', 'electricite', 'électricité', 'gaz', 'eau', 'veolia', 'suez', 'internet', 'box', 'fibre', 'wifiber'] },
+        { cat: 'alimentation', kw: ['carrefour', 'leclerc', 'auchan', 'lidl', 'aldi', 'intermarche', 'intermarché', 'super u', 'monoprix', 'franprix', 'picard', 'casino', 'leader price', 'cora', 'geant', 'géant', 'simply', 'spar', 'naturalia', 'biocoop', 'grand frais', 'cocci', 'boucherie', 'boulangerie', 'patissier', 'boulanger', 'epicerie', 'épicerie', 'courses', 'supermarche', 'supermarché'] },
+        { cat: 'transport', kw: ['sncf', 'ratp', 'tgv', 'ter', 'metro', 'métro', 'bus', 'tram', 'velib', 'vélib', 'uber', 'bolt', 'vtc', 'taxi', 'essence', 'total energies', 'totalenergies', 'bp ', 'shell', 'esso', 'avia', 'station', 'peage', 'péage', 'autoroute', 'parking', 'garage', 'mecanicien', 'mécanicien', 'controle technique', 'contrôle technique', 'assurance auto', 'carte grise', 'autostrade'] },
+        { cat: 'sante', kw: ['pharmacie', 'pharma', 'medecin', 'médecin', 'docteur', 'dr ', 'dr.', 'hopital', 'hôpital', 'clinique', 'dentiste', 'orthodontiste', 'opticien', 'kine', 'kiné', 'osteopathe', 'ostéopathe', 'laboratoire', 'analyse', 'mutuelle', 'secu', 'sécu', 'cpam', 'ameli', 'amélie', 'cmu', 'css', 'medicament', 'médicament'] },
+        { cat: 'loisirs', kw: ['netflix', 'spotify', 'disney', 'amazon prime', 'canal+', 'canal plus', 'ocs', 'apple tv', 'youtube', 'deezer', 'tidal', 'playstation', 'xbox', 'nintendo', 'steam', 'epic games', 'cinema', 'cinéma', 'theatre', 'théâtre', 'concert', 'festival', 'musee', 'musée', 'expo', 'parc', 'zoo', 'aquarium', 'escape game', 'laser game', 'bowling', 'patinoire', 'piscine', 'salle de sport', 'fitness', 'basic fit', 'basic-fit', 'keep cool', 'club med', 'sncf voyage', 'booking', 'airbnb', 'hotel', 'hôtel', 'voyage', 'vol ', 'avion', 'easyjet', 'ryanair', 'air france', 'transavia', 'vueling', 'thalys', 'eurostar', 'ouigo'] },
+        { cat: 'habillement', kw: ['zara', 'h&m', 'hm', 'uniqlo', 'celio', 'jules', 'bershka', 'pull&bear', 'mango', 'kiabi', 'camaieu', 'promod', 'verbaudet', 'tati', 'gemo', 'la redoute', 'sephora', 'nocibe', 'nocibé', 'marionnaud', 'yves rocher', 'vêtements', 'vetement', 'habillement', 'mode'] },
+        { cat: 'equipement', kw: ['ikea', 'leroy merlin', 'leroy', 'castorama', 'brico depot', 'bricomarche', 'bricorama', 'but ', 'conforama', 'darty', 'boulanger', 'cuisinella', 'schmidt', 'mobalpa', 'maisons du monde', 'electromenager', 'électroménager', 'lavage', 'sechage', 'refrigerateur', 'réfrigérateur', 'four', 'plaque', 'aspirateur', 'tv ', 'téléviseur', 'ordinateur', 'pc ', 'macbook', 'iphone', 'samsung galaxy', 'tablette', 'ipad', 'bricolage', 'bricolo', 'decathlon'] },
+        { cat: 'animaux', kw: ['veterinaire', 'vétérinaire', 'clinique veterinaire', 'animalerie', 'maxi zoo', 'jardiland', 'croquettes', 'litière', 'litiere', 'antipuce', 'vermifuge', 'chenil', 'garde chat', 'garde chien', 'pet sitter', 'laisser'] },
+        { cat: 'professionnel', kw: ['urssaf', 'auto entrepreneur', 'auto-entrepreneur', 'sasu', 'sarl', 'sas ', 'eurl', 'freelance', 'kbis', 'rc pro', 'comptable', 'expert comptable', 'frais pro', 'deplacement pro', 'déplacement pro', 'repas client', 'hotel pro', 'facture client', 'invoice', 'cotisation', 'cfe'] },
+        { cat: 'cadeaux', kw: ['cadeau', 'anniversaire', 'mariage', 'noel', 'noël', 'fete des meres', 'fête des mères', 'fete des peres', 'fête des pères', 'saint valentin', 'cadeau naissance', 'naissance', 'baby shower', 'pendaison de cremaillere', 'pendaison de crémaillère', 'wishlist', 'liste mariage'] },
+      ];
+      const DEFAULT_CAT = 'autre';
+
+      // Auto-catégorise une description selon les mots-clés
+      function autoCategorize(desc) {
+        if (!desc) return DEFAULT_CAT;
+        const text = desc.toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retire accents
+          .replace(/[^a-z0-9 ]/g, ' '); // remplace la ponctuation par espace
+        for (const m of KEYWORD_CATEGORIES) {
+          for (const kw of m.kw) {
+            const kwNorm = kw.toLowerCase()
+              .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^a-z0-9 ]/g, ' ');
+            // Match mot entier (pas sous-chaîne) pour limiter les faux positifs
+            const kwRegex = new RegExp('(^|\\s)' + kwNorm.trim() + '(\\s|$)');
+            if (kwRegex.test(text)) return m.cat;
+          }
+        }
+        return DEFAULT_CAT;
+      }
+
+      // Détecte le séparateur (',' ou ';') d'un fichier CSV
+      function detectSeparator(text) {
+        // Compte les occurrences sur la 1re ligne (hors texte entre guillemets)
+        const firstLine = (text.split(/\r?\n/)[0] || '');
+        // Retire les segments entre guillemets pour ne pas les compter
+        const cleaned = firstLine.replace(/"[^"]*"/g, '""');
+        const countComma = (cleaned.match(/,/g) || []).length;
+        const countSemi  = (cleaned.match(/;/g) || []).length;
+        // Si on a ';', c'est probablement le format FR
+        if (countSemi > countComma) return ';';
+        return ',';
+      }
+
+      // Détecte le format de date (DD/MM/YYYY, YYYY-MM-DD, etc.)
+      // Retourne une fonction qui parse une chaîne en 'YYYY-MM-DD'
+      function detectDateFormat(text) {
+        const samples = (text.split(/\r?\n/).slice(0, 10) || [])
+          .map(l => l.trim()).filter(l => l).join('\n');
+        // Cherche YYYY-MM-DD ou YYYY/MM/DD en premier (le + courant aujourd'hui)
+        if (/\b20\d{2}[-\/]\d{1,2}[-\/]\d{1,2}\b/.test(samples)) {
+          return function (s) {
+            const m = s.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+            if (!m) return null;
+            return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+          };
+        }
+        // Sinon DD/MM/YYYY ou DD.MM.YYYY
+        if (/\b\d{1,2}[\/\.]\d{1,2}[\/\.]\d{2,4}\b/.test(samples)) {
+          return function (s) {
+            const m = s.match(/(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{2,4})/);
+            if (!m) return null;
+            let y = parseInt(m[3]);
+            if (y < 100) y += 2000;
+            return `${y}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
+          };
+        }
+        // Fallback : YYYY-MM-DD
+        return function (s) {
+          const m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+          if (!m) return null;
+          return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+        };
+      }
+
+      // Parse une ligne CSV en respectant les guillemets (RFC 4180)
+      function parseCsvLine(line, sep) {
+        const out = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const c = line[i];
+          if (inQuotes) {
+            if (c === '"') {
+              if (line[i + 1] === '"') { cur += '"'; i++; }
+              else inQuotes = false;
+            } else cur += c;
+          } else {
+            if (c === '"') inQuotes = true;
+            else if (c === sep) { out.push(cur); cur = ''; }
+            else cur += c;
+          }
+        }
+        out.push(cur);
+        return out;
+      }
+
+      // Détecte le format (header) et mappe les colonnes vers nos champs
+      // Retourne { dateIdx, descIdx, amountIdx, typeIdx, catIdx, accountIdx }
+      // ou null si format non reconnu
+      function detectColumnMapping(headerLine, sep) {
+        const cols = parseCsvLine(headerLine, sep).map(c => c.toLowerCase().trim());
+        const find = (...keywords) => cols.findIndex(c => keywords.some(k => c.includes(k)));
+        const mapping = {
+          dateIdx: find('date', 'jour'),
+          descIdx: find('description', 'libelle', 'libellé', 'motif', 'label', 'name'),
+          amountIdx: find('amount', 'montant', 'valeur', 'value', 'debit', 'crédit', 'credit'),
+          // Pour type (income/expense) : cherche "type" ou "sens"
+          typeIdx: find('type', 'sens', 'movement'),
+          // Pour catégorie : cherche "category", "catégorie"
+          catIdx: find('categorie', 'catégorie', 'category', 'cat.'),
+          // Pour compte : cherche "compte", "account"
+          accountIdx: find('compte', 'account', 'iban'),
+        };
+        // Si on n'a pas trouvé au moins date + description + amount, on essaie
+        // une heuristique plus permissive
+        if (mapping.dateIdx < 0 || mapping.descIdx < 0 || mapping.amountIdx < 0) {
+          // Heuristique : on suppose que la 1re colonne est la date,
+          // la 2e la description, la 3e le montant
+          if (cols.length >= 3) {
+            return { dateIdx: 0, descIdx: 1, amountIdx: 2, typeIdx: -1, catIdx: -1, accountIdx: -1 };
+          }
+          return null;
+        }
+        return mapping;
+      }
+
+      // Parse un nombre au format FR (1 234,56) ou US (1,234.56 ou 1234.56)
+      function parseAmount(s) {
+        if (s == null) return 0;
+        const str = String(s).trim();
+        if (!str) return 0;
+        // Retire les espaces, les symboles monétaires
+        const cleaned = str.replace(/[€$£¥\s]/g, '');
+        // Détection : si on a à la fois ',' et '.', le dernier des deux est le décimal
+        const lastComma = cleaned.lastIndexOf(',');
+        const lastDot = cleaned.lastIndexOf('.');
+        let normalized;
+        if (lastComma > lastDot) {
+          // FR : 1234,56 → on retire les espaces/points (milliers), on convertit ',' en '.'
+          normalized = cleaned.replace(/\./g, '').replace(',', '.');
+        } else {
+          // US : 1,234.56 → on retire les virgules (milliers)
+          normalized = cleaned.replace(/,/g, '');
+        }
+        const n = parseFloat(normalized);
+        return isNaN(n) ? 0 : n;
+      }
+
+      // Parse un fichier CSV en mémoire et remplit D._importRows
+      // Retourne { ok, error?, rowCount, mapping, sep, dateParser, detected }
+      function parseCsvFile(text) {
+        const result = { ok: false, error: null, rowCount: 0 };
+        if (!text || !text.trim()) {
+          result.error = 'Fichier vide.';
+          return result;
+        }
+        // BOM UTF-8
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length < 2) {
+          result.error = 'Le fichier doit contenir au moins un en-tête et une ligne.';
+          return result;
+        }
+        const sep = detectSeparator(text);
+        const header = lines[0];
+        const mapping = detectColumnMapping(header, sep);
+        if (!mapping) {
+          result.error = 'Impossible de détecter les colonnes (date, description, montant).';
+          return result;
+        }
+        const dateParser = detectDateFormat(text);
+        // Liste des catégories (depuis le cache D.txCategories, défaut + ajoutées)
+        const catOptions = (D.txCategories && D.txCategories.length) ? D.txCategories : [];
+        // Liste des comptes (pour le mapping par nom)
+        const accOptions = D.accounts || [];
+
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+          const fields = parseCsvLine(lines[i], sep);
+          const dateRaw = fields[mapping.dateIdx] || '';
+          const descRaw = fields[mapping.descIdx] || '';
+          const amountRaw = fields[mapping.amountIdx] || '0';
+          const dateParsed = dateParser(dateRaw);
+          const amount = parseAmount(amountRaw);
+          // Heuristique type :
+          //   - si une colonne type existe, on l'utilise
+          //   - sinon, on regarde si la 1re ligne d'en-tête suggère "débit/crédit"
+          //     ou si l'amount est signé (négatif = sortie)
+          let type = 'expense';
+          if (mapping.typeIdx >= 0 && fields[mapping.typeIdx]) {
+            const t = fields[mapping.typeIdx].toLowerCase();
+            if (/credit|cr\u00e9dit|in|revenu|entree|entrée|recette|rec/.test(t)) type = 'income';
+            else if (/debit|d\u00e9bit|out|depense|dépense|sortie|charge/.test(t)) type = 'expense';
+          } else {
+            // Détection par signe : si négatif → sortie
+            const cleanedAmt = String(amountRaw).replace(/[€$£¥\s]/g, '').replace(',', '.');
+            if (cleanedAmt.startsWith('-')) type = 'income'; // en export FR, - = débit = sortie ; on inverse
+            // ATTENTION : la convention varie selon les banques.
+            // En France, un montant négatif = DÉPENSE (débit du compte)
+            // Donc amount < 0 → expense, amount > 0 → income
+            // Si on a un signe explicite, on respecte
+            if (String(amountRaw).trim().startsWith('-')) type = 'expense';
+            else if (String(amountRaw).trim().startsWith('+')) type = 'income';
+            // Sinon, on regarde le mot "débit"/"crédit" dans la description
+            const descLower = descRaw.toLowerCase();
+            if (/\bdebit\b|\bd\u00e9bit\b|\bcarte\b|\bvirement emis\b|\bvirement \u00e9mis\b/.test(descLower)) type = 'expense';
+            else if (/\bcredit\b|\bcr\u00e9dit\b|\bvirement recu\b|\bvirement re\u00e7u\b|\bsalaire\b/.test(descLower)) type = 'income';
+          }
+          const desc = descRaw.trim();
+          const catAuto = mapping.catIdx >= 0 && fields[mapping.catIdx]
+            ? (fields[mapping.catIdx].trim() || autoCategorize(desc))
+            : autoCategorize(desc);
+          // Match compte par nom si possible
+          const accNameRaw = mapping.accountIdx >= 0 ? (fields[mapping.accountIdx] || '').trim() : '';
+          let accId = null;
+          if (accNameRaw) {
+            const found = accOptions.find(a => a.name.toLowerCase() === accNameRaw.toLowerCase());
+            if (found) accId = found.id;
+          }
+          rows.push({
+            date: dateParsed || dateRaw, // fallback : valeur brute si parsing échoue
+            desc: desc,
+            amount: Math.abs(amount), // on stocke la valeur absolue
+            type: type,
+            cat: catAuto,
+            account: accId, // null = à choisir manuellement
+            valid: !!dateParsed && !!desc && amount > 0
+          });
+        }
+        result.ok = true;
+        result.rowCount = rows.length;
+        result.rows = rows;
+        result.mapping = mapping;
+        result.sep = sep;
+        result.detected = {
+          sep,
+          dateFormat: mapping.dateIdx >= 0 ? 'détecté' : '?',
+          colCount: (parseCsvLine(header, sep)).length,
+          header: parseCsvLine(header, sep)
+        };
+        return result;
+      }
+
+      // ── UI : Modale Import CSV ──────────────────────────────────────
+      // État local de la modale (réinitialisé à l'ouverture)
+      let _importState = null;
+
+      function openImportCsvModal() {
+        if (!requireLogin()) return;
+        _importState = {
+          step: 1,
+          rows: [],     // lignes parsées, éditées
+          mapping: null, // info sur la détection
+          detected: null,
+        };
+        document.getElementById('importStep1Error').style.display = 'none';
+        document.getElementById('importStep1Info').style.display = '';
+        document.getElementById('importFile').value = '';
+        goToImportStep(1);
+        openModal('importCsv');
+        // Init drag&drop handlers
+        setTimeout(() => {
+          const dz = document.getElementById('importDropzone');
+          const input = document.getElementById('importFile');
+          if (!dz || !input) return;
+          if (dz._bound) return; // évite les doublons
+          dz._bound = true;
+          dz.addEventListener('click', () => input.click());
+          input.addEventListener('change', (e) => {
+            const f = e.target.files && e.target.files[0];
+            if (f) handleImportFile(f);
+          });
+          dz.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dz.classList.add('dragover');
+          });
+          dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+          dz.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dz.classList.remove('dragover');
+            const f = e.dataTransfer.files && e.dataTransfer.files[0];
+            if (f) handleImportFile(f);
+          });
+        }, 50);
+      }
+
+      function closeImportCsvModal() {
+        closeModal('importCsv');
+        _importState = null;
+      }
+
+      // Quand l'utilisateur choisit / dépose un fichier
+      function handleImportFile(file) {
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+          showImportError('Fichier trop volumineux (max 5 Mo).');
+          return;
+        }
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
+        if (ext && ext !== 'csv' && !/csv|text/i.test(file.type)) {
+          showImportError(`Format non supporté (.${ext}). Seuls les .csv sont acceptés.`);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const text = e.target.result;
+          const parsed = parseCsvFile(text);
+          if (!parsed.ok) {
+            showImportError(parsed.error || 'Impossible de lire le fichier.');
+            return;
+          }
+          _importState.rows = parsed.rows;
+          _importState.detected = parsed.detected;
+          _importState.mapping = parsed.mapping;
+          // Passe automatiquement à l'étape 2
+          goToImportStep(2);
+        };
+        reader.onerror = () => showImportError('Erreur de lecture du fichier.');
+        reader.readAsText(file, 'UTF-8');
+      }
+
+      function showImportError(msg) {
+        const el = document.getElementById('importStep1Error');
+        if (!el) return;
+        el.textContent = '⚠️ ' + msg;
+        el.style.display = '';
+        setTimeout(() => { el.style.display = 'none'; }, 5000);
+      }
+
+      // Navigation entre les étapes
+      // Si on appelle depuis le bouton "Suivant" et qu'on est déjà à l'étape 3,
+      // on lance l'import. Sinon on navigue.
+      function goToImportStep(step) {
+        if (!_importState) return;
+        if (step === 3 && _importState.step === 3) {
+          executeImport();
+          return;
+        }
+        _importState.step = step;
+        // Update stepper visuel
+        for (let i = 1; i <= 3; i++) {
+          const el = document.getElementById('importStep' + i);
+          if (!el) continue;
+          el.classList.remove('active', 'done');
+          if (i < step) el.classList.add('done');
+          else if (i === step) el.classList.add('active');
+        }
+        // Update bodies
+        document.getElementById('importStep1Body').style.display = (step === 1) ? '' : 'none';
+        document.getElementById('importStep2Body').style.display = (step === 2) ? '' : 'none';
+        document.getElementById('importStep3Body').style.display = (step === 3) ? '' : 'none';
+        // Update actions
+        const prevBtn = document.getElementById('importPrevBtn');
+        const nextBtn = document.getElementById('importNextBtn');
+        if (step === 1) {
+          prevBtn.style.display = 'none';
+          nextBtn.style.display = 'none';
+        } else if (step === 2) {
+          prevBtn.style.display = '';
+          prevBtn.textContent = '← Retour';
+          prevBtn.setAttribute('onclick', "goToImportStep(1)");
+          nextBtn.style.display = '';
+          const validCount = _importState.rows.filter(r => r.valid).length;
+          nextBtn.textContent = `Importer ${validCount} transaction${validCount > 1 ? 's' : ''} →`;
+          nextBtn.disabled = validCount === 0;
+          nextBtn.style.opacity = validCount === 0 ? '0.5' : '1';
+          // Render l'aperçu
+          renderImportPreview();
+        } else if (step === 3) {
+          prevBtn.style.display = '';
+          prevBtn.textContent = '← Modifier';
+          prevBtn.setAttribute('onclick', "goToImportStep(2)");
+          nextBtn.style.display = '';
+          nextBtn.textContent = '✓ Valider l\'import';
+          // Render le résumé
+          renderImportSummary();
+        }
+      }
+
+      function renderImportPreview() {
+        const body = document.getElementById('importPreviewBody');
+        const count = document.getElementById('importPreviewCount');
+        const info = document.getElementById('importStep2Info');
+        if (!body) return;
+        const rows = _importState.rows;
+        const det = _importState.detected;
+        // Info : résumé de la détection
+        if (det) {
+          info.innerHTML = `<strong>Détection :</strong> séparateur <code>${det.sep}</code>, ${det.colCount} colonnes, format de date ${det.dateFormat}. ` +
+            (det.header.length ? `<br><strong>Colonnes :</strong> ${det.header.map((h, i) => `${i + 1}=${escHtml(h) || '?'}`).join(', ')}` : '');
+        }
+        count.textContent = rows.length + ' ligne(s) détectée(s) — ' +
+          rows.filter(r => r.valid).length + ' valide(s)';
+        // Cat options : défaut + custom de l'utilisateur
+        const catOptions = ['logement','alimentation','transport','energie','sante','loisirs','habillement','equipement','credits','animaux','professionnel','cadeaux','epargne_invest','revenu','autre'];
+        const allCats = (D.txCategories && D.txCategories.length)
+          ? Array.from(new Set([...catOptions, ...D.txCategories]))
+          : catOptions;
+        // Account options
+        const accs = D.accounts || [];
+        body.innerHTML = rows.map((r, i) => {
+          const accOptions = '<option value="">— Choisir —</option>' +
+            accs.map(a => `<option value="${a.id}" ${a.id === r.account ? 'selected' : ''}>${escHtml(a.name)}</option>`).join('');
+          const catOpts = allCats.map(c => `<option value="${escHtml(c)}" ${c === r.cat ? 'selected' : ''}>${escHtml(c)}</option>`).join('');
+          const amtClass = r.type === 'income' ? 'amount-pos' : 'amount-neg';
+          return `<tr class="${r.valid ? '' : 'invalid'}">
+            <td><input type="date" value="${escHtml(r.date || '')}" data-row="${i}" data-field="date"></td>
+            <td><input type="text" value="${escHtml(r.desc || '')}" data-row="${i}" data-field="desc" style="min-width:120px"></td>
+            <td><input type="number" step="0.01" value="${r.amount || ''}" data-row="${i}" data-field="amount" class="${amtClass}" data-type="${r.type}"></td>
+            <td>
+              <select data-row="${i}" data-field="cat">${catOpts}</select>
+            </td>
+            <td>
+              <select data-row="${i}" data-field="account">${accOptions}</select>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button onclick="removeImportRow(${i})" title="Supprimer">✕</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('');
+        // Bind les changements sur les inputs
+        body.querySelectorAll('input, select').forEach(el => {
+          el.addEventListener('change', onImportRowChange);
+          el.addEventListener('input', onImportRowChange);
+        });
+      }
+
+      function onImportRowChange(e) {
+        const el = e.target;
+        const i = parseInt(el.dataset.row);
+        const field = el.dataset.field;
+        const row = _importState.rows[i];
+        if (!row || !field) return;
+        if (field === 'amount') {
+          row.amount = parseFloat(el.value) || 0;
+          // Si l'utilisateur change le montant à 0, on invalide
+          row.valid = !!row.date && !!row.desc && row.amount > 0 && !!row.account;
+        } else if (field === 'date') {
+          row.date = el.value;
+          row.valid = !!row.date && !!row.desc && row.amount > 0 && !!row.account;
+        } else if (field === 'desc') {
+          row.desc = el.value;
+          row.valid = !!row.date && !!row.desc && row.amount > 0 && !!row.account;
+        } else if (field === 'cat') {
+          row.cat = el.value;
+        } else if (field === 'account') {
+          row.account = el.value || null;
+          row.valid = !!row.date && !!row.desc && row.amount > 0 && !!row.account;
+          // Change la classe de la ligne
+          const tr = el.closest('tr');
+          if (tr) tr.classList.toggle('invalid', !row.valid);
+        }
+        // Re-vérifier si le bouton "Suivant" doit être désactivé
+        const validCount = _importState.rows.filter(r => r.valid).length;
+        const nextBtn = document.getElementById('importNextBtn');
+        if (nextBtn) {
+          nextBtn.disabled = validCount === 0;
+          nextBtn.style.opacity = validCount === 0 ? '0.5' : '1';
+          nextBtn.textContent = `Importer ${validCount} transaction${validCount > 1 ? 's' : ''} →`;
+        }
+        // Update count
+        const count = document.getElementById('importPreviewCount');
+        if (count) {
+          count.textContent = _importState.rows.length + ' ligne(s) détectée(s) — ' +
+            validCount + ' valide(s)';
+        }
+      }
+
+      function removeImportRow(i) {
+        _importState.rows.splice(i, 1);
+        renderImportPreview();
+        // Re-render count
+        const validCount = _importState.rows.filter(r => r.valid).length;
+        const nextBtn = document.getElementById('importNextBtn');
+        if (nextBtn) {
+          nextBtn.disabled = validCount === 0;
+          nextBtn.style.opacity = validCount === 0 ? '0.5' : '1';
+          nextBtn.textContent = `Importer ${validCount} transaction${validCount > 1 ? 's' : ''} →`;
+        }
+        const count = document.getElementById('importPreviewCount');
+        if (count) {
+          count.textContent = _importState.rows.length + ' ligne(s) détectée(s) — ' +
+            validCount + ' valide(s)';
+        }
+      }
+
+      function clearImportPreview() {
+        if (!_importState) return;
+        if (!confirm('Supprimer toutes les lignes importées ?')) return;
+        _importState.rows = [];
+        renderImportPreview();
+        const nextBtn = document.getElementById('importNextBtn');
+        if (nextBtn) {
+          nextBtn.disabled = true;
+          nextBtn.style.opacity = '0.5';
+          nextBtn.textContent = 'Importer 0 transaction →';
+        }
+      }
+
+      function renderImportSummary() {
+        const sumEl = document.getElementById('importStep3Summary');
+        const infoEl = document.getElementById('importStep3Info');
+        const errEl = document.getElementById('importStep3Error');
+        if (!sumEl) return;
+        const rows = _importState.rows.filter(r => r.valid);
+        if (rows.length === 0) {
+          sumEl.innerHTML = '<div class="import-error">⚠️ Aucune ligne valide à importer.</div>';
+          return;
+        }
+        // Stats
+        const inc = rows.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
+        const exp = rows.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+        const net = inc - exp;
+        const byAccount = {};
+        rows.forEach(r => {
+          const acc = D.accounts.find(a => a.id === r.account);
+          const name = acc ? acc.name : '(sans compte)';
+          if (!byAccount[name]) byAccount[name] = { in: 0, out: 0 };
+          if (r.type === 'income') byAccount[name].in += r.amount;
+          else byAccount[name].out += r.amount;
+        });
+        let html = `
+          <div class="import-summary-item">
+            <span class="label">LIGNES VALIDES</span>
+            <span class="val">${rows.length}</span>
+          </div>
+          <div class="import-summary-item">
+            <span class="label">ENTRÉES (+)</span>
+            <span class="val pos">+${fmt(inc)}</span>
+          </div>
+          <div class="import-summary-item">
+            <span class="label">SORTIES (−)</span>
+            <span class="val neg">−${fmt(exp)}</span>
+          </div>
+          <div class="import-summary-item">
+            <span class="label">SOLDE NET</span>
+            <span class="val ${net >= 0 ? 'pos' : 'neg'}">${net >= 0 ? '+' : '−'}${fmt(Math.abs(net))}</span>
+          </div>
+        `;
+        // Détail par compte
+        const accDetails = Object.entries(byAccount)
+          .map(([name, v]) => `<div style="font-size:10.5px;color:var(--text2)">• <strong>${escHtml(name)}</strong> : +${fmt(v.in)} / −${fmt(v.out)}</div>`)
+          .join('');
+        if (accDetails) {
+          html += `<div style="flex-basis:100%;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+            <div style="font-size:10px;color:var(--text3);letter-spacing:0.5px;margin-bottom:4px">RÉPARTITION PAR COMPTE</div>
+            ${accDetails}
+          </div>`;
+        }
+        sumEl.innerHTML = html;
+        infoEl.innerHTML = `<strong>Prêt à importer :</strong> cliquez sur "Valider" pour insérer les ${rows.length} transactions dans Supabase et mettre à jour les soldes des comptes concernés.`;
+        errEl.style.display = 'none';
+      }
+
+      // Lance l'import (étape 3 → exécution)
+      async function executeImport() {
+        if (!_importState) return;
+        const rows = _importState.rows.filter(r => r.valid);
+        if (rows.length === 0) return;
+        const errEl = document.getElementById('importStep3Error');
+        const nextBtn = document.getElementById('importNextBtn');
+        nextBtn.disabled = true;
+        nextBtn.textContent = 'Import en cours…';
+        try {
+          // 1. Prépare les rows pour Supabase
+          const accountNames = {}; // pour fallback nom → id
+          D.accounts.forEach(a => { accountNames[a.name] = a.id; });
+          const inserts = rows.map(r => {
+            const acc = D.accounts.find(a => a.id === r.account);
+            return {
+              user_id: currentUserId,
+              account_id: r.account,
+              account_name: acc ? acc.name : '?',
+              date: r.date,
+              description: r.desc,
+              category: r.cat,
+              amount: r.amount,
+              type: r.type
+            };
+          });
+          // 2. Insertion en batch (par chunks de 100 pour éviter les limites Supabase)
+          const chunkSize = 100;
+          for (let i = 0; i < inserts.length; i += chunkSize) {
+            const chunk = inserts.slice(i, i + chunkSize);
+            const { error } = await supabaseClient.from('transactions').insert(chunk);
+            if (error) throw error;
+          }
+          // 3. Mise à jour des soldes des comptes impactés
+          const accountUpdates = {};
+          rows.forEach(r => {
+            if (!r.account) return;
+            if (!accountUpdates[r.account]) accountUpdates[r.account] = 0;
+            accountUpdates[r.account] += (r.type === 'income' ? r.amount : -r.amount);
+          });
+          for (const [accId, delta] of Object.entries(accountUpdates)) {
+            const acc = D.accounts.find(a => a.id === accId);
+            if (!acc) continue;
+            const newBalance = (parseFloat(acc.balance) || 0) + delta;
+            const { error } = await supabaseClient.from('accounts')
+              .update({ balance: newBalance })
+              .eq('id', accId);
+            if (error) console.warn('Update balance failed for', accId, error);
+            else acc.balance = newBalance;
+          }
+          // 4. Mise à jour locale de D.transactions
+          for (const r of rows) {
+            D.transactions.push({
+              date: r.date,
+              account: D.accounts.find(a => a.id === r.account)?.name || '',
+              desc: r.desc,
+              cat: r.cat,
+              amount: r.amount,
+              type: r.type,
+              account_id: r.account
+            });
+          }
+          // 5. Rafraîchit l'UI
+          showToast(`✓ ${rows.length} transaction${rows.length > 1 ? 's' : ''} importée${rows.length > 1 ? 's' : ''}`);
+          closeImportCsvModal();
+          renderComptes();
+          renderOverview();
+          if (typeof renderInsights === 'function') renderInsights();
+        } catch (err) {
+          errEl.textContent = '⚠️ Erreur import : ' + (err.message || err);
+          errEl.style.display = '';
+          nextBtn.disabled = false;
+          nextBtn.textContent = '✓ Valider l\'import';
+        }
       }
 
       // ======================== OVERVIEW ========================
@@ -9810,6 +10809,6 @@
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a27f21bbc81d19a5',t:'MTc4NjE5ODUxMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a27f3f6d8c18dd33',t:'MTc4NjE5OTcyOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
