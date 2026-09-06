@@ -1464,6 +1464,10 @@
       width: 100%;
     }
     .expense-tool-input:focus { border-color: var(--gold); }
+    .expense-tool-hint {
+      font-size: 10px; color: var(--text3); line-height: 1.45;
+      padding-top: 9px;
+    }
     .expense-tool-actions { display: flex; gap: 8px; margin-top: 4px; }
     .expense-tool-disclaimer {
       font-size: 10px; color: var(--text3); font-style: italic;
@@ -1614,6 +1618,12 @@
       font-weight: 600; font-size: 11px;
       width: 28px; text-align: right; flex-shrink: 0;
     }
+    .expense-criteria-block {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      color: var(--text3); text-transform: uppercase;
+      margin: 10px 0 6px;
+    }
+    .expense-criteria-block:first-child { margin-top: 0; }
     .expense-comments {
       display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;
     }
@@ -3923,8 +3933,7 @@
                         autocomplete="current-password"><button type="button" class="auth-eye"
                         data-toggle="loginPassword" aria-label="Afficher le mot de passe">👁</button></div>
                   </div>
-                  <div class="auth-row"><label class="auth-check"><input type="checkbox" id="rememberMe"><span>Se
-                        souvenir de moi</span></label><a href="#" id="forgotLink">Mot de passe oublié ?</a></div>
+                  <div class="auth-row"><a href="#" id="forgotLink">Mot de passe oublié ?</a></div>
                   <button id="loginBtn" class="auth-btn" type="submit">Accéder au dashboard</button>
                   <button type="button" id="demoAccess" class="auth-btn auth-btn-alt">Mode démo</button>
                   <div id="loginMessage" class="auth-message" aria-live="polite" role="status"></div>
@@ -4005,32 +4014,6 @@
           <button class="sidebar-item" onclick="showPage('parametres');setSidebarActive(this)">
             <span class="sidebar-icon">⚙️</span> Paramètres
           </button>
-        </div>
-        <div class="sidebar-filters">
-          <div class="sidebar-label">FILTRES</div>
-          <div class="filter-group">
-            <div class="filter-label">Période</div>
-            <select class="filter-select" id="filterPeriod" onchange="onPeriodChange()">
-              <option value="all">Depuis le début</option>
-              <option value="1y">Dernière année</option>
-              <option value="6m">6 mois</option>
-              <option value="3m">3 mois</option>
-              <option value="custom">Personnalisé</option>
-            </select>
-            <div class="custom-period-inputs" id="customPeriodInputs">
-              <input type="month" id="customFrom" onchange="applyCustomPeriod()">
-              <input type="month" id="customTo" onchange="applyCustomPeriod()">
-            </div>
-          </div>
-          <div class="filter-group">
-            <div class="filter-label">Catégorie</div>
-            <select class="filter-select" id="filterCat" onchange="renderOverview()">
-              <option value="all">Toutes</option>
-              <option value="livret">Livret</option>
-              <option value="banque">Bancaire</option>
-              <option value="especes">Espèces</option>
-            </select>
-          </div>
         </div>
         <div class="score-mini" id="scoreMini">
           <div class="score-title">SANTÉ FINANCIÈRE</div>
@@ -4346,6 +4329,20 @@
                 <div class="expense-tool-field">
                   <label class="expense-tool-label" for="expAmount">Montant (€)</label>
                   <input type="number" id="expAmount" class="expense-tool-input" min="0" step="0.01" placeholder="Ex: 850">
+                </div>
+              </div>
+
+              <!-- Ligne 1b : Budget prévu (optionnel) — l'enveloppe que
+                   l'utilisateur s'était fixée pour ce projet. Le verdict
+                   compare le montant à ce budget : c'est le critère le
+                   plus "personnel" (dépasser SON budget = signal fort). -->
+              <div class="expense-tool-row">
+                <div class="expense-tool-field">
+                  <label class="expense-tool-label" for="expBudget">Budget prévu pour ce projet (€) — optionnel</label>
+                  <input type="number" id="expBudget" class="expense-tool-input" min="0" step="0.01" placeholder="Ex: 200">
+                </div>
+                <div class="expense-tool-field">
+                  <div class="expense-tool-hint">L'enveloppe que vous vous étiez fixée pour ce projet. Si renseignée, le montant est comparé à ce budget dans le verdict.</div>
                 </div>
               </div>
 
@@ -4667,7 +4664,7 @@
                 <div class="s-key">Début du suivi</div>
                 <div class="s-desc">Dérivé de votre 1re entrée d'historique</div>
               </div>
-              <input type="month" class="form-input" style="width:140px" id="settingStartDate" readonly style="background:var(--bg2);color:var(--text3);cursor:default">
+              <input type="month" class="form-input" style="width:140px;background:var(--bg2);color:var(--text3);cursor:default" id="settingStartDate" readonly>
             </div>
           </div>
           <div class="settings-section">
@@ -4716,22 +4713,12 @@
                 <option value="JPY">Yen (¥)</option>
               </select>
             </div>
-            <div class="settings-row">
-              <div>
-                <div class="s-key">Format de date</div>
-              </div>
-              <select class="filter-select" style="width:auto" id="settingDateFormat" onchange="updateDisplaySettings()">
-                <option value="DD/MM/YYYY">JJ/MM/AAAA</option>
-                <option value="MM/DD/YYYY">MM/JJ/AAAA</option>
-                <option value="YYYY-MM-DD">AAAA-MM-JJ</option>
-              </select>
-            </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
             <button class="btn btn-gold" onclick="saveAllParametres()">Sauvegarder</button>
             <button class="btn btn-ghost" onclick="exportCSV()">Exporter en CSV</button>
             <button class="btn btn-danger"
-              onclick="if(confirm('Réinitialiser toutes les données ?')){resetData()}">Réinitialiser données</button>
+              onclick="openResetDataModal()">Réinitialiser données</button>
             <button class="btn-delete-account" id="btnDeleteAccount" onclick="openDeleteAccountModal()">Supprimer mon compte</button>
           </div>
         </div>
@@ -4901,7 +4888,7 @@
         <div class="form-group"><label class="form-label">Banque</label><input class="form-input" id="editAccBank">
         </div>
         <div class="modal-actions">
-          <button class="btn btn-bhost" onclick="closeModal('editAccount')">Annuler</button>
+          <button class="btn btn-ghost" onclick="closeModal('editAccount')">Annuler</button>
           <button class="btn btn-gold" onclick="saveEditAccount()">Sauvegarder</button>
         </div>
       </div>
@@ -5155,6 +5142,48 @@
         <div class="delete-account-actions">
           <button class="btn btn-ghost" id="deleteAccountCancel">Annuler</button>
           <button class="btn btn-danger-strong" id="deleteAccountConfirm" disabled>Supprimer définitivement</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de réinitialisation des données (confirmation par saisie,
+         même pattern que la suppression de compte : anti-clic accidentel) -->
+    <div class="modal-overlay" id="modal-resetData">
+      <div class="modal modal-delete-account">
+        <div class="delete-account-icon">🗑️</div>
+        <h2 class="delete-account-title">Réinitialiser mes données</h2>
+
+        <p class="delete-account-text">
+          Cette action supprimera <strong style="color:var(--red)">toutes vos données financières</strong> :
+          comptes, transactions, historique de patrimoine, objectifs et paramètres
+          (revenu, objectif global, budget). <strong>Votre profil et vos préférences de
+          notification sont conservés.</strong>
+        </p>
+
+        <div class="delete-account-warning">
+          <div class="delete-account-warning-icon">🚨</div>
+          <div>
+            <strong>Cette action est irréversible.</strong><br>
+            Pensez à <strong>exporter vos données en CSV</strong> au préalable si vous souhaitez en conserver une copie.
+          </div>
+        </div>
+
+        <label class="delete-account-confirm-label" for="resetDataConfirmInput">
+          Pour confirmer la réinitialisation, tapez <strong style="color:var(--red)">réinitialiser mes données</strong> ci-dessous :
+        </label>
+        <input
+          type="text"
+          class="delete-account-confirm-input"
+          id="resetDataConfirmInput"
+          placeholder="réinitialiser mes données"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <div class="delete-account-confirm-hint" id="resetDataConfirmHint">&nbsp;</div>
+
+        <div class="delete-account-actions">
+          <button class="btn btn-ghost" id="resetDataCancel">Annuler</button>
+          <button class="btn btn-danger-strong" id="resetDataConfirm" disabled>Réinitialiser</button>
         </div>
       </div>
     </div>
@@ -5578,9 +5607,7 @@
         settings: { revenu: 2200, goal: 20000, delta: 0, budget: 1800 },
         profile: { prenom: '', situation: 'salarie', age: null, charges: 0, horizon: 'moyen' },
         indicators: { bestVal: 0, bestDate: '-', worstVal: 0, worstDate: '-', avgEpargne: 0 },
-        sidebarOpen: true,
-        customFrom: null,
-        customTo: null
+        sidebarOpen: true
       };
 
       let currentUserId = null;
@@ -5639,7 +5666,7 @@
             let goalValue = parseFloat(setRes.data.goal);
             // Sécurité : si le goal récupéré est invalide (NaN, 0, ou négatif), on garde la valeur par défaut
             if (isNaN(goalValue) || goalValue <= 0) {
-              goalValue = 1000000; // 1 000 000 € par défaut
+              goalValue = 20000; // même défaut que l'état initial et le champ Paramètres
             }
             D.settings = {
               revenu: parseFloat(setRes.data.revenu), goal: goalValue,
@@ -5800,6 +5827,17 @@
         const formatted = v.toLocaleString(cur.locale, { minimumFractionDigits: decimals, maximumFractionDigits: maxDec });
         return (v >= 0 ? '+' : '') + (cur.after ? formatted + ' ' + cur.symbol : cur.symbol + formatted);
       }
+      // Date du jour au format YYYY-MM-DD en HEURE LOCALE.
+      // (toISOString() donne la date UTC : à Paris, entre 00h00 et 01h00
+      // l'hiver, elle renvoyait la veille.)
+      function localTodayStr() {
+        const d = new Date();
+        const p = n => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+      }
+      // Couleur issue de la BDD : n'autorise que l'hexadécimal (protection
+      // contre l'injection dans un attribut style="…")
+      function safeColor(c) { return /^#[0-9a-fA-F]{3,8}$/.test(c || '') ? c : '#888' }
       function getTotal() { return D.accounts.reduce((s, a) => s + a.balance, 0) }
       function getLivret() { return D.accounts.filter(a => a.type === 'livret').reduce((s, a) => s + a.balance, 0) }
       function getBanque() { return D.accounts.filter(a => a.type === 'banque').reduce((s, a) => s + a.balance, 0) }
@@ -5919,7 +5957,7 @@
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         const el = document.getElementById('page-' + id);
         if (el) el.classList.add('active');
-        const tabMap = { overview: "Vue d'ensemble", evolution: "Évolution", analyse: "Analyse", objectifs: "Objectifs", projection: "Projection", parametres: "Paramètres", comptes: null };
+        const tabMap = { overview: "Vue d'ensemble", evolution: "Évolution", analyse: "Analyse", objectifs: "Objectifs", projection: "Projection", parametres: "Paramètres", comptes: "Comptes" };
         document.querySelectorAll('.nav-tab').forEach(t => {
           if (tabMap[id] && t.textContent.trim() === tabMap[id]) t.classList.add('active');
         });
@@ -6003,31 +6041,6 @@
       // (Voir bloc CSS "SYNCHRONISATION SIDEBAR ↔ SCROLL DE LA PAGE".)
       // ================================================================
 
-      function onPeriodChange() {
-        const val = document.getElementById('filterPeriod').value;
-        const cp = document.getElementById('customPeriodInputs');
-        cp.classList.toggle('show', val === 'custom');
-        renderOverview();
-      }
-
-      function applyCustomPeriod() {
-        D.customFrom = document.getElementById('customFrom').value;
-        D.customTo = document.getElementById('customTo').value;
-        renderOverview();
-      }
-
-      function getFilteredHistory() {
-        const period = document.getElementById('filterPeriod').value;
-        let hist = [...D.history];
-        if (period === '1y') return hist.slice(-12);
-        if (period === '6m') return hist.slice(-6);
-        if (period === '3m') return hist.slice(-3);
-        if (period === 'custom' && D.customFrom && D.customTo) {
-          // Filter by label approximate (simple string compare for month labels)
-          return hist; // Keep all for now — label-based filtering complex; return all
-        }
-        return hist;
-      }
 
       // ======================== SPARKLINES ========================
       function mkSpark(id, data, color) {
@@ -6051,16 +6064,18 @@
 
       // ── Helpers privés pour les calculs d'anomalies ───────────────────
       // Récupère les transactions du mois courant (date YYYY-MM-DD)
+      // yyyy-mm en heure locale (pas toISOString/UTC)
+      function _insYM(d) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      }
       function _insTxThisMonth() {
-        const now = new Date();
-        const ym = now.toISOString().slice(0, 7);
+        const ym = _insYM(new Date());
         return (D.transactions || []).filter(t => (t.date || '').slice(0, 7) === ym);
       }
       // Récupère les transactions du mois précédent
       function _insTxPrevMonth() {
         const now = new Date();
-        const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const ym = prev.toISOString().slice(0, 7);
+        const ym = _insYM(new Date(now.getFullYear(), now.getMonth() - 1, 1));
         return (D.transactions || []).filter(t => (t.date || '').slice(0, 7) === ym);
       }
       // Total des dépenses (sorties) sur une liste de transactions
@@ -6318,8 +6333,8 @@
         }
         // 22. Patrimoine baisse 3+ mois consécutifs
         if (hist6.length >= 4) {
-          // Compare les 3 DERNIÈRES variations mensuelles
-          const last3 = hist6.slice(-3); // 3 derniers mois
+          // Compare les 3 DERNIÈRES variations mensuelles (4 points = 3 variations)
+          const last3 = hist6.slice(-4);
           let declining = true;
           for (let i = 1; i < last3.length; i++) {
             if (last3[i].total >= last3[i - 1].total) { declining = false; break; }
@@ -6416,16 +6431,26 @@
           }
         }
         // 20. Compte dormant : 0 mouvement depuis X jours
-        accounts.forEach(a => {
-          const days = _insDaysSinceLastTx(a.name);
-          if (days >= 60) {
-            insights.push({
-              id: 20, level: 'info', icon: '💤',
-              text: 'Compte dormant',
-              detail: `« ${a.name} » : aucun mouvement depuis ${days} jours.`
-            });
-          }
-        });
+        // (Uniquement si des transactions existent : sinon _insDaysSinceLastTx
+        //  renvoie Infinity et l'affichage était « depuis Infinity jours »)
+        if (txs.length > 0) {
+          accounts.forEach(a => {
+            const days = _insDaysSinceLastTx(a.name);
+            if (!Number.isFinite(days)) {
+              insights.push({
+                id: 20, level: 'info', icon: '💤',
+                text: 'Compte sans mouvement',
+                detail: `« ${a.name} » : aucun mouvement enregistré sur ce compte.`
+              });
+            } else if (days >= 60) {
+              insights.push({
+                id: 20, level: 'info', icon: '💤',
+                text: 'Compte dormant',
+                detail: `« ${a.name} » : aucun mouvement depuis ${days} jours.`
+              });
+            }
+          });
+        }
         // 23. Concentration excessive >70% dans 1 compte
         if (accounts.length >= 2 && total > 0) {
           const maxAcc = accounts.reduce((m, a) => (a.balance > m.balance ? a : m), accounts[0]);
@@ -6445,8 +6470,8 @@
         // ── 🟢 POSITIFS (~7) ─────────────────────────────────────────
         // 4. Patrimoine en progression 3 mois consécutifs
         if (hist6.length >= 4) {
-          // Compare les 3 DERNIÈRES variations mensuelles
-          const last3 = hist6.slice(-3);
+          // Compare les 3 DERNIÈRES variations mensuelles (4 points = 3 variations)
+          const last3 = hist6.slice(-4);
           let rising = true;
           for (let i = 1; i < last3.length; i++) {
             if (last3[i].total <= last3[i - 1].total) { rising = false; break; }
@@ -7214,12 +7239,16 @@
               type: r.type
             };
           });
-          // 2. Insertion en batch (par chunks de 100 pour éviter les limites Supabase)
+          // 2. Insertion en batch (par chunks de 100 pour éviter les limites Supabase).
+          //    .select() pour récupérer les ids : sans eux, les transactions
+          //    importées étaient inéditables/insupprimables (.eq('id', undefined)).
           const chunkSize = 100;
+          const insertedRows = [];
           for (let i = 0; i < inserts.length; i += chunkSize) {
             const chunk = inserts.slice(i, i + chunkSize);
-            const { error } = await supabaseClient.from('transactions').insert(chunk);
+            const { data, error } = await supabaseClient.from('transactions').insert(chunk).select();
             if (error) throw error;
+            if (Array.isArray(data)) insertedRows.push(...data);
           }
           // 3. Mise à jour des soldes des comptes impactés
           const accountUpdates = {};
@@ -7238,18 +7267,31 @@
             if (error) console.warn('Update balance failed for', accId, error);
             else acc.balance = newBalance;
           }
-          // 4. Mise à jour locale de D.transactions
-          for (const r of rows) {
-            D.transactions.push({
-              date: r.date,
-              account: D.accounts.find(a => a.id === r.account)?.name || '',
-              desc: r.desc,
-              cat: r.cat,
-              amount: r.amount,
-              type: r.type,
-              account_id: r.account
-            });
-          }
+          // 4. Mise à jour locale de D.transactions : lignes retournées par
+          //    Supabase (avec leurs ids) quand c'est possible, re-tri par date
+          //    décroissante identique à loadAllData().
+          const withIds = insertedRows.length === inserts.length
+            ? insertedRows.map(r => ({
+                id: r.id,
+                date: r.date,
+                account: r.account_name,
+                desc: r.description,
+                cat: r.category,
+                amount: parseFloat(r.amount),
+                type: r.type,
+                account_id: r.account_id
+              }))
+            : rows.map(r => ({
+                date: r.date,
+                account: D.accounts.find(a => a.id === r.account)?.name || '',
+                desc: r.desc,
+                cat: r.cat,
+                amount: r.amount,
+                type: r.type,
+                account_id: r.account
+              }));
+          D.transactions = [...D.transactions, ...withIds]
+            .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
           // 5. Rafraîchit l'UI
           showToast(`✓ ${rows.length} transaction${rows.length > 1 ? 's' : ''} importée${rows.length > 1 ? 's' : ''}`);
           closeImportCsvModal();
@@ -7391,6 +7433,16 @@
       }
 
       function calcScore() {
+        // État « neuf » : aucune donnée saisie → affichage neutre au lieu
+        // d'un 8/100 rouge « À améliorer » qui punissait le profil vierge
+        // (le goal par défaut 20 000 € rendait la progression = 0).
+        if (D.accounts.length === 0 && D.history.length === 0 && D.transactions.length === 0 && D.objectives.length === 0) {
+          document.getElementById('scoreNum').textContent = '—';
+          document.getElementById('scoreLabel').textContent = 'En attente de données';
+          const f0 = document.getElementById('scoreFill');
+          if (f0) { f0.style.width = '0%'; f0.style.background = 'var(--border)'; }
+          return null;
+        }
         const total   = getTotal();
         const profil  = D.profile || {};
         const sit     = profil.situation || 'salarie';
@@ -7668,7 +7720,7 @@
         const max = Math.max(...cats.map(c => c.val), 1);
         document.getElementById('barChart').innerHTML = cats.map(c => `
     <div class="bar-row">
-      <div class="bar-name" title="${c.name}">${c.name}</div>
+      <div class="bar-name" title="${escHtml(c.name)}">${escHtml(c.name)}</div>
       <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.val / max * 100)}%;background:${c.color}"></div></div>
       <div class="bar-val">${fmt(c.val)}</div>
     </div>`).join('');
@@ -7684,7 +7736,7 @@
         } else if (typeof D.settings.goal === 'number' && D.settings.goal > 0) {
           goal = D.settings.goal;
         } else {
-          goal = 1000000; // Fallback ultime
+          goal = 20000; // Fallback ultime (cohérent avec l'état initial et Paramètres)
         }
 
         // Calcul du pourcentage avec sécurité
@@ -7895,10 +7947,10 @@
         document.getElementById(containerId).innerHTML = accs.map((a, _) => {
           const idx = D.accounts.indexOf(a);
           return `<div class="form-row" style="margin-bottom:10px;align-items:center">
-        <div class="form-group" style="margin-bottom:0"><label class="form-label">${a.name}</label>
+        <div class="form-group" style="margin-bottom:0"><label class="form-label">${escHtml(a.name)}</label>
           <input type="number" class="form-input" value="${a.balance}" id="qedit-${idx}" onchange="quickEditBalance(${idx},this.value)">
         </div>
-        <div style="padding-top:18px"><span style="color:var(--text3);font-size:11px">${a.bank}</span></div>
+        <div style="padding-top:18px"><span style="color:var(--text3);font-size:11px">${escHtml(a.bank)}</span></div>
       </div>`;
         }).join('');
       }
@@ -7907,7 +7959,7 @@
         document.getElementById('editRepartitionList').innerHTML = D.accounts.map((a, i) => `
     <div class="form-row" style="margin-bottom:10px;align-items:center">
       <div class="form-group" style="margin-bottom:0">
-        <label class="form-label">${a.icon} ${a.name} <span style="color:var(--text3)">(${typeLabel(a.type)})</span></label>
+        <label class="form-label">${escHtml(a.icon)} ${escHtml(a.name)} <span style="color:var(--text3)">(${escHtml(typeLabel(a.type))})</span></label>
         <input type="number" class="form-input" value="${a.balance}" id="repart-${i}" onchange="quickEditBalance(${i},this.value)">
       </div>
     </div>`).join('');
@@ -7980,10 +8032,10 @@
         } else {
           document.getElementById('accountsList').innerHTML = D.accounts.map((a, i) => `
     <div class="tx-item">
-      <div class="tx-icon" style="background:${typeColor(a.type)}22;font-size:16px">${a.icon}</div>
+      <div class="tx-icon" style="background:${typeColor(a.type)}22;font-size:16px">${escHtml(a.icon)}</div>
       <div class="tx-info">
-        <div class="tx-name">${a.name}</div>
-        <div class="tx-date">${a.bank} · <span class="badge ${typeBadgeCls(a.type)}">${typeLabel(a.type)}</span></div>
+        <div class="tx-name">${escHtml(a.name)}</div>
+        <div class="tx-date">${escHtml(a.bank)} · <span class="badge ${typeBadgeCls(a.type)}">${escHtml(typeLabel(a.type))}</span></div>
       </div>
       <div style="text-align:right;margin-right:8px">
         <div style="font-size:14px;font-weight:700;color:var(--gold)">${fmt(a.balance)}</div>
@@ -8010,8 +8062,8 @@
     <div class="tx-item">
       <div class="tx-icon" style="background:${t.type === 'income' ? 'rgba(76,175,80,0.12)' : 'rgba(244,67,54,0.12)'}">${t.type === 'income' ? '⬆️' : '⬇️'}</div>
       <div class="tx-info">
-        <div class="tx-name">${t.desc}</div>
-        <div class="tx-date">${t.date} · ${t.account}</div>
+        <div class="tx-name">${escHtml(t.desc)}</div>
+        <div class="tx-date">${escHtml(t.date)} · ${escHtml(t.account)}</div>
       </div>
       <div class="tx-amount ${t.type}">${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}</div>
     </div>`).join('');
@@ -8030,8 +8082,8 @@
         } else {
           document.getElementById('txTable').innerHTML = D.transactions.map((t, i) => `
     <tr>
-      <td>${t.date}</td><td>${t.account}</td><td>${t.desc}</td>
-      <td><span class="badge bo">${t.cat}</span></td>
+      <td>${escHtml(t.date)}</td><td>${escHtml(t.account)}</td><td>${escHtml(t.desc)}</td>
+      <td><span class="badge bo">${escHtml(t.cat)}</span></td>
       <td class="tx-amount ${t.type}" style="font-size:11px">${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}</td>
       <td><div class="action-btns">
         <button class="action-btn" onclick="editTransaction(${i})" title="Modifier">✏️</button>
@@ -8047,7 +8099,7 @@
       function populateTxAccountSelect() {
         const sel = document.getElementById('txAccount');
         if (!sel) return;
-        sel.innerHTML = D.accounts.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+        sel.innerHTML = D.accounts.map(a => `<option value="${escHtml(a.name)}">${escHtml(a.name)}</option>`).join('');
         // Met aussi à jour le select "Moyen de paiement" de l'outil d'analyse
         if (typeof refreshExpensePaymentSelect === 'function') {
           refreshExpensePaymentSelect();
@@ -8140,12 +8192,12 @@
 
         if (error) { showToast('Erreur : ' + error.message, 'error'); return }
 
-        D.accounts.splice(i, 1); renderComptes(); renderOverview(); showToast('Compte supprimé', 'error');
+        D.accounts.splice(i, 1); renderComptes(); renderOverview(); showToast('Compte supprimé');
       }
 
       async function addTransaction() {
         if (!requireLogin()) return;
-        const date = document.getElementById('txDate').value || new Date().toISOString().slice(0, 10);
+        const date = document.getElementById('txDate').value || localTodayStr();
         const account = document.getElementById('txAccount').value;
         const desc = document.getElementById('txDesc').value.trim();
         const amount = parseFloat(document.getElementById('txAmount').value) || 0;
@@ -8202,7 +8254,7 @@
           else { acc.balance = newBalance; }
         }
 
-        D.transactions.splice(i, 1); renderComptes(); renderOverview(); showToast('Transaction supprimée', 'error');
+        D.transactions.splice(i, 1); renderComptes(); renderOverview(); showToast('Transaction supprimée');
       }
 
       // Ouvre la modal d'édition de transaction en pré-remplissant les champs.
@@ -8223,7 +8275,7 @@
         // Remplir le select des comptes avec les comptes actuels
         const sel = document.getElementById('editTxAccount');
         if (sel) {
-          sel.innerHTML = D.accounts.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+          sel.innerHTML = D.accounts.map(a => `<option value="${escHtml(a.name)}">${escHtml(a.name)}</option>`).join('');
           sel.value = t.account || (D.accounts[0] && D.accounts[0].name) || '';
         }
         openModal('editTx');
@@ -8234,7 +8286,7 @@
       function populateEditTxAccountSelect(selected) {
         const sel = document.getElementById('editTxAccount');
         if (!sel) return;
-        sel.innerHTML = D.accounts.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+        sel.innerHTML = D.accounts.map(a => `<option value="${escHtml(a.name)}">${escHtml(a.name)}</option>`).join('');
         if (selected) sel.value = selected;
       }
 
@@ -8253,7 +8305,7 @@
         if (!t) return;
 
         // Lecture du formulaire
-        const newDate    = document.getElementById('editTxDate').value || new Date().toISOString().slice(0, 10);
+        const newDate    = document.getElementById('editTxDate').value || localTodayStr();
         const newAccount = document.getElementById('editTxAccount').value;
         const newDesc    = document.getElementById('editTxDesc').value.trim();
         const newAmount  = parseFloat(document.getElementById('editTxAmount').value) || 0;
@@ -8428,13 +8480,17 @@
       }
       function moisLabelToDate(label) {
         const m = (label || '').toLowerCase().match(/([a-zéû]+)\s*(\d{2,4})/i);
-        if (!m) return new Date().toISOString().slice(0, 10);
+        const fallback = localTodayStr();
+        if (!m) return fallback;
         const key = m[1].slice(0, 3);
         const monthIdx = MOIS_KEY_TO_IDX[key];
         let year = parseInt(m[2]);
         if (year < 100) year += 2000;
-        if (monthIdx === undefined || isNaN(year)) return new Date().toISOString().slice(0, 10);
-        return new Date(year, monthIdx, 1).toISOString().slice(0, 10);
+        if (monthIdx === undefined || isNaN(year)) return fallback;
+        // 1er du mois, formaté en heure LOCALE (toISOString/UTC décalait
+        // d'un jour à Paris, ce qui corrompait month_date et l'unicité
+        // onConflict: user_id,month_date).
+        return year + '-' + String(monthIdx + 1).padStart(2, '0') + '-01';
       }
 
       async function addHistorique() {
@@ -8509,7 +8565,7 @@
           const delta = x.total - prev;
           const rate = D.settings.revenu > 0 ? Math.round(delta / D.settings.revenu * 100) : 0;
           return `<tr>
-      <td>${x.m}</td>
+      <td>${escHtml(x.m)}</td>
       <td>${fmt(x.total)}</td>
       <td style="color:${delta >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600">${fmtDelta(delta)}</td>
         <td>${fmt(x.livret)}</td>
@@ -8542,8 +8598,13 @@
       //   - Historique du patrimoine (12+ mois)
       //   - Objectifs en cours
       //
-      // Logique multi-critères pondérée (10 critères, 5-20% chacun),
-      // verdict 0-100 → 5 niveaux, 8+ commentaires contextualisés.
+      // Barème v2 : score = 70% "bloc financier" (épargne, revenu,
+      // patrimoine, charges fixes, budget prévu — interpolés sur des
+      // ancrages choisis pour être parlants) + 30% "bloc contexte"
+      // (situation, caractère, horizon, âge, contexte social).
+      // Verdict 0-100 → 5 niveaux + commentaires contextualisés.
+      // Le bloc contexte est plafonné à 30% : un contexte neutre ne
+      // peut plus "racheter" une dépense objectivement trop lourde.
       // ================================================================
 
       // Couleurs des niveaux de verdict (réutilisées pour jauges et badges)
@@ -8700,26 +8761,57 @@
       }
 
       // ===========================================================
-      // NOUVEAUX CALCULATEURS (remplacent scoreByRatio pour les
-      // critères quantitatifs, avec une courbe plus naturelle)
+      // MOTEUR DE SCORING v2 — interpolation linéaire par ancrages
       // ===========================================================
-      // scoreFromRatioLog(ratio) : courbe logarithmique décroissante
-      //   ratio = 0    → 100
-      //   ratio = 0.1  → 91
-      //   ratio = 0.5  → 76
-      //   ratio = 1    → 67
-      //   ratio = 3    → 52
-      //   ratio = 10   → 35
-      //   ratio = 30   → 20
-      //   ratio = 100  →  2
-      // Utilise 100 - 33 * log10(1 + 9*ratio) pour une décroissance
-      // régulière et plus parlante que les seuils durs.
+      // Chaque critère financier est un RATIO concret (mois d'épargne
+      // consommés, % du revenu, % du patrimoine, % des charges, × le
+      // budget prévu). Le score est obtenu par interpolation linéaire
+      // sur des "ancrages" choisis pour être parlants et MONOTONIQUES :
+      //   - plus le montant augmente, plus le score baisse (toujours) ;
+      //   - un écart de 10× sur le montant produit un VRAI écart de
+      //     note (l'ancienne courbe logarithmique regroupait 50€, 500€
+      //     et 5000€ entre 44 et 72 → verdict "vague", insensible).
+      //
+      // Exemple (dépense PONCTUELLE, ancrages "oneOffSavings") :
+      //   0,5 mois d'épargne → 95 | 1 mois → 82 | 3 mois → 45
+      //   6 mois → 22 | 12 mois → 6 | 24 mois → 0
       // ===========================================================
-      function scoreFromRatioLog(ratio) {
-        if (ratio <= 0) return 100;
-        const s = 100 - 33 * Math.log10(1 + 9 * ratio);
-        return Math.max(0, Math.min(100, Math.round(s)));
+      function scoreFromAnchors(ratio, anchors) {
+        if (!isFinite(ratio) || ratio <= 0) return 100;
+        if (ratio <= anchors[0][0]) return anchors[0][1];
+        for (let i = 1; i < anchors.length; i++) {
+          const [r1, s1] = anchors[i - 1];
+          const [r2, s2] = anchors[i];
+          if (ratio <= r2) return s1 + ((ratio - r1) / (r2 - r1)) * (s2 - s1);
+        }
+        return anchors[anchors.length - 1][1];
       }
+
+      // Ancrages [ratio, score] — triés par ratio croissant.
+      const EXPENSE_ANCHORS = {
+        // Dépense PONCTUELLE : nombre de mois d'épargne mensuelle consommés
+        oneOffSavings: [[0,100],[0.5,95],[1,82],[2,62],[3,45],[6,22],[12,6],[24,0]],
+        // Dépense RÉCURRENT : fraction de l'épargne mensuelle consommée
+        // chaque mois (>1 = l'épargne mensuelle devient négative)
+        recurringSavings: [[0,100],[0.25,92],[0.5,78],[0.75,58],[1,30],[1.5,10],[2,0]],
+        // Ponctuel : fraction d'UN mois de revenu (2,3 = 2,3 mois de revenu)
+        oneOffIncome: [[0,100],[0.05,96],[0.1,90],[0.25,72],[0.5,48],[1,22],[2,8],[5,0]],
+        // Récurrent : fraction du revenu mensuel (>1 = dépense > revenu)
+        recurringIncome: [[0,100],[0.05,94],[0.1,80],[0.2,55],[0.3,38],[0.5,16],[0.8,4],[1,0]],
+        // Part du patrimoine (dépense ponctuelle ou annuelle)
+        patrimoine: [[0,100],[0.005,96],[0.01,90],[0.05,72],[0.1,52],[0.2,30],[0.4,10],[0.75,2]],
+        // Ponctuel : équivalent en % des charges fixes mensuelles
+        oneOffCharges: [[0,100],[0.1,95],[0.25,80],[0.5,56],[1,30],[2,10],[4,3]],
+        // Récurrent : % des charges fixes mensuelles (>1 = charges dépassées)
+        recurringCharges: [[0,100],[0.1,90],[0.25,70],[0.5,40],[0.75,18],[1,2]],
+        // Montant vs BUDGET PRÉVU par l'utilisateur (×)
+        budget: [[0,100],[0.5,95],[1,85],[1.5,62],[2,42],[3,22],[5,5],[10,0]],
+        // COMPTE SÉLECTIONNÉ — part du solde du compte utilisée par le
+        // paiement (1 = le compte passe à zéro)
+        accountOneOff: [[0,100],[0.25,95],[0.5,80],[0.75,60],[1,30],[1.5,10],[2,0]],
+        // Récurrent mensuel : fraction du solde prélevée CHAQUE mois
+        accountRecurring: [[0,100],[0.10,90],[0.25,75],[0.50,50],[0.75,25],[1,5]],
+      };
 
       // ===========================================================
       // FONCTION PRINCIPALE : evaluateExpense()
@@ -8745,6 +8837,7 @@
         const payment     = document.getElementById('expPayment').value;
         const character   = document.getElementById('expCharacter').value;
         const context     = document.getElementById('expContext').value;
+        const budgetPrevu = parseFloat(document.getElementById('expBudget')?.value) || 0;
 
         // 2. Récupération des données de l'app
         const settings   = D.settings || {};
@@ -8759,6 +8852,12 @@
         const situation  = profile.situation || 'salarie';
         const horizon    = profile.horizon || 'moyen';
         const prenom     = profile.prenom || '';
+
+        // Compte sélectionné dans le formulaire ("moyen de paiement") :
+        // l'analyse doit se tenir à CE compte (solde, type), pas seulement
+        // au patrimoine global. "__total__" = aucune sélection précise.
+        const selAccount = (payment !== '__total__' && payment !== '') ? getAccountByName(payment) : null;
+        const selAccSolde = selAccount ? (parseFloat(selAccount.balance) || 0) : 0;
 
         // 3. Profil de la dépense
         const epProfile = getExpenseProfile(type);
@@ -8781,71 +8880,154 @@
           montantMensuel = montant / 12;
           recurrenceLabel = 'annuel';
         }
+        // Effort mensuel réel : null pour une dépense PONCTUELLE (on compare
+        // alors le montant BRUT : mois d'épargne, % du patrimoine, % des
+        // charges) ; montantMensuel pour un récurrent (mensuel ou annuel).
+        const effortMensuel = (recurrence === 'unique') ? null : montantMensuel;
 
         // 5. Calcul des valeurs concrètes (système intelligent stable)
         const capaciteJour = revenu > 0 ? revenu / 30 : 0;
         const coutParJour  = getCostPerDay(montant, epProfile);  // null pour épargne
         const valeurNette  = getAdjustedNetValue(montant, epProfile);
         const tauxEffort   = revenu > 0 ? (montantMensuel / revenu) * 100 : 0; // %
-        const effortVsEpargne = epargneMoy > 0 ? (montantMensuel / epargneMoy) : 0; // ratio
+        // Ratio clé : ponctuel → nombre de MOIS d'épargne consommés ;
+        // récurrent → fraction de l'épargne mensuelle consommée.
+        const effortVsEpargne = epargneMoy > 0 ? (montantMensuel / epargneMoy) : 0;
         const pctPatrimoine = totalPatrimoine > 0 ? (montant / totalPatrimoine) * 100 : 0;
         const pctCharges   = charges > 0 ? (montantMensuel / charges) * 100 : 0;
 
         // 6. Avertissement si données insuffisantes
-        const dataInsufficient = (revenu === 0 && epargneMoy === 0 && totalPatrimoine === 0);
+        const dataInsufficient = (revenu === 0 && epargneMoy === 0 && totalPatrimoine === 0
+                                  && charges === 0 && budgetPrevu <= 0);
 
-        // 7. Calcul du SCORE COMPOSITE (nouveau barème)
-        //    On construit un objet "criteria" avec score 0-100 et poids.
-        //    Les poids somment à 100 et sont ADAPTÉS au contexte :
-        //      - Si "Investissement" → horizon+patrimoine boostés, revenu+épargne réduits
-        //      - Si "Patrimoine" (épargne) → on inverse : critère quasi toujours 100
-        //      - Sinon → barème standard
+        // 7. Calcul du SCORE COMPOSITE (barème v2)
+        //    Deux blocs :
+        //      - "fin" : mesures concrètes du poids de la dépense
+        //        (épargne, revenu, patrimoine, charges, budget prévu).
+        //        Chaque mesure est un RATIO interpolé sur EXPENSE_ANCHORS.
+        //      - "ctx" : contexte personnel (situation, caractère, horizon,
+        //        âge, contexte social) — base neutre 50 + modulations.
+        //    Score final = 70% du bloc financier + 30% du bloc contexte
+        //    (voir l'étape 8 pour l'agrégation).
         const criteria = [];
-        let dataWarning = null;
+        const missingData = [];
+        // Formatage français d'un ratio (1,5 / 25) pour les libellés
+        const fr1 = (x) => x < 10 ? x.toFixed(1).replace('.', ',') : String(Math.round(x));
+        // Poids du bloc financier : si un COMPTE PRÉCIS est sélectionné,
+        // le critère "compte" (25) entre dans la balance et les autres
+        // critères sont légèrement re-pondérés (avec "__total__", le
+        // critère "patrimoine" joue déjà le rôle de "marge disponible").
+        const W_FIN = selAccount
+          ? { epargne: 25, revenu: 20, patrimoine: 15, charges: 10, budget: 20, compte: 25 }
+          : { epargne: 28, revenu: 20, patrimoine: 18, charges: 12, budget: 22, compte: 0 };
 
-        // Construction d'un "poids de base" par critère
-        const baseWeights = {
-          epargne: 25, patrimoine: 20, charges: 15, situation: 12,
-          revenu: 8,  horizon: 8,    age: 5,     character: 4,
-          context: 3,
-        };
-
-        // (A) Critère : ÉPARGNE — indicateur #1 de la santé financière
+        // ── BLOC FINANCIER ──────────────────────────────────────────
+        // (A) ÉPARGNE — la mesure la plus parlante :
+        //   ponctuel → combien de MOIS d'épargne la dépense consomme-t-elle ?
+        //   récurrent → quelle FRACTION de l'épargne mensuelle disparaît ?
         if (isPatrimoine) {
-          // Pour l'épargne, c'est toujours bien
-          criteria.push({ key: 'epargne', label: 'Épargne mensuelle', score: 100, weight: 25, detail: 'Vous épargnez, c\'est excellent' });
+          criteria.push({ key: 'epargne', block: 'fin', label: 'Épargne mensuelle', score: 100, weight: 28, detail: 'Vous épargnez, c\'est excellent' });
         } else if (epargneMoy > 0) {
-          const score = scoreFromRatioLog(effortVsEpargne);
+          const curveEp = (recurrence === 'unique') ? EXPENSE_ANCHORS.oneOffSavings : EXPENSE_ANCHORS.recurringSavings;
           criteria.push({
-            key: 'epargne', label: 'Épargne mensuelle', weight: 25, score,
-            detail: `${effortVsEpargne.toFixed(1)}× votre épargne (${fmt(epargneMoy)})`
+            key: 'epargne', block: 'fin', label: 'Épargne mensuelle', weight: W_FIN.epargne,
+            score: Math.round(scoreFromAnchors(effortVsEpargne, curveEp)),
+            detail: (recurrence === 'unique')
+              ? `consomme ${fr1(effortVsEpargne)} mois d'épargne (${fmt(epargneMoy)}/mois)`
+              : `représente ${Math.round(effortVsEpargne * 100)}% de votre épargne mensuelle (${fmt(epargneMoy)}/mois)`
           });
         } else {
-          dataWarning = 'épargne';
+          missingData.push('épargne mensuelle');
         }
 
-        // (B) Critère : PATRIMOINE — marge de manœuvre réelle
+        // (B) REVENU — poids de la dépense par rapport au revenu mensuel
+        if (revenu > 0) {
+          const ratioRev = (effortMensuel ?? montant) / revenu;
+          const curveRev = (recurrence === 'unique') ? EXPENSE_ANCHORS.oneOffIncome : EXPENSE_ANCHORS.recurringIncome;
+          criteria.push({
+            key: 'revenu', block: 'fin', label: 'Revenu mensuel', weight: 20,
+            score: Math.round(scoreFromAnchors(ratioRev, curveRev)),
+            detail: (ratioRev >= 1)
+              ? `représente l'équivalent de ${fr1(ratioRev)} mois de revenu`
+              : `représente ${Math.round(ratioRev * 100)}% de votre revenu mensuel`
+          });
+        } else if (!isPatrimoine) {
+          missingData.push('revenu mensuel');
+        }
+
+        // (C) PATRIMOINE — part de la richesse engagée
+        // (sensé pour une dépense ponctuelle ou annuelle ; un récurrent
+        //  mensuel est déjà couvert par les critères revenu + épargne)
         if (isPatrimoine) {
-          criteria.push({ key: 'patrimoine', label: 'Patrimoine actuel', score: 100, weight: 20, detail: 'Augmente votre patrimoine' });
-        } else if (totalPatrimoine > 0) {
-          const score = scoreFromRatioLog(pctPatrimoine / 100);
+          criteria.push({ key: 'patrimoine', block: 'fin', label: 'Patrimoine actuel', score: 100, weight: W_FIN.patrimoine, detail: 'Augmente votre patrimoine' });
+        } else if (totalPatrimoine > 0 && recurrence !== 'mensuel') {
           criteria.push({
-            key: 'patrimoine', label: 'Patrimoine actuel', weight: 20, score,
-            detail: `${pctPatrimoine.toFixed(1)}% du patrimoine (${fmt(totalPatrimoine)})`
+            key: 'patrimoine', block: 'fin', label: 'Patrimoine actuel', weight: W_FIN.patrimoine,
+            score: Math.round(scoreFromAnchors(pctPatrimoine / 100, EXPENSE_ANCHORS.patrimoine)),
+            detail: `représente ${pctPatrimoine.toFixed(1).replace('.', ',')}% de votre patrimoine (${fmt(totalPatrimoine)})`
           });
-        } else {
-          if (!dataWarning) dataWarning = 'patrimoine';
+        } else if (recurrence !== 'mensuel' && totalPatrimoine <= 0) {
+          missingData.push('patrimoine');
         }
 
-        // (C) Critère : CHARGES FIXES — capacité d'absorption
+        // (D) CHARGES FIXES — capacité d'absorption du budget mensuel
         if (charges > 0) {
-          const score = scoreFromRatioLog(pctCharges / 100);
+          const ratioChg = (effortMensuel ?? montant) / charges;
+          const curveChg = (recurrence === 'unique') ? EXPENSE_ANCHORS.oneOffCharges : EXPENSE_ANCHORS.recurringCharges;
           criteria.push({
-            key: 'charges', label: 'Charges fixes', weight: 15, score,
-            detail: `${pctCharges.toFixed(0)}% des charges (${fmt(charges)})`
+            key: 'charges', block: 'fin', label: 'Charges fixes', weight: W_FIN.charges,
+            score: Math.round(scoreFromAnchors(ratioChg, curveChg)),
+            detail: `représente l'équivalent de ${Math.round(ratioChg * 100)}% de vos charges mensuelles (${fmt(charges)})`
           });
-        } else {
-          if (!dataWarning) dataWarning = 'charges';
+        } else if (!isPatrimoine) {
+          missingData.push('charges fixes');
+        }
+
+        // (E) BUDGET PRÉVU (optionnel) — l'enveloppe que l'utilisateur
+        // s'était fixée pour ce projet. Dépasser SON propre budget est un
+        // signal fort, indépendamment de sa situation financière.
+        if (budgetPrevu > 0 && !isPatrimoine) {
+          const ratioBud = montant / budgetPrevu;
+          criteria.push({
+            key: 'budget', block: 'fin', label: 'Budget prévu', weight: W_FIN.budget,
+            score: Math.round(scoreFromAnchors(ratioBud, EXPENSE_ANCHORS.budget)),
+            detail: (ratioBud >= 1)
+              ? `représente ${fr1(ratioBud)}× le budget que vous vous étiez fixé (${fmt(budgetPrevu)})`
+              : `rentre dans le budget prévu (${fmt(budgetPrevu)}) — il en reste ${fmt(budgetPrevu - montant)}`
+          });
+        }
+
+        // (F) COMPTE SÉLECTIONNÉ — la dépense se paie DEPUIS ce compte :
+        //     1) le solde doit couvrir le montant ;
+        //     2) compte courant : après paiement, il faut encore pouvoir
+        //        couvrir au moins 1 mois de charges (sinon plafonnement).
+        //     Livret : puiser dans l'épargne de précaution est signalé.
+        if (selAccount && !isPatrimoine) {
+          const ratioAcc = selAccSolde > 0 ? montant / selAccSolde : 2;
+          const curveAcc = (recurrence === 'mensuel') ? EXPENSE_ANCHORS.accountRecurring : EXPENSE_ANCHORS.accountOneOff;
+          let scoreAcc = Math.round(scoreFromAnchors(ratioAcc, curveAcc));
+          const resteAcc = selAccSolde - montant;
+          let detailAcc, noteAcc = '';
+          if (selAccSolde <= 0 || montant > selAccSolde) {
+            detailAcc = `dépasse le solde du compte « ${selAccount.name} » (${fmt(selAccSolde)}) de ${fmt(Math.max(0, montant - selAccSolde))}`;
+            scoreAcc = Math.min(scoreAcc, 5);
+          } else {
+            detailAcc = `représente ${Math.round(ratioAcc * 100)}% du solde du compte « ${selAccount.name} » — il en resterait ${fmt(resteAcc)}`;
+            if (selAccount.type === 'banque' && charges > 0) {
+              if (resteAcc < charges * 0.5) {
+                scoreAcc = Math.min(scoreAcc, 40);
+                noteAcc = `Après paiement, il resterait ${fmt(resteAcc)} sur ce compte courant : moins de la moitié d'un mois de vos charges (${fmt(charges)}).`;
+              } else if (resteAcc < charges) {
+                scoreAcc = Math.min(scoreAcc, 55);
+                noteAcc = `Après paiement, il resterait ${fmt(resteAcc)} sur ce compte courant : moins d'un mois de vos charges (${fmt(charges)}).`;
+              }
+            } else if (selAccount.type === 'livret' && charges > 0) {
+              noteAcc = (resteAcc >= charges)
+                ? `Il resterait ≈ ${Math.round(resteAcc / charges)} mois de charges sur ce livret (épargne de précaution).`
+                : `Il resterait moins d'un mois de charges sur ce livret (épargne de précaution).`;
+            }
+          }
+          criteria.push({ key: 'compte', block: 'fin', label: `Compte « ${selAccount.name} »`, weight: W_FIN.compte, score: scoreAcc, detail: detailAcc, note: noteAcc });
         }
 
         // (D) Critère : SITUATION (profil) — contexte utilisateur
@@ -8874,27 +9056,18 @@
           if (type === 'credits') { situationScore -= 20; sitDetails.push('−crédit'); }
         }
         criteria.push({
-          key: 'situation', label: `Situation (${situation})`, weight: 12,
+          key: 'situation', block: 'ctx', label: `Situation (${situation})`, weight: 10,
           score: Math.max(0, Math.min(100, situationScore)),
           detail: sitDetails.length ? sitDetails.join(' ') : 'neutre'
         });
 
-        // (E) Critère : REVENU — réduit de 15 → 8
-        if (revenu > 0) {
-          const score = scoreFromRatioLog((montantMensuel / revenu));
-          criteria.push({
-            key: 'revenu', label: 'Revenu mensuel', weight: 8, score,
-            detail: `${tauxEffort.toFixed(0)}% du revenu`
-          });
-        } else {
-          if (!dataWarning) dataWarning = 'revenu';
-        }
+        // (B) Critère REVENU — traité plus haut, dans le bloc financier.
 
         // (F) Critère : HORIZON — adapté : boosté pour Investissement
         // Base neutre = 50 (ni favorable, ni défavorable).
         let horizonScore = 50;
         const horizonDetails = [];
-        let horizonWeight = 8;
+        const horizonWeight = 6; // barème v2 : le contexte pèse moins que le financier
         if (isInvestissement) {
           // Un investissement long terme est cohérent avec un horizon long
           horizonScore += 20; horizonDetails.push('+investissement');
@@ -8912,7 +9085,7 @@
           }
         }
         criteria.push({
-          key: 'horizon', label: `Horizon (${horizon})`, weight: horizonWeight,
+          key: 'horizon', block: 'ctx', label: `Horizon (${horizon})`, weight: horizonWeight,
           score: Math.max(0, Math.min(100, horizonScore)),
           detail: horizonDetails.length ? horizonDetails.join(' ') : 'neutre'
         });
@@ -8934,7 +9107,7 @@
           if (type === 'credits') { ageScore -= 30; ageDetails.push('−crédit'); }
         }
         criteria.push({
-          key: 'age', label: `Âge (${age} ans)`, weight: 5,
+          key: 'age', block: 'ctx', label: `Âge (${age} ans)`, weight: 4,
           score: Math.max(0, Math.min(100, ageScore)),
           detail: ageDetails.length ? ageDetails.join(' ') : 'neutre'
         });
@@ -8963,7 +9136,7 @@
           characterScore -= 40; characterDetails.push('−impulsion');
         }
         criteria.push({
-          key: 'character', label: `Caractère (${character})`, weight: 4,
+          key: 'character', block: 'ctx', label: `Caractère (${character})`, weight: 8,
           score: Math.max(0, Math.min(100, characterScore)),
           detail: characterDetails.join(' ') || 'standard'
         });
@@ -8988,38 +9161,57 @@
           }
         }
         criteria.push({
-          key: 'context', label: `Contexte (${context})`, weight: 3,
+          key: 'context', block: 'ctx', label: `Contexte (${context})`, weight: 4,
           score: Math.max(0, Math.min(100, contextScore)),
           detail: contextDetails.join(' ') || 'standard'
         });
 
-        // 8. Re-normalisation des poids (le total doit sommer à 100)
-        const totalW = criteria.reduce((s, c) => s + c.weight, 0);
-        if (totalW > 0 && totalW !== 100) {
-          const k = 100 / totalW;
-          criteria.forEach(c => c.weight = Math.round(c.weight * k * 10) / 10);
+        // 8. AGGREGATION — score = 70% bloc financier + 30% bloc contexte
+        //    Si un critère est indisponible (donnée manquante), les poids
+        //    du bloc sont re-normalisés sur les critères disponibles.
+        //    Le bloc contexte ne pèse JAMAIS plus de 30% : une dépense
+        //    objectivement lourde ne peut pas être "rachetée" par un
+        //    contexte neutre, et un contexte difficile ne peut pas rendre
+        //    "raisonnable" une dépense qui détruit l'épargne.
+        const finCrit = criteria.filter(c => c.block === 'fin');
+        const ctxCrit = criteria.filter(c => c.block === 'ctx');
+        let scoreFinal;
+        let indicative = false;
+        if (finCrit.length === 0) {
+          // Aucune donnée financière : score INDICATIF sur le contexte seul
+          const wC = ctxCrit.reduce((s, c) => s + c.weight, 0);
+          scoreFinal = wC > 0 ? Math.round(ctxCrit.reduce((s, c) => s + c.score * c.weight, 0) / wC) : 50;
+          indicative = true;
+        } else {
+          const wF = finCrit.reduce((s, c) => s + c.weight, 0);
+          const finAvg = finCrit.reduce((s, c) => s + c.score * c.weight, 0) / wF;
+          const wC = ctxCrit.reduce((s, c) => s + c.weight, 0);
+          const ctxAvg = wC > 0 ? ctxCrit.reduce((s, c) => s + c.score * c.weight, 0) / wC : 50;
+          scoreFinal = Math.round(0.7 * finAvg + 0.3 * ctxAvg);
         }
-
-        // 9. Calcul du score final pondéré
-        let totalScore = 0;
-        for (const c of criteria) {
-          totalScore += c.score * c.weight;
-        }
-        let scoreFinal = Math.round(totalScore / 100);
-        // CORRECTIF : Si AUCUNE donnée financière n'est renseignée
-        // (revenu=0, epargne=0, patrimoine=0), le score serait
-        // artificiellement autour de 50 (car tous les critères
-        // qualitatifs valent 50 en base). On force 50 pour que
-        // ce soit explicitement "neutre" et non pas "presque bon".
-        if (revenu === 0 && epargneMoy === 0 && totalPatrimoine === 0) {
-          scoreFinal = 50;
-        }
-        // Cas spécial : épargne = toujours bien (plafond à 95 max si score < 95)
-        if (isPatrimoine && scoreFinal < 95) scoreFinal = 95;
-        // Cas spécial : Investissement très gros → on relâche un peu
-        if (isInvestissement && montant > (revenu * 5) && scoreFinal < 40) scoreFinal = 40;
+        // Cas spécial : "Épargne & Investissement" crée du patrimoine →
+        // verdict quasi systématiquement positif (c'est une épargne,
+        // pas une dépense).
+        if (isPatrimoine) scoreFinal = Math.max(scoreFinal, 95);
         const level = getExpenseLevel(scoreFinal);
         const levelInfo = EXPENSE_LEVELS[level];
+
+        // Critère "fait marquant" pour le texte du verdict : le critère
+        // financier le plus faible (c'est lui qui explique la note).
+        // Si l'utilisateur a dépassé de ≥2× SON budget prévu, c'est ce
+        // fait-là qui est le plus parlant.
+        let keyCriterion = null;
+        if (finCrit.length > 0) {
+          keyCriterion = finCrit.reduce((a, b) => (b.score < a.score ? b : a));
+          if (budgetPrevu > 0 && (montant / budgetPrevu) >= 2) {
+            const budCrit = finCrit.find(c => c.key === 'budget');
+            if (budCrit) keyCriterion = budCrit;
+          }
+          // Un compte sélectionné insuffisant est le fait le plus urgent
+          // à mettre en avant (la dépense ne peut pas s'y payer).
+          const accCrit = finCrit.find(c => c.key === 'compte');
+          if (accCrit && accCrit.score <= 10) keyCriterion = accCrit;
+        }
 
         // 10. CONSTRUCTION DES COMMENTAIRES avec SCORE DE PERTINENCE
         // Chaque commentaire a un "pertinence" (0-100). On trie, le premier
@@ -9031,12 +9223,35 @@
           comments.push({ icon, type, text, pertinence });
         };
 
-        // (C1) Verdict principal — toujours présent, pertinence max
-        const verdictText = buildVerdictText(montant, recurrenceLabel, montantAnnuel, montantMensuel, prenom, scoreFinal, levelInfo);
+        // (C1) Verdict principal — toujours présent, pertinence max.
+        // Intègre le "fait marquant" (le critère financier le plus faible)
+        // pour que la note s'explique en une phrase.
+        const verdictText = buildVerdictText(montant, recurrenceLabel, montantAnnuel, montantMensuel, prenom, scoreFinal, levelInfo,
+          keyCriterion ? keyCriterion.detail : null, character === 'necessaire');
         addComment(levelInfo.emoji, 'verdict', verdictText, 100);
 
-        // (C2) Capacité d'achat restante (synthèse concrète)
-        if (revenu > 0 && epargneMoy > 0 && !isPatrimoine) {
+        // (C2) Insight "chiffre clé" mis en avant.
+        //   Ponctuel : on affiche la 2e mesure la plus faible (la 1re est
+        //   déjà dans le verdict) pour donner un 2e angle concret.
+        //   Récurrent : impact direct sur la capacité d'épargne mensuelle
+        //   (le texte "passerait de X à Y" n'a de sens que là).
+        if (recurrence === 'unique' && !isPatrimoine) {
+          // Dépense NÉCESSAIRE : la question n'est pas « faut-il la faire ? »
+          // mais « comment la financer sans mettre le mois en danger ? »
+          // → un conseil de financement prend la priorité dans l'insight.
+          const financementText = (character === 'necessaire')
+            ? buildFinancementAdvice(montant, selAccount, selAccSolde, payment, charges, revenu)
+            : null;
+          if (financementText) {
+            addComment('💡', 'insight', financementText, 35);
+          } else {
+            const finSorted = [...finCrit].sort((a, b) => a.score - b.score);
+            if (finSorted.length > 1) {
+              const ic = finSorted[1];
+              addComment('💡', 'insight', `${escHtml(ic.label)} : elle ${escHtml(ic.detail)}.`, 35);
+            }
+          }
+        } else if (revenu > 0 && epargneMoy > 0 && !isPatrimoine) {
           const epargneFuture = Math.max(0, epargneMoy - montantMensuel);
           addComment(
             '💡', 'insight',
@@ -9076,15 +9291,13 @@
           );
         }
 
-        // (C6) Commentaire épargne (ratio)
+        // (C6) Commentaire épargne (ratio) — formulation adaptée à la
+        // récurrence (mois consommés pour un ponctuel, % pour un récurrent)
         if (epargneMoy > 0 && !isPatrimoine && effortVsEpargne >= 1) {
-          const ratioStr = effortVsEpargne.toFixed(1);
-          const mois = effortVsEpargne >= 1 ? Math.round(effortVsEpargne) : 1;
-          addComment(
-            '🐷', 'epargne',
-            `C'est <strong>${ratioStr}× votre épargne mensuelle moyenne</strong> (${fmt(epargneMoy)}), soit l'équivalent de <strong>${mois} mois</strong> d'épargne.`,
-            effortVsEpargne >= 3 ? 55 : 30
-          );
+          const text = (recurrence === 'unique')
+            ? `C'est l'équivalent de <strong>${Math.round(effortVsEpargne)} mois</strong> de votre épargne mensuelle moyenne (${fmt(epargneMoy)}/mois).`
+            : `C'est <strong>${Math.round(effortVsEpargne * 100)}% de votre épargne mensuelle moyenne</strong> (${fmt(epargneMoy)}/mois) — votre épargne mensuelle deviendrait <strong>négative</strong>.`;
+          addComment('🐷', 'epargne', text, effortVsEpargne >= 3 ? 55 : 30);
         }
 
         // (C7) Commentaire charges
@@ -9178,16 +9391,32 @@
           }
         }
 
-        // (C13) Avertissement timing (compte sélectionné)
-        if (datePrevue && payment !== '__total__') {
-          const acc = getAccountByName(payment);
-          if (acc && acc.balance < montant) {
-            const dateStr = new Date(datePrevue).toLocaleDateString('fr-FR');
+        // (C13) Compte sélectionné — précision "actionnable" sur la
+        // trésorerie. Le score intègre déjà ce compte (critère "compte") ;
+        // ici on donne la phrase d'action (manque, ou puiser ailleurs).
+        if (selAccount) {
+          if (montant > selAccSolde) {
             addComment(
               '💳', 'timing',
-              `Votre compte <strong>« ${escHtml(payment)} »</strong> n'aura que ${fmt(acc.balance)} le ${dateStr} : <strong>insuffisant</strong> (manque ${fmt(montant - acc.balance)}).`,
+              `Votre compte <strong>« ${escHtml(payment)} »</strong> a un solde actuel de <strong>${fmt(selAccSolde)}</strong> : insuffisant pour ${fmt(montant)} (manque <strong>${fmt(montant - selAccSolde)}</strong>). Prévoyez un autre moyen de paiement, un report, ou un paiement fractionné.`,
               50
             );
+          }
+        } else {
+          // "__total__" : on ne sait pas depuis quel compte on partira →
+          // avertissement si le compte courant principal ne couvre pas la
+          // dépense à lui seul (les autres comptes resteront des tampons).
+          const courants = (D.accounts || []).filter(a => a.type === 'banque');
+          if (courants.length > 0 && recurrence !== 'mensuel') {
+            const cour = courants.reduce((m, a) => ((parseFloat(a.balance) || 0) > (parseFloat(m.balance) || 0) ? a : m), courants[0]);
+            const courSolde = parseFloat(cour.balance) || 0;
+            if (montant > courSolde) {
+              addComment(
+                '💳', 'timing',
+                `« Patrimoine total » sélectionné : votre compte courant <strong>« ${escHtml(cour.name)} »</strong> (${fmt(courSolde)}) ne couvre pas à lui seul ${fmt(montant)} — vous puiserez dans vos autres comptes (épargne).`,
+                40
+              );
+            }
           }
         }
 
@@ -9255,25 +9484,46 @@
           </div>
         `).join('');
 
-        // Barres de critères (HTML inchangé)
-        const criteriaHtml = criteria.map(c => {
+        // Barres de critères, groupées par bloc (financier / contexte)
+        let criteriaHtml = '';
+        let lastBlock = null;
+        for (const c of criteria) {
+          if (c.block !== lastBlock) {
+            criteriaHtml += `<div class="expense-criteria-block">${c.block === 'fin' ? '📊 Indicateurs financiers' : '👤 Contexte personnel'}</div>`;
+            lastBlock = c.block;
+          }
           const color = scoreToColor(c.score);
-          return `<div class="expense-criterion">
+          criteriaHtml += `<div class="expense-criterion">
             <span class="expense-criterion-label">${escHtml(c.label)}</span>
             <div class="expense-criterion-bar">
               <div class="expense-criterion-fill" style="width:${c.score}%;background:${color}"></div>
             </div>
             <span class="expense-criterion-score" style="color:${color}">${c.score}</span>
           </div>
-          <div style="font-size:10px;color:var(--text3);margin-top:-2px;margin-left:4px">${escHtml(c.detail)}</div>`;
-        }).join('');
+          <div style="font-size:10px;color:var(--text3);margin-top:-2px;margin-left:4px">${escHtml(c.detail)}${c.note ? ' ' + escHtml(c.note) : ''}</div>`;
+        }
 
         // Warning
         const warningHtml = dataInsufficient
-          ? `<div class="expense-data-warning">⚠️ Données insuffisantes (revenu, épargne, patrimoine). L'analyse reste indicative — complétez votre profil et vos comptes pour un verdict plus précis.</div>`
-          : (dataWarning
-            ? `<div class="expense-data-warning">ℹ️ Analyse partielle (manque : ${dataWarning}). Les autres critères sont pris en compte.</div>`
-            : '');
+          ? `<div class="expense-data-warning">⚠️ Aucune donnée financière (revenu, épargne, patrimoine, charges). Le score est <strong>indicatif</strong> (basé sur le contexte seul) — complétez vos paramètres et vos comptes pour un verdict précis.</div>`
+          : (missingData.length > 0
+            ? `<div class="expense-data-warning">ℹ️ Analyse partielle (manque : ${missingData.join(', ')}). Les critères disponibles sont re-pondérés.</div>`
+            : (indicative ? `<div class="expense-data-warning">ℹ️ Score indicatif — aucune mesure financière disponible.</div>` : ''));
+
+        // Ligne de transparence : les données concrètes sur lesquelles
+        // repose le verdict. Un outil qui conseille sérieusement montre
+        // ses données d'entrée (et ce qui manque pour affiner).
+        const baseParts = [];
+        if (revenu > 0) baseParts.push(`revenu ${fmt(revenu)}/mois (déclaré)`);
+        if (epargneMoy > 0) baseParts.push(`épargne ${fmt(epargneMoy)}/mois (moy. 12 m.)`);
+        const nbAccs = (D.accounts || []).length;
+        if (nbAccs > 0) baseParts.push(`${nbAccs} compte${nbAccs > 1 ? 's' : ''} (${fmt(totalPatrimoine)})`);
+        if (charges > 0) baseParts.push(`charges ${fmt(charges)}/mois`);
+        if (budgetPrevu > 0) baseParts.push(`budget prévu ${fmt(budgetPrevu)}`);
+        if (selAccount) baseParts.push(`compte sélectionné : « ${escHtml(selAccount.name)} » (${fmt(selAccSolde)})`);
+        const baseHtml = baseParts.length > 0
+          ? `<div class="expense-insight"><span class="expense-insight-icon">📌</span><span><strong>Base de l'analyse :</strong> ${baseParts.join(' · ')}${(!revenu || !epargneMoy || nbAccs === 0 || !charges) ? ' — complétez les données manquantes (Paramètres / Profil) pour affiner le verdict.' : '.'}</span></div>`
+          : '';
 
         // Toggle "Autres commentaires" (secondaires)
         // État sauvegardé pour persister entre analyses
@@ -9308,6 +9558,7 @@
             </div>
           </div>
           ${warningHtml}
+          ${baseHtml}
           ${insightsHtml}
           <div class="expense-comments">${primaryHtml}</div>
           ${othersHtml}
@@ -9336,10 +9587,11 @@
       // ===========================================================
       function resetExpenseTool() {
         document.getElementById('expAmount').value = '';
+        document.getElementById('expBudget').value = '';
         document.getElementById('expType').selectedIndex = 0;
         document.getElementById('expRecurrence').selectedIndex = 0;
-        // Date d'aujourd'hui par défaut (l'utilisateur peut la modifier)
-        document.getElementById('expDate').value = new Date().toISOString().slice(0, 10);
+        // Date d'aujourd'hui par défaut, heure LOCALE (l'utilisateur peut la modifier)
+        document.getElementById('expDate').value = localTodayStr();
         document.getElementById('expCharacter').selectedIndex = 0;
         document.getElementById('expContext').selectedIndex = 0;
         // Réinitialise le résultat à l'état "empty"
@@ -9397,16 +9649,45 @@
       }
 
       // Construit le texte du verdict principal (utilisé dans le commentaire
-      // le plus pertinent). Évite la concaténation tordue qui produisait
-      // "représente , Thomas est..." (bug de l'ancienne version).
-      function buildVerdictText(montant, recurrenceLabel, montantAnnuel, montantMensuel, prenom, scoreFinal, levelInfo) {
+      // le plus pertinent). Corrige l'accord ("dépense" est féminin :
+      // "unique", "mensuelle", "annuelle") et intègre le "fait marquant"
+      // (keyFact, verbe à la 3e personne) pour que la note s'explique
+      // en une phrase. Pour un RÉCURRENT, ajoute l'effet de concrétisation
+      // (coût sur 3 ans) ; pour une dépense NÉCESSAIRE, la question posée
+      // n'est plus « faut-il ? » mais « comment financer ? ».
+      function buildVerdictText(montant, recurrenceLabel, montantAnnuel, montantMensuel, prenom, scoreFinal, levelInfo, keyFact, isNecessaire) {
         const prenomPart = prenom ? `, ${prenom}` : '';
-        const recPart = (recurrenceLabel !== 'unique')
-          ? (recurrenceLabel === 'mensuel' ? ` (${fmt(montantAnnuel)}/an)`
-             : recurrenceLabel === 'annuel' ? ` (≈${fmt(montantMensuel)}/mois)`
-             : '')
+        const typePart = (recurrenceLabel === 'mensuel') ? ' mensuelle'
+          : (recurrenceLabel === 'annuel') ? ' annuelle' : ' unique';
+        const recPart = (recurrenceLabel === 'mensuel') ? ` (≈ ${fmt(montantAnnuel)}/an, ≈ ${fmt(montant * 36)} sur 3 ans)`
+          : (recurrenceLabel === 'annuel') ? ` (≈ ${fmt(montantMensuel)}/mois, ≈ ${fmt(montant * 3)} sur 3 ans)`
           : '';
-        return `Cette dépense${recurrenceLabel !== 'unique' ? ' ' + recurrenceLabel : ''} de <strong>${fmt(montant)}</strong>${prenomPart} est <strong>${levelInfo.label.toLowerCase()}</strong>${recPart}. Score global : <strong>${scoreFinal}/100</strong>.`;
+        const factPart = keyFact ? ` — elle ${escHtml(keyFact)}.` : '.';
+        if (isNecessaire) {
+          return `Cette dépense${typePart} de <strong>${fmt(montant)}</strong>${prenomPart} est <strong>nécessaire</strong>${recPart} : la vraie question est de savoir <strong>comment la financer</strong>${keyFact ? ` — ${escHtml(keyFact)}` : ''}. Score global : <strong>${scoreFinal}/100</strong>.`;
+        }
+        return `Cette dépense${typePart} de <strong>${fmt(montant)}</strong>${prenomPart} est <strong>${levelInfo.label.toLowerCase()}</strong>${recPart}${factPart} Score global : <strong>${scoreFinal}/100</strong>.`;
+      }
+
+      // Conseil de financement pour une dépense NÉCESSAIRE (une fois la
+      // décision prise, la vraie question est de savoir COMMENT payer sans
+      // mettre le mois en danger). S'appuie sur le compte sélectionné.
+      // Renvoie un texte HTML prêt à afficher, ou null si rien à dire.
+      function buildFinancementAdvice(montant, selAccount, selAccSolde, payment, charges, revenu) {
+        if (!selAccount) {
+          // "__total__" : on sait seulement que la dépense est lourde
+          if (revenu > 0 && montant >= revenu * 0.5) {
+            return `${fmt(montant)}, c'est au moins la moitié de votre revenu mensuel. Pour une dépense nécessaire : privilégiez le paiement fractionné ou un compte dédié, pour ne pas découvrir le compte courant du mois.`;
+          }
+          return null;
+        }
+        if (montant > selAccSolde) {
+          return `Le compte <strong>« ${escHtml(payment)} »</strong> ne couvre pas ${fmt(montant)} (solde actuel ${fmt(selAccSolde)}). Pour une dépense nécessaire : étalez le paiement sur 2-4 semaines, puiser dans un autre compte, ou demandez des mensualités au fournisseur.`;
+        }
+        if (selAccount.type === 'banque' && charges > 0 && (selAccSolde - montant) < charges) {
+          return `Payer ${fmt(montant)} depuis <strong>« ${escHtml(payment)} »</strong> laisserait ${fmt(Math.max(0, selAccSolde - montant))} sur ce compte, moins d'un mois de vos charges. Pour une dépense nécessaire, étalez le paiement avant la fin du mois pour ne pas découvrer le compte.`;
+        }
+        return null;
       }
 
       // ===========================================================
@@ -9426,7 +9707,7 @@
         // Renseigne les champs de la modale d'ajout de transaction
         const dateInput = document.getElementById('txDate');
         if (dateInput) {
-          dateInput.value = a.datePrevue || new Date().toISOString().slice(0, 10);
+          dateInput.value = a.datePrevue || localTodayStr();
         }
         const amountInput = document.getElementById('txAmount');
         if (amountInput) {
@@ -9471,7 +9752,7 @@
             onmouseover="this.style.borderColor='var(--gold)'"
             onmouseout="this.style.borderColor='var(--border)'"
           >
-            <span style="font-weight:600">${h.m}</span>
+            <span style="font-weight:600">${escHtml(h.m)}</span>
             <span style="color:var(--gold);font-size:12px">${fmt(h.total)}</span>
           </button>`).join('');
 
@@ -9530,7 +9811,7 @@
 
         D.history.splice(i, 1);
         renderAnalyse(); renderEvolution(); renderOverview();
-        showToast('Mois supprimé', 'error');
+        showToast('Mois supprimé');
       }
 
       // ======================== OBJECTIFS ========================
@@ -9558,7 +9839,7 @@
             : '';
           return `<div class="obj-card" style="${isMain ? 'border-color:var(--gold);box-shadow:0 0 0 1px rgba(200,168,75,0.25)' : ''}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:13px;font-weight:600">🎯 ${o.name}${mainBadge}</div>
+        <div style="font-size:13px;font-weight:600">🎯 ${escHtml(o.name)}${mainBadge}</div>
         <div class="action-btns">
           <button class="action-btn" onclick="toggleMainObjectif(${i})" title="${isMain ? 'Retirer comme principal' : 'Définir comme principal'}" style="${mainBtnStyle}">⭐</button>
           <button class="action-btn" onclick="editObjectif(${i})">✏️</button>
@@ -9567,10 +9848,10 @@
       </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px">
         <span>${fmt(o.current)}</span>
-        <span style="font-weight:700;color:${o.color}">${pct}%</span>
+        <span style="font-weight:700;color:${safeColor(o.color)}">${pct}%</span>
         <span style="color:var(--text3)">${fmt(o.target)}</span>
       </div>
-      <div class="obj-progress-bar"><div class="obj-progress-fill" style="width:${pct}%;background:${o.color}"></div></div>
+      <div class="obj-progress-bar"><div class="obj-progress-fill" style="width:${pct}%;background:${safeColor(o.color)}"></div></div>
       <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px">
         <span>Reste: ${fmt(o.target - o.current)}</span>
         <span>Échéance: ${o.date}</span>
@@ -9586,26 +9867,26 @@
         const target = D.objectives[i];
         if (!target) return;
 
-        // Si l'objectif est déjà principal → on le retire
-        // Sinon, on le marque principal (et on retire le statut des autres)
         const newState = !target.isMain;
 
-        // Mise à jour locale optimiste
+        // Snapshot de l'état BDD AVANT modification : c'est lui qui détermine
+        // quels UPDATE envoyer. (Le bug d'original comparait l'état local
+        // APRÈS la mise à jour optimiste → aucune requête n'était jamais
+        // envoyée, le statut ⭐ était perdu au rechargement.)
+        const previous = D.objectives.map(o => ({ id: o.id, isMain: o.isMain === true }));
+
+        // Mise à jour locale optimiste : au plus un seul objectif principal
         D.objectives.forEach(o => o.isMain = false);
         target.isMain = newState;
 
-        // Si on vient d'ajouter un principal et qu'il n'y en avait aucun avant,
-        // on garde le premier en cas d'erreur réseau
-        const previousMain = D.objectives.find(o => o._wasMain);
-
-        // Persistance Supabase : un seul UPDATE par objectif
         try {
-          // D'abord, retirer le statut de tous les autres
           for (let j = 0; j < D.objectives.length; j++) {
             const o = D.objectives[j];
-            if (o.id && o.isMain !== (j === i ? newState : false)) {
+            if (!o.id) continue;
+            const wanted = (j === i) ? newState : false;
+            if (previous[j].isMain !== wanted) {
               const { error } = await supabaseClient.from('objectives')
-                .update({ is_main: j === i ? newState : false })
+                .update({ is_main: wanted })
                 .eq('id', o.id);
               if (error) throw error;
             }
@@ -9613,8 +9894,12 @@
           showToast(newState ? '⭐ Objectif défini comme principal' : 'Statut principal retiré');
         } catch (err) {
           showToast('Erreur : ' + (err.message || err), 'error');
-          // Rollback local
-          target.isMain = !newState;
+          // Rollback local : restaure l'état précédent
+          D.objectives.forEach(o => o.isMain = false);
+          D.objectives.forEach(o => {
+            const prev = previous.find(p => p.id === o.id);
+            if (prev && prev.isMain) o.isMain = true;
+          });
         }
 
         renderObjectifs();
@@ -9753,28 +10038,35 @@
       }
 
       function onProjInputChange(field) {
+        // Bornes [min, max] alignées sur les attributs du slider : le
+        // libellé affiché ne peut plus diverger de la valeur calculée.
         if (field === 'epargne') {
-          const v = parseFloat(document.getElementById('projEpargneInput').value) || 0;
-          document.getElementById('projEpargneRange').value = Math.min(v, 3000);
+          const raw = parseFloat(document.getElementById('projEpargneInput').value);
+          const v = Number.isFinite(raw) ? Math.min(3000, Math.max(0, raw)) : 0;
+          document.getElementById('projEpargneRange').value = v;
           document.getElementById('projEpargneVal').textContent = v;
         }
         if (field === 'horizon') {
-          const v = parseFloat(document.getElementById('projHorizonInput').value) || 1;
-          document.getElementById('projHorizonRange').value = Math.min(v, 30);
+          const raw = parseFloat(document.getElementById('projHorizonInput').value);
+          const v = Number.isFinite(raw) ? Math.min(30, Math.max(1, Math.round(raw))) : 5;
+          document.getElementById('projHorizonRange').value = v;
           document.getElementById('projHorizonVal').textContent = v;
         }
         if (field === 'rend') {
-          const v = parseFloat(document.getElementById('projRendInput').value) || 0;
-          document.getElementById('projRendRange').value = Math.min(v, 15);
+          const raw = parseFloat(document.getElementById('projRendInput').value);
+          const v = Number.isFinite(raw) ? Math.min(15, Math.max(0, raw)) : 0;
+          document.getElementById('projRendRange').value = v;
           document.getElementById('projRendVal').textContent = v.toFixed(1);
         }
         updateProjChart();
       }
 
       function updateProjChart() {
-        const epargne = parseFloat(document.getElementById('projEpargneRange').value) || 620;
-        const horizon = parseInt(document.getElementById('projHorizonRange').value) || 5;
-        const rend = parseFloat(document.getElementById('projRendRange').value) || 3;
+        // Pas de fallback « || valeur » : un 0 saisi est une valeur LÉGITIME
+        // (rendement 0 %, épargne 0 €), pas une erreur de saisie.
+        const epargne = parseFloat(document.getElementById('projEpargneRange').value);
+        const horizon = parseInt(document.getElementById('projHorizonRange').value, 10);
+        const rend = parseFloat(document.getElementById('projRendRange').value);
         const start = getTotal();
         const histH = D.history;
 
@@ -9784,15 +10076,19 @@
         const tauxM = rend / 100 / 12;
         const tauxMOpt = (rend * 1.5) / 100 / 12;
         const tauxMPru = (rend * 0.4) / 100 / 12;
+        // Facteur de capitalisation des versements mensuels :
+        //   t > 0 → ((1+t)^n − 1) / t     ·     t = 0 → n (simple somme)
+        // Sans ce garde-fou, t = 0 produisait 0/0 = NaN sur toute la courbe.
+        const annuity = (t, n) => (t > 0 ? (Math.pow(1 + t, n) - 1) / t : n);
 
         for (let y = 1; y <= horizon; y++) {
           const now = new Date();
           projLabels.push('Jan ' + (now.getFullYear() + y));
           const months = y * monthsPerYear;
           // Compound with monthly contributions
-          const calcReal = start * Math.pow(1 + tauxM, months) + epargne * ((Math.pow(1 + tauxM, months) - 1) / tauxM);
-          const calcOpt = start * Math.pow(1 + tauxMOpt, months) + (epargne * 1.5) * ((Math.pow(1 + tauxMOpt, months) - 1) / tauxMOpt);
-          const calcPru = start * Math.pow(1 + tauxMPru, months) + (epargne * 0.45) * ((Math.pow(1 + tauxMPru, months) - 1) / tauxMPru);
+          const calcReal = start * Math.pow(1 + tauxM, months) + epargne * annuity(tauxM, months);
+          const calcOpt = start * Math.pow(1 + tauxMOpt, months) + (epargne * 1.5) * annuity(tauxMOpt, months);
+          const calcPru = start * Math.pow(1 + tauxMPru, months) + (epargne * 0.45) * annuity(tauxMPru, months);
           dataReal.push(Math.round(calcReal));
           dataOpt.push(Math.round(calcOpt));
           dataPru.push(Math.round(calcPru));
@@ -9801,7 +10097,10 @@
         const histLabels = histH.slice(-6).map(h => h.m);
         const histData = histH.slice(-6).map(h => h.total);
         const allLabels = [...histLabels, ...projLabels];
-        const nullPad = Array(histLabels.length - 1).fill(null);
+        // Math.max(0, ...) : sans historique, histLabels.length = 0 et
+        // Array(-1) levait « RangeError: Invalid array length » (crash
+        // de toute la page Projection pour un compte sans historique).
+        const nullPad = Array(Math.max(0, histLabels.length - 1)).fill(null);
 
         dc('projChart');
         charts['projChart'] = new Chart(document.getElementById('projChart'), {
@@ -9855,7 +10154,8 @@
         const budgetVal = document.getElementById('settingBudget').value;
         const budget = (budgetVal === '' || isNaN(parseFloat(budgetVal))) ? 1800 : parseFloat(budgetVal);
         const currency = document.getElementById('settingCurrency').value;
-        const dateFormat = document.getElementById('settingDateFormat').value;
+        const dfEl = document.getElementById('settingDateFormat');
+        const dateFormat = dfEl ? dfEl.value : D.settings.dateFormat;
 
         const { error } = await supabaseClient.from('settings')
           .update({ revenu, goal, budget, currency, date_format: dateFormat })
@@ -9936,13 +10236,6 @@
         // Recalcule le score avec les nouvelles pondérations
         calcScore();
 
-        // Met à jour le prénom dans le header si renseigné
-        const headerName = document.getElementById('userEmailLabel');
-        if (headerName && prenom) {
-          const email = headerName.textContent.split(' ')[0];
-          // On garde l'email mais on ajoute le prénom si disponible
-        }
-
         showToast('Profil mis à jour ✓');
       }
 
@@ -9987,7 +10280,8 @@
       async function updateDisplaySettings() {
         if (!requireLogin()) return;
         const currency = document.getElementById('settingCurrency').value;
-        const dateFormat = document.getElementById('settingDateFormat').value;
+        const dfEl = document.getElementById('settingDateFormat');
+        const dateFormat = dfEl ? dfEl.value : D.settings.dateFormat;
 
         const { error } = await supabaseClient.from('settings')
           .update({ currency, date_format: dateFormat })
@@ -10005,8 +10299,118 @@
         showToast('Préférences d\'affichage enregistrées ✓');
       }
 
-      function resetData() {
-        showToast('Données réinitialisées', 'error');
+      // ================================================================
+      // RÉINITIALISATION DES DONNÉES (réelle, confirmation par saisie —
+      // même pattern que la suppression de compte).
+      // Supprime : transactions, comptes, objectifs, historique mensuel,
+      // settings et indicateurs.
+      // Conserve : profil + préférences de notification (identité, pas de
+      // données financières) ; le compte Auth est inchangé.
+      // ================================================================
+      const RESET_CONFIRM_TEXT = 'réinitialiser mes données';
+
+      function openResetDataModal() {
+        if (!requireLogin()) return;
+        const overlay = document.getElementById('modal-resetData');
+        if (!overlay) return;
+        const input = document.getElementById('resetDataConfirmInput');
+        const btn = document.getElementById('resetDataConfirm');
+        const hint = document.getElementById('resetDataConfirmHint');
+        if (input) { input.value = ''; input.classList.remove('match'); }
+        if (btn) { btn.disabled = true; btn.textContent = 'Réinitialiser'; }
+        if (hint) hint.innerHTML = '&nbsp;';
+        document.body.style.overflow = 'hidden';
+        overlay.classList.add('show');
+
+        const btnCancel = document.getElementById('resetDataCancel');
+        if (btnCancel && !btnCancel.dataset.bound) {
+          btnCancel.dataset.bound = '1';
+          btnCancel.addEventListener('click', closeResetDataModal);
+        }
+        if (input && !input.dataset.bound) {
+          input.dataset.bound = '1';
+          input.addEventListener('input', onResetDataInputChange);
+          input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && btn && !btn.disabled) {
+              e.preventDefault();
+              confirmResetData();
+            }
+          });
+        }
+        if (btn && !btn.dataset.bound) {
+          btn.dataset.bound = '1';
+          btn.addEventListener('click', confirmResetData);
+        }
+        setTimeout(() => { if (input) input.focus(); }, 60);
+      }
+
+      function closeResetDataModal() {
+        const overlay = document.getElementById('modal-resetData');
+        if (!overlay) return;
+        overlay.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+
+      function onResetDataInputChange() {
+        const input = document.getElementById('resetDataConfirmInput');
+        const btn = document.getElementById('resetDataConfirm');
+        const hint = document.getElementById('resetDataConfirmHint');
+        if (!input || !btn) return;
+        const val = input.value.trim();
+        if (val.length === 0) {
+          btn.disabled = true;
+          input.classList.remove('match');
+          if (hint) hint.innerHTML = '&nbsp;';
+        } else if (val === RESET_CONFIRM_TEXT) {
+          btn.disabled = false;
+          input.classList.add('match');
+          if (hint) hint.innerHTML = '<span style="color:var(--green)">✓ Saisie correcte, vous pouvez valider</span>';
+        } else {
+          btn.disabled = true;
+          input.classList.remove('match');
+          if (hint) hint.innerHTML = '<span style="color:var(--text3)">Saisie incorrecte</span>';
+        }
+      }
+
+      async function confirmResetData() {
+        if (!requireLogin()) return;
+        const btn = document.getElementById('resetDataConfirm');
+        const input = document.getElementById('resetDataConfirmInput');
+        if (!btn || btn.disabled) return;
+        if (!input || input.value.trim() !== RESET_CONFIRM_TEXT) {
+          showToast('Saisie incorrecte.', 'error');
+          return;
+        }
+        const btnCancel = document.getElementById('resetDataCancel');
+        btn.disabled = true;
+        if (btnCancel) btnCancel.disabled = true;
+
+        try {
+          const tables = [
+            'transactions', 'accounts', 'objectives',
+            'net_worth_history', 'settings', 'indicators'
+          ];
+          for (const t of tables) {
+            const { error } = await supabaseClient.from(t).delete().eq('user_id', currentUserId);
+            if (error) console.warn('Réinitialisation — table ' + t + ' :', error.message);
+          }
+          // Reset local (mêmes valeurs que l'état initial)
+          D.accounts = [];
+          D.transactions = [];
+          D.objectives = [];
+          D.history = [];
+          D.settings = { revenu: 2200, goal: 20000, delta: 0, budget: 1800 };
+          D.indicators = { bestVal: 0, bestDate: '-', worstVal: 0, worstDate: '-', avgEpargne: 0 };
+          closeResetDataModal();
+          renderAll();
+          if (btn) { btn.textContent = 'Réinitialiser'; btn.disabled = true; }
+          if (btnCancel) btnCancel.disabled = false;
+          showToast('Données réinitialisées — profil et préférences de notification conservés');
+        } catch (err) {
+          if (btn) { btn.textContent = 'Réinitialiser'; btn.disabled = false; }
+          if (btnCancel) btnCancel.disabled = false;
+          showToast('Erreur lors de la réinitialisation : ' + (err.message || err), 'error');
+        }
       }
 
       // ======================== CSV EXPORT ========================
@@ -10014,7 +10418,7 @@
         const rows = [['TYPE', 'DATE', 'NOM/DESCRIPTION', 'COMPTE', 'CATEGORIE', 'MONTANT', 'TYPE TX']];
         // Accounts
         D.accounts.forEach(a => {
-          rows.push(['COMPTE', new Date().toISOString().slice(0, 10), a.name, a.bank, typeLabel(a.type), a.balance, 'SOLDE']);
+          rows.push(['COMPTE', localTodayStr(), a.name, a.bank, typeLabel(a.type), a.balance, 'SOLDE']);
         });
         // Transactions
         D.transactions.forEach(t => {
@@ -10039,7 +10443,7 @@
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'patrimoine_export_' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.href = url; a.download = 'patrimoine_export_' + localTodayStr() + '.csv';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
         showToast('Export CSV téléchargé ✓');
@@ -10113,29 +10517,32 @@
               applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
             });
           } catch (e) {
-            // VAPID non configurée → mode dégradé (notifications in-app seulement)
-            showToast('Clé VAPID non configurée — notifications in-app uniquement', 'error');
-            return false;
+            // VAPID non configurée → mode local : pas d'abonnement push,
+            // mais les notifications locales (site ouvert) restent actives.
+            sub = null;
           }
         }
 
-        // Sauvegarder l'abonnement dans Supabase
-        const json = sub.toJSON();
-        const { error } = await supabaseClient.from('push_subscriptions').upsert({
-          user_id:    currentUserId,
-          endpoint:   json.endpoint,
-          p256dh:     json.keys.p256dh,
-          auth_key:   json.keys.auth,
-          user_agent: navigator.userAgent.slice(0, 200)
-        }, { onConflict: 'user_id,endpoint' });
+        // Sauvegarder l'abonnement dans Supabase (uniquement s'il existe)
+        if (sub) {
+          const json = sub.toJSON();
+          const { error } = await supabaseClient.from('push_subscriptions').upsert({
+            user_id:    currentUserId,
+            endpoint:   json.endpoint,
+            p256dh:     json.keys.p256dh,
+            auth_key:   json.keys.auth,
+            user_agent: navigator.userAgent.slice(0, 200)
+          }, { onConflict: 'user_id,endpoint' });
+          if (error) { showToast('Erreur sauvegarde abonnement: ' + error.message, 'error'); return false; }
+        }
 
-        if (error) { showToast('Erreur sauvegarde abonnement: ' + error.message, 'error'); return false; }
-
-        // Marquer push_enabled dans les prefs
+        // Marquer push_enabled dans les prefs : cette option active aussi
+        // les notifications LOCALES (rappels mensuels, objectif atteint,
+        // rapport hebdo) qui ne nécessitent pas d'abonnement push.
         await supabaseClient.from('notification_prefs')
           .upsert({ user_id: currentUserId, push_enabled: true }, { onConflict: 'user_id' });
 
-        return true;
+        return sub ? 'push' : 'local';
       }
 
       // ── Désabonnement push ──────────────────────────────────────────
@@ -10160,13 +10567,18 @@
         if (!requireLogin()) return;
         const enabling = btn.classList.contains('off');
         if (enabling) {
-          const ok = await subscribeToPush();
-          if (ok) {
+          const mode = await subscribeToPush();
+          if (mode) {
             btn.classList.replace('off', 'on');
             document.getElementById('notifSubSettings').style.opacity = '1';
             document.getElementById('notifSubSettings').style.pointerEvents = 'auto';
-            document.getElementById('notifPermDesc').textContent = 'Notifications actives sur cet appareil';
-            showToast('Notifications push activées ✓');
+            if (mode === 'local') {
+              document.getElementById('notifPermDesc').textContent = 'Notifications actives quand le site est ouvert (push « site fermé » indisponible : clé VAPID non configurée)';
+              showToast('Notifications activées — mode local (site ouvert)');
+            } else {
+              document.getElementById('notifPermDesc').textContent = 'Notifications actives sur cet appareil';
+              showToast('Notifications push activées ✓');
+            }
           }
         } else {
           await unsubscribeFromPush();
@@ -10193,7 +10605,7 @@
       async function loadNotifPrefs() {
         if (!currentUserId) return;
         const { data } = await supabaseClient.from('notification_prefs')
-          .select('*').eq('user_id', currentUserId).single();
+          .select('*').eq('user_id', currentUserId).maybeSingle();
 
         if (!data) return;
 
@@ -10232,7 +10644,7 @@
         if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
         const today     = new Date();
-        const todayStr  = today.toISOString().slice(0, 10);
+        const todayStr  = localTodayStr();
         const dayOfWeek = today.getDay(); // 1 = lundi
 
         // 1. Rappel mensuel — 1er du mois ET pas encore envoyé ce mois-ci
@@ -10250,16 +10662,28 @@
         }
 
         // 2. Alerte objectif atteint
+        //    Anti-répétition : sans garde-fou, cette notification était
+        //    renvoyée à CHAQUE connexion. localStorage (par id + date du
+        //    jour) limite à 1×/jour/objectif.
         if (prefs.notif_objectif) {
           const total = getTotal();
+          const todayKey = localTodayStr();
+          let notified = {};
+          try { notified = JSON.parse(localStorage.getItem('patrimoine_notif_objectifs') || '{}') || {}; } catch (e) { notified = {}; }
+          let changed = false;
           D.objectives.forEach(o => {
-            if (o.target > 0 && total >= o.target) {
+            if (o.target > 0 && total >= o.target && notified[o.id] !== todayKey) {
+              notified[o.id] = todayKey;
+              changed = true;
               sendLocalNotification(
                 '🎯 Objectif atteint !',
                 `Félicitations ! Votre objectif "${o.name}" (${fmt(o.target)}) est atteint.`
               );
             }
           });
+          if (changed) {
+            try { localStorage.setItem('patrimoine_notif_objectifs', JSON.stringify(notified)); } catch (e) { /* stockage indisponible : ignorer */ }
+          }
         }
 
         // 3. Rapport hebdomadaire — lundi ET pas encore envoyé cette semaine
@@ -10283,13 +10707,13 @@
         if (!('serviceWorker' in navigator)) {
           // Fallback : Notification API directe (site ouvert uniquement)
           if (Notification.permission === 'granted') {
-            new Notification(title, { body, icon: '/favicon.ico' });
+            new Notification(title, { body, icon: './favicon.ico' });
           }
           return;
         }
         navigator.serviceWorker.ready.then(reg => {
           reg.showNotification(title, {
-            body, icon: '/favicon.ico', badge: '/favicon.ico',
+            body, icon: './favicon.ico', badge: './favicon.ico',
             tag: 'patrimoine-' + Date.now(), renotify: true
           });
         }).catch(() => {
@@ -10304,7 +10728,8 @@
         const day = d.getDay() || 7;
         const mon = new Date(d);
         mon.setDate(d.getDate() - day + 1);
-        return mon.toISOString().slice(0, 10);
+        const p = n => String(n).padStart(2, '0');
+        return mon.getFullYear() + '-' + p(mon.getMonth() + 1) + '-' + p(mon.getDate());
       }
 
       // ── Vérifie la permission actuelle au chargement ─────────────────
@@ -10335,7 +10760,8 @@
         // fermer si l'utilisateur clique à l'intérieur (il n'y a pas
         // de croix par design — l'utilisateur doit choisir un bouton).
         const modal = overlay.querySelector('.modal');
-        if (modal) {
+        if (modal && !modal.dataset.guarded) {
+          modal.dataset.guarded = '1';
           modal.addEventListener('click', function (e) {
             e.stopPropagation();
           });
@@ -10432,7 +10858,8 @@
         // Stop la propagation du clic sur la modal pour qu'elle ne se
         // ferme pas si on clique à l'intérieur (pas de croix par design)
         const modalEl = overlay.querySelector('.modal');
-        if (modalEl) {
+        if (modalEl && !modalEl.dataset.guarded) {
+          modalEl.dataset.guarded = '1';
           modalEl.addEventListener('click', function (e) {
             e.stopPropagation();
           });
@@ -10814,15 +11241,11 @@
           if (hd) hd.textContent = n.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
         }, 60 * 1000);
         const txDate = document.getElementById('txDate');
-        if (txDate) txDate.value = now.toISOString().slice(0, 10);
+        if (txDate) txDate.value = localTodayStr();
         // Date d'aujourd'hui par défaut pour l'outil "Évaluer une dépense"
         // (l'utilisateur peut toujours la modifier avant l'analyse)
         const expDate = document.getElementById('expDate');
-        if (expDate) expDate.value = now.toISOString().slice(0, 10);
-        const cf = document.getElementById('customFrom');
-        const ct = document.getElementById('customTo');
-        if (cf) cf.value = now.toISOString().slice(0, 7);
-        if (ct) ct.value = now.toISOString().slice(0, 7);
+        if (expDate) expDate.value = localTodayStr();
         updateRing(0);
         renderOverview();
         // Enregistre le Service Worker et vérifie l'état des permissions
@@ -10856,6 +11279,6 @@
 
       init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f5a8589f5d5c0',t:'MTc4MzAxMzE2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d5d59980dd136',t:'MTc4NTg0NDQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a27f50138d4f703e',t:'MTc4NjIwMDQxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
+  </body>
 </html>
