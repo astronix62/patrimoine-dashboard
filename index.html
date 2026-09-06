@@ -4528,6 +4528,7 @@
               <div class="page-sub">Gérez vos comptes et transactions</div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="openReconcile()">🔍 Vérifier les soldes</button>
               <button class="btn btn-ghost btn-sm" onclick="openImportCsvModal()">📥 Importer CSV</button>
               <button class="btn btn-gold btn-sm" onclick="openModal('addAccount')">+ Ajouter un compte</button>
             </div>
@@ -4817,6 +4818,17 @@
         <div id="editRepartitionList"></div>
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="closeModal('editRepartition')">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Réconciliation des soldes (Lot D #1) : rapport de lecture seule -->
+    <div class="modal-overlay" id="modal-reconcile">
+      <div class="modal" style="max-width:560px">
+        <div class="modal-title">🔍 Réconciliation des soldes</div>
+        <div id="reconcileBody"></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal('reconcile')">Fermer</button>
         </div>
       </div>
     </div>
@@ -8104,6 +8116,103 @@
         if (typeof refreshExpensePaymentSelect === 'function') {
           refreshExpensePaymentSelect();
         }
+      }
+
+      // ================================================================
+      // RÉCONCILIATION / VÉRIFICATION DES SOLDES (Lot D #1)
+      // Rapport de LECTURE SEULE : agrège les mouvements par compte,
+      // totalise le patrimoine, détecte les anomalies réellement
+      // repérables. N'écrit ni ne supprime AUCUNE donnée.
+      // ================================================================
+      function openReconcile() {
+        if (!requireLogin()) return;
+        const accs = D.accounts || [];
+        const txs = D.transactions || [];
+        const setNames = new Set(accs.map(a => a.name));
+        const num = v => parseFloat(v) || 0;
+        const esc = v => escHtml(v == null ? '' : String(v));
+        const fmtSigned = v => (v >= 0 ? '+' : '−') + fmt(Math.abs(v));
+
+        // Agrégation par compte
+        const perAcc = accs.map(a => {
+          const atxs = txs.filter(t => t.account === a.name);
+          const inc = atxs.filter(t => t.type === 'income').reduce((s, t) => s + num(t.amount), 0);
+          const exp = atxs.filter(t => t.type !== 'income').reduce((s, t) => s + num(t.amount), 0);
+          return { a, n: atxs.length, inc, exp, net: inc - exp };
+        });
+
+        // Totaux globaux
+        const totalEnr = getTotal();
+        const gInc = txs.filter(t => t.type === 'income').reduce((s, t) => s + num(t.amount), 0);
+        const gExp = txs.filter(t => t.type !== 'income').reduce((s, t) => s + num(t.amount), 0);
+
+        // Intégrité des données
+        const orphans = txs.filter(t => t.account && !setNames.has(t.account));
+        const noId = txs.filter(t => !t.id);
+        const seen = new Map();
+        const dups = [];
+        txs.forEach(t => {
+          const key = [t.account || '', t.date || '', num(t.amount), t.type || '', (t.desc || '').toLowerCase()].join('|');
+          if (seen.has(key)) dups.push(t); else seen.set(key, t);
+        });
+
+        let html = '';
+
+        // 1) Détail par compte
+        if (accs.length === 0) {
+          html += '<div class="import-warning">Aucun compte. Ajoutez un compte ou importez un CSV pour pouvoir vérifier les soldes.</div>';
+        } else {
+          html += '<div class="table-wrap" style="max-height:none;margin-bottom:12px"><table class="data-table"><thead><tr>' +
+            '<th>Compte</th><th style="text-align:right">Solde</th><th style="text-align:center">Mouv.</th>' +
+            '<th style="text-align:right">Entrées</th><th style="text-align:right">Sorties</th><th style="text-align:right">Net</th>' +
+            '</tr></thead><tbody>' +
+            perAcc.map(r =>
+              '<tr>' +
+                '<td>' + esc(r.a.icon) + ' ' + esc(r.a.name) + '</td>' +
+                '<td style="text-align:right;font-weight:600;color:var(--gold)">' + fmt(r.a.balance) + '</td>' +
+                '<td style="text-align:center;color:var(--text3)">' + r.n + '</td>' +
+                '<td style="text-align:right;color:var(--green)">' + (r.n ? '+' + fmt(r.inc) : '—') + '</td>' +
+                '<td style="text-align:right;color:var(--red)">' + (r.n ? '−' + fmt(r.exp) : '—') + '</td>' +
+                '<td style="text-align:right;color:' + (r.net >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (r.n ? fmtSigned(r.net) : '—') + '</td>' +
+              '</tr>'
+            ).join('') +
+            '</tbody></table></div>';
+
+          // 2) Totaux globaux
+          html += '<div class="import-summary" style="margin-bottom:12px">' +
+            '<div class="import-summary-item"><span class="label">PATRIMOINE ENREGISTRÉ</span><span class="val">' + fmt(totalEnr) + '</span></div>' +
+            '<div class="import-summary-item"><span class="label">ENTRÉES (TOUT)</span><span class="val pos">+' + fmt(gInc) + '</span></div>' +
+            '<div class="import-summary-item"><span class="label">SORTIES (TOUT)</span><span class="val neg">−' + fmt(gExp) + '</span></div>' +
+            '<div class="import-summary-item"><span class="label">MOUVEMENTS NETS</span><span class="val ' + (gInc - gExp >= 0 ? 'pos' : 'neg') + '">' + fmtSigned(gInc - gExp) + '</span></div>' +
+            '</div>';
+        }
+
+        // 3) Anomalies réellement détectables
+        const issues = [];
+        if (orphans.length) issues.push({ level: 'critical', icon: '⚠️', text: '<strong>' + orphans.length + ' mouvement(s) orphelin(s)</strong> : compte « ' + esc(Array.from(new Set(orphans.map(o => o.account))).join(' », « ')) + ' » inexistant.' });
+        if (noId.length) issues.push({ level: 'warning', icon: '⚠️', text: '<strong>' + noId.length + ' mouvement(s) sans identifiant</strong> : impossible à modifier ou supprimer.' });
+        if (dups.length) issues.push({ level: 'info', icon: 'ℹ️', text: '<strong>' + dups.length + ' mouvement(s) identique(s)</strong> : possibles doublons, à vérifier.' });
+
+        if (issues.length === 0) {
+          html += '<div class="insights-empty">✅ Aucune anomalie détectée — vos soldes et mouvements sont cohérents.</div>';
+        } else {
+          html += '<div class="insights-list" style="margin-bottom:12px">' +
+            issues.map(it => '<div class="insight-item" data-level="' + it.level + '"><span class="insight-icon">' + it.icon + '</span><span class="insight-text">' + it.text + '</span></div>').join('') +
+            '</div>';
+          if (orphans.length) {
+            html += '<div style="font-size:11px;color:var(--text3);margin-bottom:4px">Détail des mouvements orphelins :</div>' +
+              '<div class="table-wrap" style="max-height:140px;margin-bottom:12px"><table class="data-table">' +
+              '<thead><tr><th>Date</th><th>Compte fantôme</th><th>Libellé</th><th style="text-align:right">Montant</th></tr></thead><tbody>' +
+              orphans.map(t => '<tr><td>' + esc(t.date) + '</td><td>' + esc(t.account) + '</td><td>' + esc(t.desc) + '</td><td style="text-align:right;color:' + (t.type === 'income' ? 'var(--green)' : 'var(--red)') + '">' + (t.type === 'income' ? '+' : '−') + fmt(t.amount) + '</td></tr>').join('') +
+              '</tbody></table></div>';
+          }
+        }
+
+        // 4) Explication du fonctionnement
+        html += '<div class="expense-data-warning" style="margin-bottom:4px">ℹ️ Le solde de chaque compte est un <strong>solde courant</strong> : saisi à la création, puis ajusté à chaque mouvement. Le « solde de départ » n\'étant pas stocké séparément, un recalcul automatique complet n\'est pas possible sans risque. Si un solde ne correspond pas à votre banque, corrigez-le avec le bouton <strong>✏️ Modifier le compte</strong>.</div>';
+
+        document.getElementById('reconcileBody').innerHTML = html;
+        openModal('reconcile');
       }
 
       async function addAccount() {
