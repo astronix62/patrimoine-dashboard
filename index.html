@@ -8717,21 +8717,201 @@
       // ================================================================
 
       // Couleurs des niveaux de verdict (réutilisées pour jauges et badges)
+      // Couleurs des niveaux de verdict (réutilisées pour jauges et badges).
+      // Barème affiné : 10 paliers (au lieu de 5) pour éviter tout jugement
+      // binaire du type « note < 50 = mauvais / note > 50 = bon ». Chaque
+      // palier porte :
+      //   - `label` : texte court affiché dans le badge, à côté de la note ;
+      //   - `phrase`: qualificatif ACCORDÉ (le mot « dépense » est féminin :
+      //     « risquée », « excessive »…) utilisé dans la phrase de verdict
+      //     « Cette dépense … est <phrase> ».
+      // Le palier découle de la note ; l'étiquette finale peut encore être
+      // nuancée par le profil (voir expenseContextual), jamais améliorée.
       const EXPENSE_LEVELS = {
-        excellent: { label: 'Raisonnable', emoji: '✅', color: '#4CAF50', min: 80 },
-        good:      { label: 'Acceptable',  emoji: '👍', color: '#2196F3', min: 60 },
-        warn:      { label: 'À réfléchir',  emoji: '⚠️', color: '#FF9800', min: 40 },
-        risky:     { label: 'Risqué',       emoji: '🔶', color: '#ff7e00', min: 20 },
-        excess:    { label: 'Excessif',     emoji: '🚨', color: '#F44336', min:  0 },
+        excellent: { label: 'Excellent',        phrase: 'excellente',        emoji: '🟢', color: '#2E7D32', min: 95 },
+        vgood:     { label: 'Très raisonnable', phrase: 'très raisonnable',  emoji: '✅', color: '#4CAF50', min: 85 },
+        good:      { label: 'Raisonnable',      phrase: 'raisonnable',       emoji: '✅', color: '#66BB6A', min: 75 },
+        ok:        { label: 'Acceptable',       phrase: 'acceptable',        emoji: '👍', color: '#2196F3', min: 65 },
+        watch:     { label: 'À surveiller',     phrase: 'à surveiller',      emoji: '👍', color: '#29B6F6', min: 55 },
+        reflect:   { label: 'À y réfléchir',    phrase: 'à y réfléchir',     emoji: '⚠️', color: '#FF9800', min: 45 },
+        advised:   { label: 'Déconseillée',     phrase: 'déconseillée',      emoji: '⚠️', color: '#F57C00', min: 35 },
+        risky:     { label: 'Risquée',          phrase: 'risquée',           emoji: '🔶', color: '#ff7e00', min: 25 },
+        heavy:     { label: 'Très risquée',     phrase: 'très risquée',      emoji: '🔶', color: '#E64A19', min: 15 },
+        excess:    { label: 'Excessive',        phrase: 'excessive',         emoji: '🚨', color: '#F44336', min:  0 },
       };
 
-      // Renvoie le niveau de verdict en fonction du score
+      // Ordre de sévérité (du meilleur au pire) pour getExpenseLevel.
+      const EXPENSE_LEVEL_ORDER = ['excellent','vgood','good','ok','watch','reflect','advised','risky','heavy','excess'];
+
+      // Indice 0..9 de sévérité d'un palier (0 = meilleur).
+      const EXPENSE_LEVEL_SEVERITY = {};
+      EXPENSE_LEVEL_ORDER.forEach((k, i) => { EXPENSE_LEVEL_SEVERITY[k] = i; });
+
+      // Correspondance vers les 5 libellés CSS existants (data-level) afin de
+      // conserver le style actuel du badge sans toucher aux CSS : le libellé
+      // TEXTE affiché reste celui du palier fin (label), la couleur reste une
+      // approximation CSS en 5 familles.
+      const EXPENSE_LEVEL_COARSE = {
+        excellent: 'excellent',
+        vgood: 'good', good: 'good', ok: 'good',
+        watch: 'warn', reflect: 'warn',
+        advised: 'risky', risky: 'risky',
+        heavy: 'excess', excess: 'excess',
+      };
+      function expenseCssDataLevel(key) { return EXPENSE_LEVEL_COARSE[key] || 'warn'; }
+
+      // Renvoie le palier en fonction du score
       function getExpenseLevel(score) {
-        if (score >= EXPENSE_LEVELS.excellent.min) return 'excellent';
-        if (score >= EXPENSE_LEVELS.good.min)      return 'good';
-        if (score >= EXPENSE_LEVELS.warn.min)      return 'warn';
-        if (score >= EXPENSE_LEVELS.risky.min)     return 'risky';
+        for (const k of EXPENSE_LEVEL_ORDER) {
+          if (score >= EXPENSE_LEVELS[k].min) return k;
+        }
         return 'excess';
+      }
+
+      // ================================================================
+      // MOTEUR PROFIL & IMPACT RELATIF (v2)
+      // ================================================================
+      // Objectif : juger une dépense sur son IMPACT RELATIF pour l'utilisateur
+      // (sa marge réelle, son coussin, sa situation, son âge), et pas seulement
+      // sur le montant absolu. Les seuils « types » ci-dessous ne servent que
+      // de CADRAGE prudent : dès que l'application possède les données réelles
+      // de l'utilisateur (revenu, charges, patrimoine, transactions), ce sont
+      // elles qui priment.
+      // ================================================================
+      // 1) Tranches d'âge (en cohérence avec les données INSEE/DREES sur le
+      //    patrimoine par âge). On n'impose rien : on ne fait que renseigner
+      //    la sensibilité attendue d'une dépense selon la phase de vie.
+      function expenseAgeBand(age) {
+        if (age == null || isNaN(age)) return 'adulte';
+        if (age < 25) return 'jeune';
+        if (age < 40) return 'actif';
+        if (age < 60) return 'midlife';
+        return 'senior';
+      }
+      const EXPENSE_AGE_RULES = {
+        jeune:   { name: 'moins de 25 ans',      ep: 'faible (début de constitution)', recurringRisk: 0 },
+        actif:   { name: '25 à 39 ans',          ep: 'croissante (installation)',       recurringRisk: 0 },
+        midlife: { name: '40 à 59 ans',          ep: 'forte (revenus au plus haut)',    recurringRisk: 0 },
+        senior:  { name: '60 ans et plus',       ep: 'redescendante (revenu fixe)',     recurringRisk: 1 },
+        adulte:  { name: 'âge non renseigné',    ep: '',                                recurringRisk: 0 },
+      };
+      // 2) Règles par SITUATION : nom propre, coussin cible (mois de charges),
+      //    et deux drapeaux de prudence :
+      //      - recurringExtraRisk : un récurrent durable mérite une attention
+      //        renforcée (revenu fixe ou irrégulier) ;
+      //      - nonEssentialPenalty : nombre de crans dont on peut dégrader le
+      //        palier d'une dépense NON ESSENTIELLE (0..2).
+      const EXPENSE_SITUATION_RULES = {
+        etudiant:    { name: 'Étudiant',    bufferMonths: 4, recurringExtraRisk: 0, nonEssentialPenalty: 1 },
+        sans_emploi: { name: 'Sans emploi', bufferMonths: 6, recurringExtraRisk: 1, nonEssentialPenalty: 2 },
+        independant: { name: 'Indépendant(e)', bufferMonths: 8, recurringExtraRisk: 1, nonEssentialPenalty: 0 },
+        retraite:    { name: 'Retraité(e)', bufferMonths: 6, recurringExtraRisk: 1, nonEssentialPenalty: 0 },
+        salarie:     { name: 'Salarié(e)',   bufferMonths: 3, recurringExtraRisk: 0, nonEssentialPenalty: 0 },
+      };
+      function getExpenseSituationRules(s) {
+        return EXPENSE_SITUATION_RULES[s] || EXPENSE_SITUATION_RULES.salarie;
+      }
+      // 3) Libellés français (accents inclus) pour le panneau « Détail ».
+      function expenseSituationLabel(s) {
+        const m = { etudiant: 'Étudiant', salarie: 'Salarié(e)', independant: 'Indépendant(e)', retraite: 'Retraité(e)', sans_emploi: 'Sans emploi' };
+        return m[s] || s;
+      }
+      function expenseHorizonLabel(h) {
+        const m = { court: 'court terme', moyen: 'moyen terme', long: 'long terme' };
+        return m[h] || h;
+      }
+      function expenseCharacterLabel(c) {
+        const m = { necessaire: 'nécessaire', confort: 'confort', plaisir: 'plaisir', impulsion: 'impulsion' };
+        return m[c] || c;
+      }
+      function expenseContextLabel(c) {
+        const m = { seul: 'seul(e)', famille: 'famille / couple', amis: 'amis', pro: 'professionnel' };
+        return m[c] || c;
+      }
+      // 4) Flux réels : revenus / dépenses effectifs moyens sur les 6 derniers
+      //    mois à partir de D.transactions. Retourne { hasData, income, expense,
+      //    margin, months }.
+      function computeRealFlows() {
+        const tx = D.transactions || [];
+        const out = { hasData: false, income: 0, expense: 0, margin: 0, months: 0 };
+        if (!tx.length) return out;
+        const recent = tx.filter(t => t.date && t.date >= _expenseCutoff6mois());
+        if (recent.length < 2) return out;
+        let inc = 0, exp = 0;
+        recent.forEach(t => {
+          const a = Math.abs(parseFloat(t.amount) || 0);
+          if (t.type === 'income') inc += a; else exp += a;
+        });
+        const monthsSet = new Set(recent.map(t => String(t.date).slice(0, 7)).filter(Boolean));
+        const months = Math.max(1, Math.min(6, monthsSet.size));
+        out.hasData = true;
+        out.months = months;
+        out.income = inc / months;
+        out.expense = exp / months;
+        out.margin = out.income - out.expense;
+        return out;
+      }
+      // Date limite « il y a 6 mois » au format YYYY-MM-DD (heure locale).
+      function _expenseCutoff6mois() {
+        const d = new Date();
+        d.setMonth(d.getMonth() - 6);
+        const p = n => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+      }
+      // 5) Liquidités (banque + espèces) et coussin en mois de charges.
+      function computeLiquidity() {
+        const charges = parseFloat((D.profile || {}).charges) || 0;
+        const liq = (D.accounts || [])
+          .filter(a => a.type === 'banque' || a.type === 'especes')
+          .reduce((s, a) => s + (parseFloat(a.balance) || 0), 0);
+        return { liquidity: liq, months: charges > 0 ? liq / charges : 0 };
+      }
+      // 6) Dégradation d'un palier de N crans (sans jamais remonter).
+      function stepExpenseLevel(key, steps) {
+        const idx = EXPENSE_LEVEL_SEVERITY[key];
+        if (idx == null || !steps) return key;
+        const n = Math.min(EXPENSE_LEVEL_ORDER.length - 1, idx + steps);
+        return EXPENSE_LEVEL_ORDER[n];
+      }
+      // 7) Nuance contextuelle finale du verdict : renvoie { key, sentences }.
+      //    `key` est le palier (éventuellement dégradé d'un cran) à afficher ;
+      //    `sentences` sont des mises en garde grammaticales (toujours entières,
+      //    pour ne jamais produire une phrase bizarre).
+      function expenseContextual(baseKey, meta) {
+        let key = baseKey;
+        const sentences = [];
+        const situation = meta && meta.situation;
+        const rules = getExpenseSituationRules(situation);
+        const character = meta && meta.character;
+        const recurrence = meta && meta.recurrence;
+        const isRecurring = recurrence && recurrence !== 'unique';
+        const nonEssential = (character === 'plaisir' || character === 'impulsion' || character === 'confort');
+        if (nonEssential && rules.nonEssentialPenalty > 0) {
+          key = stepExpenseLevel(key, rules.nonEssentialPenalty);
+          if (situation === 'etudiant') {
+            sentences.push("Compte tenu de votre situation d'étudiant, cette dépense non essentielle appelle une vigilance particulière.");
+          } else if (situation === 'sans_emploi') {
+            sentences.push('Sans emploi, une dépense non essentielle fragilise une trésorerie déjà tendue.');
+          } else if (situation === 'independant') {
+            sentences.push('Une dépense non essentielle devrait attendre que votre activité soit financièrement stabilisée.');
+          } else if (situation === 'retraite') {
+            sentences.push('Cette dépense non essentielle demande à être mesurée au regard de vos priorités.');
+          } else {
+            sentences.push("Cette dépense non essentielle mérite d'être mesurée au regard de vos priorités.");
+          }
+        }
+        if (isRecurring && rules.recurringExtraRisk) {
+          if (situation === 'retraite') {
+            sentences.push("Cette charge récurrente pèsera durablement sur un revenu de retraite, surtout s'il est fixe.");
+          } else if (situation === 'independant') {
+            sentences.push("Vos revenus étant irréguliers, une charge récurrente durable exige une trésorerie suffisante.");
+          } else if (situation === 'sans_emploi') {
+            sentences.push('Une charge récurrente fixe est difficile à tenir sans revenu régulier.');
+          } else {
+            sentences.push('Cette charge récurrente pèsera durablement sur votre budget.');
+          }
+        }
+        return { key, sentences };
       }
 
       // Helpers : récupère un compte par nom, ou null
@@ -8961,6 +9141,11 @@
         const situation  = profile.situation || 'salarie';
         const horizon    = profile.horizon || 'moyen';
         const prenom     = profile.prenom || '';
+        // v2 — impact relatif : données réelles & règles de profil.
+        const realFlows   = computeRealFlows();      // revenus/dépenses effectifs
+        const liqInfo     = computeLiquidity();      // liquidités & coussin (mois)
+        const situationRules = getExpenseSituationRules(situation);
+        const ageBand     = expenseAgeBand(age);
 
         // Compte sélectionné dans le formulaire ("moyen de paiement") :
         // l'analyse doit se tenir à CE compte (solde, type), pas seulement
@@ -9139,6 +9324,55 @@
           criteria.push({ key: 'compte', block: 'fin', label: `Compte « ${selAccount.name} »`, weight: W_FIN.compte, score: scoreAcc, detail: detailAcc, note: noteAcc });
         }
 
+        // (D2) MARGE RÉELLE (v2) — quand les transactions le permettent, on
+        // juge la dépense par rapport à la marge mensuelle EFFECTIVE
+        // (revenus encaissés − dépenses), plus représentative du pouvoir
+        // d'absorption qu'un « revenu déclaré ». Un étudiant sans marge ou en
+        // négatif est ainsi pénalisé, quel que soit le montant déclaré.
+        if (!isPatrimoine && realFlows.hasData) {
+          if (realFlows.margin > 0) {
+            const eff = (recurrence === 'unique') ? montant : montantMensuel;
+            const ratioMarge = eff / realFlows.margin;
+            const curveM = (recurrence === 'unique')
+              ? [[0,100],[0.25,96],[0.5,88],[1,70],[2,40],[3,20],[6,5],[12,0]]
+              : [[0,100],[0.25,90],[0.5,70],[0.75,45],[1,15],[1.5,4],[2,0]];
+            criteria.push({
+              key: 'marge', block: 'fin', label: 'Marge mensuelle réelle', weight: W_FIN.revenu,
+              score: Math.round(scoreFromAnchors(ratioMarge, curveM)),
+              detail: (recurrence === 'unique')
+                ? `équivaut à ${fr1(ratioMarge)} mois de votre marge réelle (${fmt(realFlows.margin)}/mois)`
+                : `représente ${Math.round(ratioMarge * 100)}% de votre marge réelle (${fmt(realFlows.margin)}/mois)`
+            });
+          } else {
+            criteria.push({
+              key: 'marge', block: 'fin', label: 'Marge mensuelle réelle', weight: W_FIN.revenu,
+              score: 5,
+              detail: `creuse votre marge réelle, nulle ou négative (${fmt(realFlows.margin)}/mois) : toute dépense ajoute au déficit`
+            });
+          }
+        }
+        // (D3) COUSSIN DE SÉCURITÉ (v2) — combien de mois de charges restent
+        // couverts après la dépense, comparé à l'objectif prudent de la
+        // situation. Pertinent pour une ponctuelle (unique/annuel) puisée dans
+        // les liquidités ; un récurrent mensuel est déjà vu par revenu/marge.
+        if (!isPatrimoine && recurrence !== 'mensuel' && charges > 0 && liqInfo.liquidity > 0) {
+          const target = situationRules.bufferMonths;
+          const afterLiquidity = Math.max(0, liqInfo.liquidity - montant);
+          const afterMonths = charges > 0 ? afterLiquidity / charges : 0;
+          const cur = [[0,4],[target * 0.5,35],[target * 0.8,60],[target,82],[target * 1.5,96],[target * 3,100]];
+          let cScore = Math.round(scoreFromAnchors(afterMonths, cur));
+          let cNote = '';
+          if (afterMonths < target) {
+            cNote = `Après paiement, il resterait ≈ ${(afterMonths).toFixed(1).replace('.', ',')} mois de charges : sous le niveau recommandé (${target} mois) pour un·e ${situationRules.name.toLowerCase()}.`;
+          }
+          criteria.push({
+            key: 'coussin', block: 'fin', label: 'Coussin de sécurité', weight: W_FIN.charges,
+            score: cScore,
+            detail: `ramènerait votre coussin de liquidités à ≈ ${(afterMonths).toFixed(1).replace('.', ',')} mois de charges (objectif ≈ ${target} mois)`,
+            note: cNote
+          });
+        }
+
         // (D) Critère : SITUATION (profil) — contexte utilisateur
         // Base neutre = 50 (ni bon, ni mauvais). Les bonus/malus
         // modulent autour de cette valeur pour refléter l'adéquation
@@ -9165,7 +9399,7 @@
           if (type === 'credits') { situationScore -= 20; sitDetails.push('−crédit'); }
         }
         criteria.push({
-          key: 'situation', block: 'ctx', label: `Situation (${situation})`, weight: 10,
+          key: 'situation', block: 'ctx', label: `Situation (${expenseSituationLabel(situation)})`, weight: 10,
           score: Math.max(0, Math.min(100, situationScore)),
           detail: sitDetails.length ? sitDetails.join(' ') : 'neutre'
         });
@@ -9194,7 +9428,7 @@
           }
         }
         criteria.push({
-          key: 'horizon', block: 'ctx', label: `Horizon (${horizon})`, weight: horizonWeight,
+          key: 'horizon', block: 'ctx', label: `Horizon (${expenseHorizonLabel(horizon)})`, weight: horizonWeight,
           score: Math.max(0, Math.min(100, horizonScore)),
           detail: horizonDetails.length ? horizonDetails.join(' ') : 'neutre'
         });
@@ -9245,7 +9479,7 @@
           characterScore -= 40; characterDetails.push('−impulsion');
         }
         criteria.push({
-          key: 'character', block: 'ctx', label: `Caractère (${character})`, weight: 8,
+          key: 'character', block: 'ctx', label: `Caractère (${expenseCharacterLabel(character)})`, weight: 8,
           score: Math.max(0, Math.min(100, characterScore)),
           detail: characterDetails.join(' ') || 'standard'
         });
@@ -9270,7 +9504,7 @@
           }
         }
         criteria.push({
-          key: 'context', block: 'ctx', label: `Contexte (${context})`, weight: 4,
+          key: 'context', block: 'ctx', label: `Contexte (${expenseContextLabel(context)})`, weight: 4,
           score: Math.max(0, Math.min(100, contextScore)),
           detail: contextDetails.join(' ') || 'standard'
         });
@@ -9305,6 +9539,15 @@
         const level = getExpenseLevel(scoreFinal);
         const levelInfo = EXPENSE_LEVELS[level];
 
+        // v2 — palier et mises en garde nuancés par le profil (situation,
+        // caractère, récurrence). On ne fait que DÉGRADER (jamais remonter) :
+        // une dépense non essentielle en situation fragile devient plus
+        // prudente ; les phrases contextuelles restent grammaticalement
+        // entières (aucune phrase bizarre).
+        const ctxEval = expenseContextual(level, { situation, character, recurrence: recurrenceLabel });
+        const finalLevel = EXPENSE_LEVELS[ctxEval.key];
+        const ctxSentences = ctxEval.sentences;
+
         // Critère "fait marquant" pour le texte du verdict : le critère
         // financier le plus faible (c'est lui qui explique la note).
         // Si l'utilisateur a dépassé de ≥2× SON budget prévu, c'est ce
@@ -9335,9 +9578,9 @@
         // (C1) Verdict principal — toujours présent, pertinence max.
         // Intègre le "fait marquant" (le critère financier le plus faible)
         // pour que la note s'explique en une phrase.
-        const verdictText = buildVerdictText(montant, recurrenceLabel, montantAnnuel, montantMensuel, prenom, scoreFinal, levelInfo,
-          keyCriterion ? keyCriterion.detail : null, character === 'necessaire');
-        addComment(levelInfo.emoji, 'verdict', verdictText, 100);
+        const verdictText = buildVerdictText(montant, recurrenceLabel, montantAnnuel, montantMensuel, prenom, scoreFinal, finalLevel,
+          keyCriterion ? keyCriterion.detail : null, character === 'necessaire', ctxSentences);
+        addComment(finalLevel.emoji, 'verdict', verdictText, 100);
 
         // (C2) Insight "chiffre clé" mis en avant.
         //   Ponctuel : on affiche la 2e mesure la plus faible (la 1re est
@@ -9369,11 +9612,16 @@
           );
         }
 
-        // (C3) Bonus épargne
+        // (C3) Bonus épargne — orthographe : futur (« vous aurez accumulé »)
+        // au lieu du conditionnel, et rythme mensuel affiché UNIQUEMENT pour
+        // un récurrent (dire « 500 €/mois » pour un versement unique était faux).
         if (isPatrimoine) {
+          const rythmeC3 = (recurrence !== 'unique')
+            ? `À ce rythme de ${fmt(montantMensuel)}/mois, sur un an vous aurez accumulé <strong>${fmt(montantAnnuel)}</strong>.`
+            : `Sur un an, vous aurez accumulé <strong>${fmt(montantAnnuel)}</strong>.`;
           addComment(
             '💰', 'positivity',
-            `<strong>Bonne décision :</strong> vous épargnez <strong>${fmt(montant)}</strong>. À ce rythme${montantMensuel > 0 ? ` (${fmt(montantMensuel)}/mois), sur un an, vous auriez accumulé <strong>${fmt(montantAnnuel)}</strong>` : ''}.`,
+            `<strong>Bonne décision :</strong> vous épargnez <strong>${fmt(montant)}</strong>. ${rythmeC3}`,
             70
           );
         }
@@ -9384,7 +9632,7 @@
           const dailyCost = getCostPerDay(montant, epProfile);
           addComment(
             '🏠', 'investissement',
-            `C'est un <strong>Investissement</strong> (durée de vie ~${years} ans, valeur de revente ~${Math.round(epProfile.residual*100)}%). ` +
+            `C'est un <strong>investissement</strong> (durée de vie ~${years} ans, valeur de revente ~${Math.round(epProfile.residual*100)}%). ` +
             `Coût réel par jour d'usage : <strong>${fmt(dailyCost)}</strong>` +
             `${epProfile.residual > 0 ? `, soit un coût net après revente de <strong>${fmt(valeurNette)}</strong> sur ${years} ans.` : '.'}`,
             65
@@ -9413,7 +9661,7 @@
         if (charges > 0 && !isPatrimoine && pctCharges >= 30) {
           addComment(
             '💸', 'charges',
-            `Cette dépense représente <strong>${pctCharges.toFixed(0)}% de vos charges fixes</strong> (${fmt(charges)}). Un ratio élevé peut mettre en tension votre budget.`,
+            `Cette dépense représente <strong>${pctCharges.toFixed(0)}% de vos charges fixes</strong> (${fmt(charges)}). Un ratio élevé peut mettre votre budget sous tension.`,
             pctCharges >= 60 ? 45 : 25
           );
         }
@@ -9493,7 +9741,7 @@
               // Objectif en cours
               addComment(
                 '🎯', 'objectif',
-                `Cette dépense retarderait votre objectif <strong>« ${escHtml(mainObj.name)} »</strong> (actuellement à <strong>${progressPct.toFixed(0)}%</strong>)${moisRetard > 0 ? ` de <strong>${moisRetard} mois</strong> supplémentaires` : ''}.`,
+                `Cette dépense reporterait de <strong>${moisRetard} mois</strong> l'atteinte de votre objectif <strong>« ${escHtml(mainObj.name)} »</strong> (avancement actuel : <strong>${progressPct.toFixed(0)}%</strong>).`,
                 moisRetard >= 2 ? 45 : 25
               );
             }
@@ -9507,7 +9755,7 @@
           if (montant > selAccSolde) {
             addComment(
               '💳', 'timing',
-              `Votre compte <strong>« ${escHtml(payment)} »</strong> a un solde actuel de <strong>${fmt(selAccSolde)}</strong> : insuffisant pour ${fmt(montant)} (manque <strong>${fmt(montant - selAccSolde)}</strong>). Prévoyez un autre moyen de paiement, un report, ou un paiement fractionné.`,
+              `Votre compte <strong>« ${escHtml(payment)} »</strong> a un solde actuel de <strong>${fmt(selAccSolde)}</strong> : insuffisant pour ${fmt(montant)} (il en manque <strong>${fmt(montant - selAccSolde)}</strong>). Prévoyez un autre moyen de paiement, un report, ou un paiement fractionné.`,
               50
             );
           }
@@ -9616,7 +9864,7 @@
         const warningHtml = dataInsufficient
           ? `<div class="expense-data-warning">⚠️ Aucune donnée financière (revenu, épargne, patrimoine, charges). Le score est <strong>indicatif</strong> (basé sur le contexte seul) — complétez vos paramètres et vos comptes pour un verdict précis.</div>`
           : (missingData.length > 0
-            ? `<div class="expense-data-warning">ℹ️ Analyse partielle (manque : ${missingData.join(', ')}). Les critères disponibles sont re-pondérés.</div>`
+            ? `<div class="expense-data-warning">ℹ️ Analyse partielle (manque : ${missingData.join(', ')}). Les critères disponibles sont rééquilibrés.</div>`
             : (indicative ? `<div class="expense-data-warning">ℹ️ Score indicatif — aucune mesure financière disponible.</div>` : ''));
 
         // Ligne de transparence : les données concrètes sur lesquelles
@@ -9628,6 +9876,7 @@
         const nbAccs = (D.accounts || []).length;
         if (nbAccs > 0) baseParts.push(`${nbAccs} compte${nbAccs > 1 ? 's' : ''} (${fmt(totalPatrimoine)})`);
         if (charges > 0) baseParts.push(`charges ${fmt(charges)}/mois`);
+        if (realFlows.hasData) baseParts.push(`marge réelle ${fmt(realFlows.margin)}/mois (6 mois de transactions)`);
         if (budgetPrevu > 0) baseParts.push(`budget prévu ${fmt(budgetPrevu)}`);
         if (selAccount) baseParts.push(`compte sélectionné : « ${escHtml(selAccount.name)} » (${fmt(selAccSolde)})`);
         const baseHtml = baseParts.length > 0
@@ -9660,7 +9909,7 @@
 
         resultEl.innerHTML = `
           <div class="expense-tool-result-header">
-            <div class="expense-verdict-badge" data-level="${level}">${levelInfo.emoji} ${levelInfo.label}</div>
+            <div class="expense-verdict-badge" data-level="${expenseCssDataLevel(ctxEval.key)}">${finalLevel.emoji} ${finalLevel.label}</div>
             <div class="expense-score">
               <div class="expense-score-value">${scoreFinal}<small>/100</small></div>
               <div class="expense-gauge"><div class="expense-gauge-fill" style="width:${scoreFinal}%;background:${levelInfo.color}"></div></div>
@@ -9764,18 +10013,23 @@
       // en une phrase. Pour un RÉCURRENT, ajoute l'effet de concrétisation
       // (coût sur 3 ans) ; pour une dépense NÉCESSAIRE, la question posée
       // n'est plus « faut-il ? » mais « comment financer ? ».
-      function buildVerdictText(montant, recurrenceLabel, montantAnnuel, montantMensuel, prenom, scoreFinal, levelInfo, keyFact, isNecessaire) {
-        const prenomPart = prenom ? `, ${prenom}` : '';
+      function buildVerdictText(montant, recurrenceLabel, montantAnnuel, montantMensuel, prenom, scoreFinal, levelInfo, keyFact, isNecessaire, ctxSentences) {
+        // v2 orthographe : le prénom est placé en tête de phrase
+        // (« Alex, cette dépense … est acceptable. ») au lieu de l'ancienne
+        // tournure « … de 100 €, Alex est acceptable » qui coupait la phrase.
+        // `levelInfo.phrase` est le qualificatif ACCORDÉ (dépense = féminin).
+        const opener = prenom ? `${prenom}, cette` : `Cette`;
         const typePart = (recurrenceLabel === 'mensuel') ? ' mensuelle'
           : (recurrenceLabel === 'annuel') ? ' annuelle' : ' unique';
         const recPart = (recurrenceLabel === 'mensuel') ? ` (≈ ${fmt(montantAnnuel)}/an, ≈ ${fmt(montant * 36)} sur 3 ans)`
           : (recurrenceLabel === 'annuel') ? ` (≈ ${fmt(montantMensuel)}/mois, ≈ ${fmt(montant * 3)} sur 3 ans)`
           : '';
         const factPart = keyFact ? ` — elle ${escHtml(keyFact)}.` : '.';
+        const ctxNote = (ctxSentences && ctxSentences.length) ? ' ' + ctxSentences.join(' ') : '';
         if (isNecessaire) {
-          return `Cette dépense${typePart} de <strong>${fmt(montant)}</strong>${prenomPart} est <strong>nécessaire</strong>${recPart} : la vraie question est de savoir <strong>comment la financer</strong>${keyFact ? ` — ${escHtml(keyFact)}` : ''}. Score global : <strong>${scoreFinal}/100</strong>.`;
+          return `${opener} dépense${typePart} de <strong>${fmt(montant)}</strong> est <strong>nécessaire</strong>${recPart} : la vraie question est de savoir <strong>comment la financer</strong>${keyFact ? ` — elle ${escHtml(keyFact)}.` : '.'}${ctxNote} Score global : <strong>${scoreFinal}/100</strong>.`;
         }
-        return `Cette dépense${typePart} de <strong>${fmt(montant)}</strong>${prenomPart} est <strong>${levelInfo.label.toLowerCase()}</strong>${recPart}${factPart} Score global : <strong>${scoreFinal}/100</strong>.`;
+        return `${opener} dépense${typePart} de <strong>${fmt(montant)}</strong> est <strong>${levelInfo.phrase}</strong>${recPart}${factPart}${ctxNote} Score global : <strong>${scoreFinal}/100</strong>.`;
       }
 
       // Conseil de financement pour une dépense NÉCESSAIRE (une fois la
@@ -9791,10 +10045,10 @@
           return null;
         }
         if (montant > selAccSolde) {
-          return `Le compte <strong>« ${escHtml(payment)} »</strong> ne couvre pas ${fmt(montant)} (solde actuel ${fmt(selAccSolde)}). Pour une dépense nécessaire : étalez le paiement sur 2-4 semaines, puiser dans un autre compte, ou demandez des mensualités au fournisseur.`;
+          return `Le compte <strong>« ${escHtml(payment)} »</strong> ne couvre pas ${fmt(montant)} (solde actuel ${fmt(selAccSolde)}). Pour une dépense nécessaire : étalez le paiement sur 2-4 semaines, puisez dans un autre compte, ou demandez des mensualités au fournisseur.`;
         }
         if (selAccount.type === 'banque' && charges > 0 && (selAccSolde - montant) < charges) {
-          return `Payer ${fmt(montant)} depuis <strong>« ${escHtml(payment)} »</strong> laisserait ${fmt(Math.max(0, selAccSolde - montant))} sur ce compte, moins d'un mois de vos charges. Pour une dépense nécessaire, étalez le paiement avant la fin du mois pour ne pas découvrer le compte.`;
+          return `Payer ${fmt(montant)} depuis <strong>« ${escHtml(payment)} »</strong> laisserait ${fmt(Math.max(0, selAccSolde - montant))} sur ce compte, soit moins d'un mois de vos charges. Pour une dépense nécessaire, étalez le paiement avant la fin du mois pour ne pas découvrir le compte.`;
         }
         return null;
       }
