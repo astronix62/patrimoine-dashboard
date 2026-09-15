@@ -3,7 +3,18 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- `viewport-fit=cover` + les variables CSS `env(safe-area-inset-*)`
+       permettent de gérer la Dynamic Island, l'encoche et la barre
+       d'accueil des iPhone.
+       `interactive-widget=resizes-content` : quand le clavier iOS/Android
+       s'ouvre, la page est redimensionnée (le champ actif et les boutons
+       de la modale restent donc visibles) au lieu d'être recouverte.
+       `format-detection=telephone=no` : empêche iOS de transformer
+       automatiquement les nombres du dashboard (soldes, dates) en liens
+       téléphoniques bleus. -->
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="format-detection" content="telephone=no">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -47,6 +58,16 @@
         } else if (w <= 1024) {
           root.classList.add('is-tablet');
         }
+        // `is-touch` : appareil SANS survol possible (iPhone, iPad, Android).
+        // Sert à rendre VISIBLES les boutons d'édition ✏️ qui
+        // n'apparaissent qu'au survol (:hover) sur ordinateur.
+        // On teste `hover: none` et non `ontouchstart` : un portable
+        // tactile avec souris (ou un iPad avec trackpad) sait encore
+        // survoler, on ne veut donc pas lui imposer les crayons visibles.
+        var mq = window.matchMedia ? window.matchMedia.bind(window) : null;
+        var isTouch = !!(mq && mq('(hover: none)').matches && mq('(pointer: coarse)').matches);
+        if (isTouch) root.classList.add('is-touch');
+        else root.classList.remove('is-touch');
       }
       detectDevice();
       window.addEventListener('resize', detectDevice);
@@ -57,6 +78,7 @@
       if (isMobileUA && !document.documentElement.classList.contains('is-mobile')) {
         document.documentElement.classList.add('is-mobile');
       }
+      if (isMobileUA) document.documentElement.classList.add('is-touch');
     })();
   </script>
 
@@ -92,12 +114,18 @@
     html.is-mobile .grid-3cols .panel,
     html.is-mobile .grid-3eq .panel,
     html.is-mobile .grid-2eq .panel { grid-column: 1 / -1 !important }
-    html.is-mobile .header { padding: 0 10px !important; height: 52px !important; gap: 6px !important }
+    /* Le header est `sticky: top 0`. Sur iPhone (mode PWA / écran
+       d'accueil), la Dynamic Island occupe le haut de l'écran : sans
+       réserver la safe-area, le logo et le bouton ☰ passent DERRIÈRE
+       la Dynamic Island dès qu'on fait défiler la page.
+       On ajoute donc la safe-area à la hauteur ET au padding haut.
+       (`env()` vaut 0px sur les appareils sans encoche → aucun impact.) */
+    html.is-mobile .header { padding: var(--safe-top, 0px) max(10px, var(--safe-right, 0px)) 0 max(10px, var(--safe-left, 0px)) !important; height: calc(52px + var(--safe-top, 0px)) !important; gap: 6px !important }
     html.is-mobile .logo-text h1 { font-size: 12px !important }
     html.is-mobile .logo-text p { font-size: 7px !important }
     html.is-mobile .logo-icon { width: 28px !important; height: 28px !important; font-size: 10px !important }
     html.is-mobile .header-right { gap: 6px !important }
-    html.is-mobile .sidebar { position: fixed !important; top: 52px !important; left: 0 !important; width: 280px !important; height: calc(100vh - 52px) !important; height: calc(100dvh - 52px) !important; z-index: 300 !important; transform: translateX(-100%) !important; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; opacity: 1 !important; box-shadow: 4px 0 24px rgba(0,0,0,0.5) !important; border-right: 1px solid var(--border) !important; display: flex !important; flex-direction: column !important; }
+    html.is-mobile .sidebar { position: fixed !important; top: calc(52px + var(--safe-top, 0px)) !important; left: var(--safe-left, 0px) !important; width: 280px !important; height: calc(100vh - 52px) !important; height: calc(100dvh - 52px - var(--safe-top, 0px)) !important; z-index: 300 !important; transform: translateX(-100%) !important; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; opacity: 1 !important; box-shadow: 4px 0 24px rgba(0,0,0,0.5) !important; border-right: 1px solid var(--border) !important; display: flex !important; flex-direction: column !important; }
     html.is-mobile .sidebar.collapsed { width: 280px !important; padding: 16px 0 !important; opacity: 1 !important; transform: translateX(-100%) !important; overflow-y: auto !important }
     html.is-mobile .sidebar.mobile-open { transform: translateX(0) !important }
 
@@ -119,8 +147,11 @@
     html.is-mobile .sidebar-filters { margin-top: auto !important; padding-top: 12px !important; border-top: 1px solid var(--border); }
     html.is-mobile .score-mini { margin-top: 12px !important; }
     html.is-mobile .quote-box { margin-top: 10px !important; margin-bottom: 10px !important; }
-    /* Padding supérieur réduit pour gagner de la place */
-    html.is-mobile .sidebar { padding: 12px 0 !important; }
+    /* Padding supérieur réduit pour gagner de la place.
+       En bas, on réserve la barre d'accueil iPhone
+       (safe-area-inset-bottom) : la dernière entrée du menu
+       (Paramètres) doit rester entièrement cliquable. */
+    html.is-mobile .sidebar { padding: 12px 0 calc(12px + var(--safe-bottom, 0px)) !important; }
     html.is-mobile .content { padding: 12px !important; width: 100% !important; max-width: 100vw !important }
     html.is-mobile .kpi-card { padding: 12px !important }
     html.is-mobile .kpi-value { font-size: 17px !important }
@@ -148,7 +179,7 @@
     /* L'auth-modal a sa propre gestion responsive (voir bloc @media auth).
        On exclut donc le sélecteur pour ne pas casser l'affichage auth sur mobile. */
     html.is-mobile .modal-overlay:not(#authModal) { align-items: flex-end !important; padding: 0 !important }
-    html.is-mobile .modal-overlay:not(#authModal) .modal { width: 100% !important; max-width: 100% !important; max-height: 90vh !important; border-radius: 16px 16px 0 0 !important; padding: 20px 16px !important }
+    html.is-mobile .modal-overlay:not(#authModal) .modal { position: relative !important; width: 100% !important; max-width: 100% !important; max-height: 90vh !important; max-height: min(90dvh, calc(100dvh - var(--safe-top, 0px) - 16px)) !important; border-radius: 16px 16px 0 0 !important; padding: 20px 16px calc(20px + var(--safe-bottom, 0px)) !important; overscroll-behavior: contain !important }
     html.is-mobile .h180 { height: 160px !important }
     html.is-mobile .h200 { height: 180px !important }
     html.is-mobile .h220 { height: 200px !important }
@@ -164,17 +195,17 @@
     html.is-mobile .settings-row input,
     html.is-mobile .settings-row select,
     html.is-mobile .settings-row .form-input { width: 100% !important }
-    html.is-mobile .toast-container { right: 12px !important; left: 12px !important; bottom: 12px !important }
+    html.is-mobile .toast-container { right: 12px !important; left: 12px !important; bottom: calc(12px + var(--safe-bottom, 0px)) !important }
     html.is-mobile .toast { min-width: 0 !important; width: 100% !important }
     html.is-mobile #authStatusBar {
-      padding: 6px 8px !important;
       /* Safe-area iPhone (Dynamic Island / PWA écran d'accueil) :
-         on GARDE le décalage safe-area-top même en mobile, sinon
-         le bouton "Connexion" est masqué par la Dynamic Island. */
-      padding-top: max(6px, env(safe-area-inset-top)) !important;
+         on GARDE le décalage safe-area même en mobile, sinon
+         le bouton "Connexion" est masqué par la Dynamic Island (et,
+         en paysage, poussé contre l'encoche latérale). */
+      padding: max(6px, var(--safe-top, 0px)) max(8px, var(--safe-right, 0px)) 6px max(8px, var(--safe-left, 0px)) !important;
     }
     html.is-mobile .main-layout { position: relative !important; overflow: visible !important }
-    html.is-mobile .sidebar-backdrop { position: fixed !important; top: 52px !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.6) !important; z-index: 250 !important; opacity: 0 !important; pointer-events: none !important; transition: opacity 0.3s !important; backdrop-filter: blur(2px) !important; -webkit-backdrop-filter: blur(2px) !important }
+    html.is-mobile .sidebar-backdrop { position: fixed !important; top: calc(52px + var(--safe-top, 0px)) !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.6) !important; z-index: 250 !important; opacity: 0 !important; pointer-events: none !important; transition: opacity 0.3s !important; backdrop-filter: blur(2px) !important; -webkit-backdrop-filter: blur(2px) !important }
     html.is-mobile .sidebar-backdrop.show { opacity: 1 !important; pointer-events: auto !important }
 
     /* Tablette */
@@ -186,17 +217,72 @@
     html.is-tablet .stat-cards-row { grid-template-columns: repeat(3, 1fr) !important }
     html.is-tablet .proj-sliders { grid-template-columns: 1fr 1fr !important }
 
-    /* Très petit mobile (≤ 380px) */
-    html.is-tiny .kpi-row { grid-template-columns: 1fr !important }
-    html.is-tiny .kpi-value { font-size: 19px !important }
-    html.is-tiny .indicators { grid-template-columns: 1fr !important }
+    /* Tablette étroite et iPhone EN MODE PAYSAGE (769 – 1024 px).
+       ───────────────────────────────────────────────────────────────
+       Dans cette plage, la barre d'onglets horizontale du header
+       (7 onglets, ~604 px) + le logo + la date + le bouton ☰ ne tenaient
+       pas : le header débordait de ~150 px et repoussait le bouton ☰
+       HORS DE L'ÉCRAN (impossible d'ouvrir le menu). Sur iPhone 12 en
+       paysage (844 px), c'était systématique.
+       Correctifs : la date est masquée (elle n'est pas indispensable au
+       header), et la barre d'onglets devient DÉFILABLE horizontalement
+       au lieu de pousser le bouton hors de l'écran. */
+    html.is-tablet .header { padding: var(--safe-top, 0px) max(12px, var(--safe-right, 0px)) 0 max(12px, var(--safe-left, 0px)) !important; gap: 8px !important }
+    html.is-tablet .header-date { display: none !important }
+    html.is-tablet .nav-tabs {
+      flex: 1 1 auto;
+      min-width: 0;
+      justify-content: flex-start;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    html.is-tablet .nav-tabs::-webkit-scrollbar { display: none }
+    html.is-tablet .nav-tab { flex: 0 0 auto }
+
+    /* Écran étroit (≤ 380px : iPhone SE, mini, X/XS/11 Pro…)
+       ────────────────────────────────────────────────────────────
+       On CONSERVE 2 colonnes. Les mettre sur une seule colonne
+       quadruplait la hauteur de la vue d'ensemble (4 cartes empilées,
+       ~1000 px de défilement avant le premier graphique) alors que deux
+       cartes de ~170 px suffisent largement à afficher « 32 450,85 € ».
+       Seuls les écrans réellement minuscules (≤ 340 px) passent en
+       1 colonne — voir le bloc suivant. */
+    html.is-tiny .kpi-row { grid-template-columns: 1fr 1fr !important }
+    html.is-tiny .kpi-value { font-size: 16px !important }
+    html.is-tiny .indicators { grid-template-columns: 1fr 1fr !important }
     html.is-tiny .header { padding: 0 8px !important }
     html.is-tiny .logo-text { display: none !important }
-    html.is-tiny .content { padding: 10px !important }
+    /* On ne touche qu'au padding HAUT : les marges latérales et basse
+       sont gérées globalement par `html.is-mobile .content`
+       (12 px + réserve de la barre d'accueil iPhone). */
+    html.is-tiny .content { padding-top: 10px !important }
     html.is-tiny .toast-container { right: 8px !important; left: 8px !important; bottom: 8px !important }
     html.is-tiny .toast { min-width: 0 !important; width: 100% !important }
 
+    /* Écran minuscule (≤ 340 px : très vieux iPhone en portrait,
+       navigateurs avec fenêtre réduite). Là, une seule colonne. */
+    @media (max-width: 340px) {
+      html.is-tiny .kpi-row { grid-template-columns: 1fr !important }
+      html.is-tiny .kpi-value { font-size: 19px !important }
+      html.is-tiny .indicators { grid-template-columns: 1fr !important }
+    }
+
         :root {
+      /* ── Zones sûres iPhone (Dynamic Island, encoche, barre d'accueil) ──
+         `env()` vaut 0px sur les appareils sans encoche et la valeur
+         réelle (ex. 47px / 34px) sur iPhone. On les centralise ici :
+         une seule source de vérité, utilisée partout via var(). */
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      /* Hauteur du clavier virtuel, mesurée en JS (visualViewport).
+         Vaut 0px tant que le clavier est fermé. */
+      --kb-offset: 0px;
+
       --gold: #C8A84B;
       --gold-light: #E8C96A;
       --bg: #0A0A0A;
@@ -282,7 +368,7 @@
       border-radius: 20px;
       border: none;
       background: transparent;
-      color: var(--tx2);
+      color: var(--text2);
       cursor: pointer;
       font-size: 12px;
       transition: all 0.2s;
@@ -1769,8 +1855,10 @@
        qu'elle prenne toute la largeur.
        
        Si l'utilisateur a PLUS DE 5 comptes, on ajoute
-       automatiquement la classe .kpi-top3 (utilisée par le
-       mini-graphique "Top 3 des comptes" — voir #top3ChartContainer).
+       automatiquement la classe .kpi-top3 sur la rangée de KPI.
+       C'est un marqueur d'état (aucune règle de style associée) :
+       le mini-graphique "Top 3 des comptes" (#top3ChartContainer)
+       est, lui, affiché/masqué directement par renderTop3Chart().
        ============================================ */
     .kpi-row.kpi-single {
       grid-template-columns: 1fr !important;
@@ -2336,7 +2424,7 @@
       .toast-container {
         right: 12px;
         left: 12px;
-        bottom: 12px
+        bottom: calc(12px + var(--safe-bottom, 0px))
       }
 
       .toast {
@@ -2849,8 +2937,14 @@
         flex: 1;
         grid-template-rows: auto 1fr;
       }
+      /* L'auth-modal couvre tout l'écran (position: fixed; inset: 0).
+         En mode PWA / écran d'accueil sur iPhone, le bloc de marque serait
+         donc DESSINÉ SOUS la Dynamic Island. On décale le contenu de la
+         safe-area-top. En bas, on réserve la barre d'accueil pour que le
+         bouton « Mode démo » reste entièrement visible. */
       .auth-side {
         padding: 18px 18px 16px;
+        padding-top: calc(18px + var(--safe-top, 0px));
         flex-shrink: 0;
       }
       .auth-logo {
@@ -2870,7 +2964,7 @@
         letter-spacing: .14em;
       }
       .auth-panel {
-        padding: 16px 18px 24px;
+        padding: 16px 18px calc(24px + var(--safe-bottom, 0px));
         align-items: flex-start;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
@@ -3024,10 +3118,14 @@
         max-width: 100vw;
       }
 
-      /* HEADER COMPACT */
+      /* HEADER COMPACT
+         (hauteur + safe-area : voir le commentaire détaillé dans le
+         bloc `html.is-mobile .header`. Sans cela, le header `sticky`
+         passe sous la Dynamic Island en mode PWA, et en paysage sous
+         l'encoche latérale.) */
       .header {
-        padding: 0 10px;
-        height: 52px;
+        padding: var(--safe-top, 0px) max(10px, var(--safe-right, 0px)) 0 max(10px, var(--safe-left, 0px));
+        height: calc(52px + var(--safe-top, 0px));
         gap: 6px;
       }
 
@@ -3069,11 +3167,11 @@
 
       .sidebar {
         position: fixed;
-        top: 52px;
-        left: 0;
+        top: calc(52px + var(--safe-top, 0px));
+        left: var(--safe-left, 0px);
         width: 280px;
         height: calc(100vh - 52px);
-        height: calc(100dvh - 52px);
+        height: calc(100dvh - 52px - var(--safe-top, 0px));
         z-index: 300;
         transform: translateX(-100%);
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s;
@@ -3097,7 +3195,7 @@
       /* Overlay sombre quand sidebar ouverte */
       .sidebar-backdrop {
         position: fixed;
-        top: 52px;
+        top: calc(52px + var(--safe-top, 0px));
         left: 0;
         right: 0;
         bottom: 0;
@@ -3299,18 +3397,25 @@
         width: 100% !important
       }
 
-      /* Modal plein écran sur mobile */
+      /* Modal en « feuille » ancrée en bas de l'écran (bottom sheet).
+         `90vh` devient `90dvh` : sur iPhone la barre d'adresse de Safari
+         réduit la hauteur réelle de l'écran, et la modale pouvait donc
+         dépasser SOUS la barre d'adresse (boutons d'action inaccessibles).
+         On réserve aussi la barre d'accueil via safe-area-inset-bottom. */
       .modal-overlay {
         align-items: flex-end;
         padding: 0
       }
 
       .modal {
+        position: relative;
         width: 100%;
         max-width: 100%;
         max-height: 90vh;
+        max-height: min(90dvh, calc(100dvh - var(--safe-top, 0px) - 16px));
         border-radius: 16px 16px 0 0;
-        padding: 20px 16px
+        padding: 20px 16px calc(20px + var(--safe-bottom, 0px));
+        overscroll-behavior: contain
       }
 
       /* Bar supérieure des paramètres : boutons empilés */
@@ -3846,7 +3951,10 @@
     .import-summary-item .val.neg { color: var(--red); }
 
     @media (max-width: 768px) {
-      .import-csv-modal { max-width: 100%; padding: 18px 14px; }
+      /* `min-width: 0` annule la largeur minimale de 460 px définie pour
+         le bureau : sans elle, la modale d'import dépassait de 35 px de
+         chaque côté de l'écran d'un iPhone (champs et boutons coupés). */
+      .import-csv-modal { min-width: 0; max-width: 100%; padding: 18px 14px; }
       .import-dropzone { padding: 24px 14px; }
       .import-dropzone-icon { font-size: 32px; }
       .import-dropzone-text { font-size: 12px; }
@@ -3859,6 +3967,424 @@
       .modal-actions { flex-wrap: wrap; }
       .modal-actions .btn { flex: 1 1 auto; min-width: 0; }
       #importNextBtn, #importPrevBtn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    }
+
+    /* ============================================================
+       CORRECTIONS D'AFFICHAGE MOBILE / iPhone
+       ============================================================
+       Ce bloc ne redessine PAS l'interface : il corrige uniquement
+       des défauts constatés sur iPhone. Chaque règle est commentée
+       avec le problème qu'elle résout.
+       ============================================================ */
+
+    /* iOS agrandit automatiquement les polices en mode paysage, ce qui
+       déforme la mise en page : on neutralise ce comportement. */
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* ── 1. Boutons d'édition invisibles au doigt ────────────────
+       `.edit-btn` et `.edit-btn-panel` n'apparaissaient qu'au survol
+       de la souris (`opacity: 0` + `:hover`). Sur un écran tactile,
+       il n'y a pas de survol : les crayons ✏️ des KPI et des panneaux
+       étaient donc impossibles à découvrir. On les rend visibles en
+       permanence dès qu'un appareil tactile est détecté. */
+    html.is-touch .edit-btn,
+    html.is-touch .edit-btn-panel {
+      opacity: 1;
+      border-color: var(--border);
+      color: var(--text2);
+    }
+
+    /* ── 2. Zones tactiles trop petites ──────────────────────────
+       Recommandation Apple : 44 × 44 px minimum. Les boutons d'action
+       (✏️ / 🗑️), les interrupteurs et certains liens étaient bien en
+       dessous → on ratait régulièrement le bouton visé. */
+    html.is-mobile .action-btn {
+      width: 38px;
+      height: 38px;
+      font-size: 15px;
+    }
+
+    html.is-mobile .action-btns {
+      gap: 6px;
+    }
+
+    html.is-mobile .modal-actions .btn,
+    html.is-mobile .delete-account-actions .btn,
+    html.is-mobile .demo-notice-actions .btn {
+      min-height: 44px;
+      padding: 11px 16px;
+      font-size: 13px;
+    }
+
+    /* Interrupteurs « Notifications » (Paramètres) : 38 × 20 px → 46 × 26 px,
+       et on agrandit le bouton blanc en conséquence. */
+    html.is-mobile .toggle {
+      width: 46px;
+      height: 26px;
+      border-radius: 13px;
+    }
+
+    html.is-mobile .toggle::after {
+      width: 22px;
+      height: 22px;
+    }
+
+    html.is-mobile .toggle.on::after {
+      left: 22px;
+    }
+
+    html.is-mobile .toggle.off::after {
+      left: 2px;
+    }
+
+    /* Lien « Voir le détail › » de l'anneau d'objectif : 15 px de haut,
+       difficile à viser ; on lui donne une vraie zone tactile. */
+    html.is-mobile .ring-link {
+      min-height: 38px;
+      padding: 8px 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Listes déroulantes de filtre (Évolution, Paramètres) : 29 px. */
+    html.is-mobile .filter-select {
+      min-height: 36px;
+    }
+
+    /* Cases à cocher des courbes (Évolution) : 13 px. */
+    html.is-mobile .evo-toggle input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Curseurs de la simulation (Projection) : on épaissit la piste
+       pour que le doigt accroche le curseur. */
+    html.is-mobile input[type="range"] {
+      height: 34px;
+    }
+
+    /* ── 3. Cartes d'une même rangée : hauteurs cohérentes ───────
+       Les 4 KPI sont dans une grille. La 2ᵉ rangée (Livret A / Espèces)
+       n'a pas de ligne « vs mois dernier », elle était donc 23 px plus
+       courte que la 1ʳᵉ : les deux rangées de cartes semblaient ne pas
+       avoir les mêmes proportions. `grid-auto-rows: 1fr` aligne toutes
+       les rangées sur la plus haute, et la sparkline est poussée en bas
+       de chaque carte (margin-top: auto) pour que les 4 courbes
+       commencent à la même hauteur. */
+    html.is-mobile .kpi-row {
+      grid-auto-rows: 1fr;
+    }
+
+    html.is-mobile .kpi-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    html.is-mobile .kpi-card .sparkline-wrap {
+      margin-top: auto;
+    }
+
+    /* ── 4. Modales « feuille » : titre et boutons toujours visibles ──
+       Problème : les boutons Annuler / Valider sont placés en fin de
+       contenu. Quand la modale est plus haute que l'écran (clavier
+       ouvert, formulaire long), ils sortaient de l'écran et il fallait
+       faire défiler tout le contenu pour valider.
+       Solution : la barre d'actions reste collée en bas de la modale
+       (position: sticky) et le titre reste collé en haut. Le contenu
+       défile entre les deux. */
+    html.is-mobile .modal-overlay:not(#authModal) .modal-title {
+      position: sticky;
+      top: calc(-1 * 20px);
+      z-index: 2;
+      margin: calc(-1 * 20px) calc(-1 * 16px) 16px;
+      padding: 20px 16px 12px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    html.is-mobile .modal-overlay:not(#authModal) .modal-actions,
+    html.is-mobile .modal-overlay:not(#authModal) .delete-account-actions {
+      position: sticky;
+      bottom: calc(-1 * (20px + var(--safe-bottom, 0px)));
+      z-index: 2;
+      margin: 16px calc(-1 * 16px) calc(-1 * (20px + var(--safe-bottom, 0px)));
+      padding: 12px 16px calc(12px + var(--safe-bottom, 0px));
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+    }
+
+    /* Les modales « suppression de compte » et « réinitialisation »
+       ont des marges internes différentes de celles des autres modales
+       (bureau : 28px 26px 22px · ≤ 600px : 24px 18px 20px) : on recale
+       la barre d'actions sur ces valeurs. */
+    html.is-mobile .modal-overlay:not(#authModal) .delete-account-actions {
+      margin: 16px -26px -22px;
+      padding: 12px 26px calc(12px + var(--safe-bottom, 0px));
+    }
+
+    @media (max-width: 600px) {
+      html.is-mobile .modal-overlay:not(#authModal) .delete-account-actions {
+        margin: 16px -18px -20px;
+        padding: 12px 18px calc(12px + var(--safe-bottom, 0px));
+      }
+    }
+
+    /* Poignée visuelle en haut de la feuille : elle indique clairement
+       que la fenêtre s'ouvre par le bas et se ferme vers le bas. */
+    html.is-mobile .modal-overlay:not(#authModal) .modal::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      width: 38px;
+      height: 4px;
+      margin-left: -19px;
+      border-radius: 2px;
+      background: var(--border);
+    }
+
+    /* ── 5. Tableau des transactions : plus de défilement caché ──
+       Sur mobile, les colonnes « Compte » et « Catégorie » poussaient
+       les colonnes « Montant » et « Actions » hors de l'écran : il
+       fallait faire défiler horizontalement pour supprimer une
+       transaction. Ces deux colonnes sont masquées sur téléphone
+       (l'information reste disponible dans la liste des transactions
+       récentes et dans l'export CSV). */
+    html.is-mobile .data-table-tx {
+      min-width: 0;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    html.is-mobile .data-table-tx th:nth-child(2),
+    html.is-mobile .data-table-tx td:nth-child(2),
+    html.is-mobile .data-table-tx th:nth-child(4),
+    html.is-mobile .data-table-tx td:nth-child(4) {
+      display: none;
+    }
+
+    html.is-mobile .data-table-tx th:nth-child(1),
+    html.is-mobile .data-table-tx td:nth-child(1) {
+      width: 74px;
+    }
+
+    html.is-mobile .data-table-tx th:nth-child(5),
+    html.is-mobile .data-table-tx td:nth-child(5) {
+      width: 72px;
+      text-align: right;
+    }
+
+    html.is-mobile .data-table-tx th:nth-child(6),
+    html.is-mobile .data-table-tx td:nth-child(6) {
+      width: 88px;
+    }
+
+    html.is-mobile .data-table-tx td:nth-child(3) {
+      max-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Tableau d'analyse mensuelle : beaucoup de colonnes, le défilement
+       horizontal est légitime — mais on garde la colonne « Mois »
+       visible (colonne figée) pour ne pas perdre le repère. */
+    html.is-mobile .data-table:not(.data-table-tx) th:first-child,
+    html.is-mobile .data-table:not(.data-table-tx) td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background: var(--bg2);
+      color: var(--text2);
+    }
+
+    html.is-mobile .data-table:not(.data-table-tx) th:first-child {
+      background: var(--bg3);
+      color: var(--text3);
+    }
+
+    /* ── 6. Statistiques (Analyse) : 3 grandes cartes empilées ───
+       Empilées verticalement, elles ressemblaient à une simple liste.
+       On garde la première en pleine largeur (chiffre principal) et
+       les deux suivantes côte à côte. */
+    /* `!important` nécessaire : le premier bloc `html.is-mobile` du fichier
+       force 1 colonne avec `!important` (1 code plus haut) pour les
+       anciens écrans étroits, on le remplace ici. */
+    html.is-mobile .stat-cards-row {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 8px !important;
+    }
+
+    html.is-mobile .stat-card:first-child {
+      grid-column: 1 / -1;
+    }
+
+    /* ── 7. Marge basse du contenu : la dernière carte ne doit pas
+       être collée à la barre d'accueil de l'iPhone. ─────────────── */
+    /* `!important` : le premier bloc `html.is-mobile` impose
+       `padding: 12px !important`, il faut donc repasser au-dessus. */
+    html.is-mobile .content {
+      padding-bottom: calc(16px + var(--safe-bottom, 0px)) !important;
+      /* En paysage sur iPhone à encoche, le bord gauche (ou droit) de
+         l'écran est occupé par l'encoche : on réserve l'inset latéral
+         pour que le contenu ne passe pas dessous. Vaut 0px en portrait. */
+      padding-left: max(12px, var(--safe-left, 0px)) !important;
+      padding-right: max(12px, var(--safe-right, 0px)) !important;
+    }
+
+    /* Même réserve latérale en mode tablette / iPhone en paysage
+       (la classe `is-tablet` s'applique de 769 à 1024 px de large). */
+    html.is-tablet .content {
+      padding-left: max(16px, var(--safe-left, 0px));
+      padding-right: max(16px, var(--safe-right, 0px));
+    }
+
+    /* ── 8. Champs de saisie iOS : hauteur et style uniformes ────
+       Un `<select>` iOS ne respecte pas le padding : il était plus haut
+       que les `<input>` voisins (38 px contre 36 px), les champs d'une
+       même ligne n'étaient donc pas alignés. On impose une hauteur
+       commune, et on neutralise l'apparence native (les listes
+       déroulantes iOS ont un fond gris qui jurait avec le thème sombre).
+       On redessine un chevron discret à la place. */
+    html.is-mobile .form-input,
+    html.is-mobile .filter-select,
+    html.is-mobile .expense-tool-input {
+      min-height: 42px;
+      border-radius: 8px;
+    }
+
+    html.is-mobile select.form-input,
+    html.is-mobile select.filter-select,
+    html.is-mobile select.expense-tool-input {
+      appearance: none;
+      -webkit-appearance: none;
+      padding-right: 34px;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--text2) 50%),
+        linear-gradient(135deg, var(--text2) 50%, transparent 50%);
+      background-position:
+        calc(100% - 17px) calc(50% + 1px),
+        calc(100% - 12px) calc(50% + 1px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
+
+    html.is-mobile input[type="date"].form-input,
+    html.is-mobile input[type="month"].form-input,
+    html.is-mobile input[type="date"].expense-tool-input {
+      appearance: none;
+      -webkit-appearance: none;
+      min-height: 42px;
+    }
+
+    /* ── 9. Clavier virtuel : la fenêtre remonte au-dessus ───────
+       `--kb-offset` est mesuré en JS (visualViewport). Tant que le
+       clavier est fermé, la valeur est 0px : aucun effet. */
+    /* `!important` + spécificité : la règle `html.is-mobile
+       .modal-overlay:not(#authModal) { padding: 0 !important }` doit
+       pouvoir être surchargée sur le seul bord bas. */
+    html.is-mobile .modal-overlay:not(#authModal).show {
+      padding-bottom: var(--kb-offset, 0px) !important;
+    }
+
+    html.is-mobile .auth-modal.show {
+      padding-bottom: var(--kb-offset, 0px);
+    }
+
+    /* ── 10. Aperçu d'import CSV : boutons de ligne trop petits ───
+       Les boutons ✏️/🗑️ de chaque ligne de l'aperçu faisaient 22 × 22 px. */
+    html.is-mobile .import-preview .row-actions button {
+      width: 34px;
+      height: 34px;
+      font-size: 13px;
+    }
+
+    /* ── 11. Modale « insights » : liste défilante bornée ──────────
+       La liste interne avait une hauteur fixe de 60vh ; sur un iPhone
+       en paysage (ou avec le clavier ouvert) elle dépassait l'écran.
+       On la borne par rapport à la hauteur RÉELLE de l'écran. */
+    html.is-mobile .insights-modal-list {
+      max-height: 55vh;
+      max-height: min(55dvh, calc(100dvh - 260px));
+    }
+
+    /* ============================================================
+       ÉCRANS PEU HAUTS — iPhone EN PAYSAGE (375 à 430 px de haut)
+       ============================================================
+       En paysage, l'écran ne fait plus que ~390 px de haut. Les fenêtres
+       modales (centrées verticalement, hauteur 85vh) dépassaient alors
+       au-dessus ET au-dessous : les boutons « Annuler / Valider »
+       étaient hors écran et donc IMPOSSIBLES à atteindre (le centrage
+       flex rendait même le haut inaccessible au défilement).
+       Ici : la fenêtre s'aligne en haut, sa hauteur est bornée à
+       l'écran réel, et la barre d'actions reste collée en bas de
+       la fenêtre pendant le défilement.
+       ============================================================ */
+    @media (max-height: 500px) {
+      /* Auth-modal : le formulaire (≈ 600 px de haut) ne tient pas dans
+         390 px. Centré verticalement avec `align-items: center`, son haut
+         était inaccessible : on aligne en haut pour que le défilement
+         natif de `.auth-modal` (déjà en `overflow-y: auto`) fonctionne. */
+      .auth-modal {
+        align-items: flex-start !important;
+        padding: 10px !important;
+      }
+
+      .auth-shell {
+        border-radius: 18px !important;
+      }
+
+      .modal-overlay:not(#authModal) {
+        align-items: flex-start !important;
+        padding: 12px !important;
+        padding-bottom: calc(12px + var(--safe-bottom, 0px)) !important;
+      }
+
+      .modal-overlay:not(#authModal) .modal {
+        max-height: calc(100vh - 24px) !important;
+        max-height: calc(100dvh - 24px) !important;
+        border-radius: 12px !important;
+      }
+
+      /* Modales au padding standard (20px 16px sur mobile, 22px sinon) */
+      .modal-overlay:not(#authModal) .modal:not(.modal-delete-account) {
+        padding: 16px !important;
+      }
+
+      .modal-overlay:not(#authModal) .modal-actions {
+        position: sticky !important;
+        bottom: -16px !important;
+        margin: 12px -16px -16px !important;
+        padding: 10px 16px calc(10px + var(--safe-bottom, 0px)) !important;
+        background: var(--bg2);
+        border-top: 1px solid var(--border);
+      }
+
+      /* Modales « suppression de compte » / « réinitialisation » */
+      .modal-overlay:not(#authModal) .delete-account-actions {
+        position: sticky !important;
+        bottom: -22px !important;
+        margin: 12px -26px -22px !important;
+        padding: 10px 26px calc(10px + var(--safe-bottom, 0px)) !important;
+        background: var(--bg2);
+        border-top: 1px solid var(--border);
+      }
+
+      /* La fenêtre n'est plus ancrée en bas : pas de poignée, et le titre
+         n'a plus besoin de rester collé (la fenêtre est déjà courte). */
+      .modal-overlay:not(#authModal) .modal::before { display: none !important; }
+
+      .modal-overlay:not(#authModal) .modal-title {
+        position: static !important;
+        margin: 0 0 14px !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border-bottom: none !important;
+      }
     }
   </style>
 </head>
@@ -3878,7 +4404,7 @@
          `viewport-fit=cover` (déjà dans la balise meta viewport).
          Le bouton de connexion est ainsi toujours visible.
          ────────────────────────────────────────────────────────────── -->
-    <div id="authStatusBar" style="display:flex;align-items:center;gap:10px;padding:8px 12px;padding-top:max(8px, env(safe-area-inset-top))">
+    <div id="authStatusBar" style="display:flex;align-items:center;gap:10px;padding:8px 12px;padding-top:max(8px, var(--safe-top, 0px))">
       <button id="openAuth" class="auth-open-btn">Connexion / Inscription</button>
       <div id="userBar" style="display:none;align-items:center;gap:10px">
         <span id="userEmailLabel" style="color:var(--gold);font-size:12px;font-weight:600"></span>
@@ -4554,7 +5080,10 @@
               <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Exporter CSV</button>
             </div>
             <div class="table-wrap">
-              <table class="data-table">
+              <!-- `data-table-tx` : sur téléphone, les colonnes Compte et
+                   Catégorie sont masquées pour que Montant et Actions
+                   restent visibles sans défilement horizontal. -->
+              <table class="data-table data-table-tx">
                 <thead>
                   <tr>
                     <th>Date</th>
@@ -5828,6 +6357,63 @@
         const formatted = v.toLocaleString(cur.locale, { minimumFractionDigits: decimals, maximumFractionDigits: maxDec });
         return cur.after ? formatted + ' ' + cur.symbol : cur.symbol + formatted;
       }
+      // Abrège un libellé de mois long (« septembre 2025 ») en version
+      // courte (« sept. 25 »). Nécessaire pour l'axe X des graphiques :
+      // avec des libellés longs, Chart.js finit par ne plus pouvoir en
+      // afficher un seul sur un écran de téléphone → l'axe mois devenait
+      // totalement muet sur iPhone.
+      const MOIS_ABREGES = {
+        janvier: 'janv.', février: 'févr.', mars: 'mars', avril: 'avr.',
+        mai: 'mai', juin: 'juin', juillet: 'juil.', août: 'août',
+        septembre: 'sept.', octobre: 'oct.', novembre: 'nov.', décembre: 'déc.'
+      };
+
+      function shortMonthLabel(label) {
+        const s = String(label == null ? '' : label).trim();
+        if (!s) return '';
+        const m = s.match(/^([A-Za-zÀ-ÿ]+)\s+(\d{4})$/);
+        if (!m) return s;
+        const abr = MOIS_ABREGES[m[1].toLowerCase()];
+        return abr ? abr + ' ' + m[2].slice(2) : s;
+      }
+
+      // Configuration commune de l'axe X des graphiques « mois ».
+      // `maxTicksLimit` + `maxRotation: 0` garantissent des étiquettes
+      // lisibles et horizontales même sur un écran de 390 px : sans cela,
+      // Chart.js empile/chevauche les libellés (voire les masque tous).
+      function monthAxisTicks(fontSize, maxTicks) {
+        return {
+          color: '#606060',
+          font: { size: fontSize || 9 },
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: maxTicks || 6,
+          callback: function (value) {
+            // Sur un axe de type « catégorie », Chart.js passe l'INDEX du
+            // point au callback (pas le libellé) : on le reconvertit en
+            // libellé avant de l'abréger. Sans cela, l'axe affichait
+            // « 0, 2, 4, 6… » au lieu des mois.
+            const label = (this && typeof this.getLabelForValue === 'function')
+              ? this.getLabelForValue(value)
+              : value;
+            return shortMonthLabel(label);
+          }
+        };
+      }
+
+      // Formate une date ISO (« 2026-06-30 ») en français lisible
+      // (« 30 juin 2026 »). On découpe la chaîne nous-mêmes plutôt que
+      // d'utiliser new Date('2026-06-30') : l'interprétation UTC de ce
+      // format décale la date d'un jour dans certains fuseaux horaires.
+      function fmtDateFr(value) {
+        const s = String(value == null ? '' : value).trim();
+        const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!m) return '';
+        const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+      }
+
       function fmtDelta(n) {
         if (n == null || isNaN(n)) return '+0 ' + getCurrency().symbol;
         const v = parseFloat(n);
@@ -5928,14 +6514,23 @@
           if (g) g.style.display = 'none';
           if (inp) inp.value = '';
         }
-        document.getElementById('modal-' + id).classList.add('show');
+        const overlay = document.getElementById('modal-' + id);
+        if (!overlay) return;
+        overlay.classList.add('show');
+        // Réinitialise la position de défilement de la fenêtre.
+        // Sans cela, une fenêtre qu'on avait fait défiler s'ouvrait
+        // de nouveau déjà scrollée (le titre était hors écran).
+        const box = overlay.querySelector('.modal');
+        if (box) box.scrollTop = 0;
         // Sur mobile : bloque le scroll du body pendant l'ouverture
         if (isMobileView()) {
           document.body.style.overflow = 'hidden';
         }
       }
       function closeModal(id) {
-        document.getElementById('modal-' + id).classList.remove('show');
+        const overlay = document.getElementById('modal-' + id);
+        if (!overlay) return;
+        overlay.classList.remove('show');
         // Restaure le scroll du body si aucune sidebar mobile n'est ouverte
         if (isMobileView()) {
           const sb = document.getElementById('sidebar');
@@ -5947,6 +6542,30 @@
       document.querySelectorAll('.modal-overlay').forEach(o => {
         o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show') });
       });
+
+      // ================================================================
+      // CLAVIER VIRTUEL (iPhone / Android)
+      // ================================================================
+      // Quand on touche un champ de saisie, le clavier recouvre le bas de
+      // l'écran. Les fenêtres s'ouvrant par le bas, leurs boutons
+      // « Annuler / Valider » passaient dessous.
+      // `visualViewport` donne la hauteur réellement visible : on publie
+      // l'écart dans la variable CSS `--kb-offset`, que les règles CSS
+      // mobiles utilisent pour remonter la fenêtre au-dessus du clavier.
+      // (Sur les navigateurs sans `visualViewport`, la variable reste à
+      // 0px et rien ne change.)
+      function initKeyboardOffsetTracking() {
+        const vv = window.visualViewport;
+        if (!vv) return;
+        const apply = () => {
+          const gap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+          document.documentElement.style.setProperty('--kb-offset', Math.round(gap) + 'px');
+        };
+        vv.addEventListener('resize', apply);
+        vv.addEventListener('scroll', apply);
+        apply();
+      }
+      initKeyboardOffsetTracking();
 
       // Pile d'historique de navigation (utilisée pour le bouton retour
       // du navigateur). On stocke les pages visitées pour pouvoir y revenir.
@@ -7704,7 +8323,7 @@
           options: {
             responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
             plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#C8A84B', borderWidth: 1, callbacks: { label: c => ' ' + fmt(c.raw) } } },
-            scales: { x: { ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: yOpts, grid: { color: 'rgba(255,255,255,0.03)' }, beginAtZero: false, suggestedMin: yOpts.suggestedMin, suggestedMax: yOpts.suggestedMax } }
+            scales: { x: { ticks: monthAxisTicks(9), grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: yOpts, grid: { color: 'rgba(255,255,255,0.03)' }, beginAtZero: false, suggestedMin: yOpts.suggestedMin, suggestedMax: yOpts.suggestedMax } }
           }
         });
       }
@@ -8075,9 +8694,9 @@
       <div class="tx-icon" style="background:${t.type === 'income' ? 'rgba(76,175,80,0.12)' : 'rgba(244,67,54,0.12)'}">${t.type === 'income' ? '⬆️' : '⬇️'}</div>
       <div class="tx-info">
         <div class="tx-name">${escHtml(t.desc)}</div>
-        <div class="tx-date">${escHtml(t.date)} · ${escHtml(t.account)}</div>
+        <div class="tx-date">${escHtml(t.date)}${t.account ? ' · ' + escHtml(t.account) : ''}</div>
       </div>
-      <div class="tx-amount ${t.type}">${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}</div>
+      <div class="tx-amount ${t.type === 'income' ? 'income' : 'expense'}">${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}</div>
     </div>`).join('');
         }
 
@@ -8096,7 +8715,7 @@
     <tr>
       <td>${escHtml(t.date)}</td><td>${escHtml(t.account)}</td><td>${escHtml(t.desc)}</td>
       <td><span class="badge bo">${escHtml(t.cat)}</span></td>
-      <td class="tx-amount ${t.type}" style="font-size:11px">${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}</td>
+      <td class="tx-amount ${t.type === 'income' ? 'income' : 'expense'}" style="font-size:11px">${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}</td>
       <td><div class="action-btns">
         <button class="action-btn" onclick="editTransaction(${i})" title="Modifier">✏️</button>
         <button class="action-btn del" onclick="deleteTx(${i})" title="Supprimer">🗑️</button>
@@ -8514,7 +9133,7 @@
           options: {
             responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
             plugins: { legend: { labels: { color: '#B0B0B0', font: { size: 10 }, boxWidth: 12 } }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#C8A84B', borderWidth: 1, callbacks: { label: c => ' ' + c.dataset.label + ': ' + fmt(c.raw) } } },
-            scales: { x: { ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { beginAtZero: false, suggestedMin: yOpts.suggestedMin, suggestedMax: yOpts.suggestedMax, ticks: yOpts, grid: { color: 'rgba(255,255,255,0.03)' } } }
+            scales: { x: { ticks: monthAxisTicks(9), grid: { color: 'rgba(255,255,255,0.03)' } }, y: { beginAtZero: false, suggestedMin: yOpts.suggestedMin, suggestedMax: yOpts.suggestedMax, ticks: yOpts, grid: { color: 'rgba(255,255,255,0.03)' } } }
           }
         });
 
@@ -8524,7 +9143,7 @@
         charts['growthChart'] = new Chart(document.getElementById('growthChart'), {
           type: 'bar',
           data: { labels: h.map(x => x.m), datasets: [{ data: growthData, backgroundColor: growthData.map(v => v >= 0 ? 'rgba(76,175,80,0.65)' : 'rgba(244,67,54,0.65)'), borderRadius: 3 }] },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#2A2A2A', borderWidth: 1, callbacks: { label: c => ' ' + fmtDelta(c.raw) } } }, scales: { x: { ticks: { color: '#606060', font: { size: 8 } }, grid: { display: false } }, y: { beginAtZero: false, suggestedMin: yGrowth.suggestedMin, suggestedMax: yGrowth.suggestedMax, ticks: yGrowth, grid: { color: 'rgba(255,255,255,0.03)' } } } }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#2A2A2A', borderWidth: 1, callbacks: { label: c => ' ' + fmtDelta(c.raw) } } }, scales: { x: { ticks: monthAxisTicks(8), grid: { display: false } }, y: { beginAtZero: false, suggestedMin: yGrowth.suggestedMin, suggestedMax: yGrowth.suggestedMax, ticks: yGrowth, grid: { color: 'rgba(255,255,255,0.03)' } } } }
         });
 
         dc('stackChart');
@@ -8539,7 +9158,7 @@
               { label: 'Espèces', data: h.map(x => x.esp), backgroundColor: 'rgba(255,152,0,0.65)', stack: 's' },
             ]
           },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#B0B0B0', font: { size: 9 }, boxWidth: 10 } } }, scales: { x: { stacked: true, ticks: { color: '#606060', font: { size: 8 } }, grid: { display: false } }, y: { stacked: true, beginAtZero: false, suggestedMin: yStack.suggestedMin, suggestedMax: yStack.suggestedMax, ticks: yStack, grid: { color: 'rgba(255,255,255,0.03)' } } } }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#B0B0B0', font: { size: 9 }, boxWidth: 10 } } }, scales: { x: { stacked: true, ticks: monthAxisTicks(8), grid: { display: false } }, y: { stacked: true, beginAtZero: false, suggestedMin: yStack.suggestedMin, suggestedMax: yStack.suggestedMax, ticks: yStack, grid: { color: 'rgba(255,255,255,0.03)' } } } }
         });
 
         const total = getTotal();
@@ -8645,7 +9264,7 @@
         charts['distChart'] = new Chart(document.getElementById('distChart'), {
           type: 'bar',
           data: { labels: h.slice(1).map(x => x.m), datasets: [{ data: growthData.slice(1), backgroundColor: growthData.slice(1).map(v => v >= 0 ? 'rgba(200,168,75,0.7)' : 'rgba(244,67,54,0.7)'), borderRadius: 3 }] },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#2A2A2A', borderWidth: 1, callbacks: { label: c => ' ' + fmtDelta(c.raw) } } }, scales: { x: { ticks: { color: '#606060', font: { size: 8 } }, grid: { display: false } }, y: { ticks: { color: '#606060' }, grid: { color: 'rgba(255,255,255,0.03)' } } } }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1C1C1C', borderColor: '#2A2A2A', borderWidth: 1, callbacks: { label: c => ' ' + fmtDelta(c.raw) } } }, scales: { x: { ticks: monthAxisTicks(8), grid: { display: false } }, y: { ticks: { color: '#606060' }, grid: { color: 'rgba(255,255,255,0.03)' } } } }
         });
 
         dc('catChart');
@@ -10216,8 +10835,8 @@
       </div>
       <div class="obj-progress-bar"><div class="obj-progress-fill" style="width:${pct}%;background:${safeColor(o.color)}"></div></div>
       <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px">
-        <span>Reste: ${fmt(o.target - o.current)}</span>
-        <span>Échéance: ${o.date}</span>
+        <span>Reste : ${fmt(Math.max(0, o.target - o.current))}</span>
+        <span>Échéance : ${o.date ? (fmtDateFr(o.date) || escHtml(o.date)) : 'non définie'}</span>
       </div>
     </div>`;
         }).join('');
@@ -10486,7 +11105,7 @@
               }
             },
             scales: {
-              x: { ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+              x: { ticks: monthAxisTicks(9, 5), grid: { color: 'rgba(255,255,255,0.03)' } },
               y: { ticks: { color: '#606060', font: { size: 9 }, callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k€' : v + '€' }, grid: { color: 'rgba(255,255,255,0.03)' } }
             }
           }
@@ -11427,7 +12046,7 @@
         const currentVal = sel.value;
         sel.innerHTML = types
           .map(t => `<option value="${escHtml(t.value)}">${escHtml(t.label)}</option>`)
-          .join('') + `<option value="__custom__">＋ Type personnalisé...</option>`;
+          .join('') + `<option value="__custom__">+ Type personnalisé...</option>`;
         // Restaure la sélection si elle existe encore
         if (currentVal && types.some(t => t.value === currentVal)) {
           sel.value = currentVal;
@@ -11539,7 +12158,7 @@
         const currentVal = sel.value;
         sel.innerHTML = cats
           .map(c => `<option>${escHtml(c)}</option>`)
-          .join('') + `<option value="__custom__">＋ Catégorie personnalisée...</option>`;
+          .join('') + `<option value="__custom__">+ Catégorie personnalisée...</option>`;
         if (currentVal && cats.includes(currentVal)) sel.value = currentVal;
         else if (cats[0]) sel.value = cats[0];
       }
@@ -11642,6 +12261,12 @@
 
       init();
     </script>
+
+    <!-- Fermeture du conteneur principal `<div class="app">`.
+         Elle manquait : le navigateur la déduisait tout seul, mais un
+         balisage correct évite toute surprise (le jour où du contenu est
+         ajouté après ce bloc, il se retrouverait à l'intérieur de .app). -->
+  </div>
 
   </body>
 </html>
