@@ -6367,19 +6367,17 @@
       // avec des libellés longs, Chart.js finit par ne plus pouvoir en
       // afficher un seul sur un écran de téléphone → l'axe mois devenait
       // totalement muet sur iPhone.
-      const MOIS_ABREGES = {
-        janvier: 'janv.', février: 'févr.', mars: 'mars', avril: 'avr.',
-        mai: 'mai', juin: 'juin', juillet: 'juil.', août: 'août',
-        septembre: 'sept.', octobre: 'oct.', novembre: 'nov.', décembre: 'déc.'
-      };
+      // Libellés courts d'affichage des axes. L'année est écrite sur 4
+      // chiffres (« janv. 2026 ») : avec « Oct 26 », le « 26 » se lisait
+      // comme un jour du mois alors que c'est l'année.
+      const MOIS_AFFICHAGE = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
+                              'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 
       function shortMonthLabel(label) {
         const s = String(label == null ? '' : label).trim();
         if (!s) return '';
-        const m = s.match(/^([A-Za-zÀ-ÿ]+)\s+(\d{4})$/);
-        if (!m) return s;
-        const abr = MOIS_ABREGES[m[1].toLowerCase()];
-        return abr ? abr + ' ' + m[2].slice(2) : s;
+        const p = parseMoisLabel(s);
+        return p ? MOIS_AFFICHAGE[p.monthIdx] + ' ' + p.year : s;
       }
 
       // Configuration commune de l'axe X des graphiques « mois ».
@@ -9190,7 +9188,8 @@
       const MOIS_FR_COURT = ['jan', 'fev', 'mar', 'avr', 'mai', 'jun', 'jul', 'aou', 'sep', 'oct', 'nov', 'dec'];
       const MOIS_KEY_TO_IDX = {
         jan: 0, fev: 1, mar: 2, avr: 3, mai: 4, jun: 5,
-        jul: 6, aou: 7, sep: 8, oct: 9, nov: 10, dec: 11
+        jul: 6, aou: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+        feb: 1, apr: 3, may: 4, aug: 7
       };
       function moisLabelFromDate(d) {
         if (!(d instanceof Date) || isNaN(d.getTime())) d = new Date();
@@ -9199,19 +9198,43 @@
         // 1re lettre en majuscule, le reste en minuscule : "Jan 24"
         return m.charAt(0).toUpperCase() + m.slice(1) + ' ' + y;
       }
-      function moisLabelToDate(label) {
-        const m = (label || '').toLowerCase().match(/([a-zéû]+)\s*(\d{2,4})/i);
-        const fallback = localTodayStr();
-        if (!m) return fallback;
-        const key = m[1].slice(0, 3);
-        const monthIdx = MOIS_KEY_TO_IDX[key];
-        let year = parseInt(m[2]);
+      // Analyse un libellé de mois ("Jan 26", "Févr. 2026", "juillet 2025",
+      // "Août 25", "sept 2025"…) → { monthIdx: 0-11, year: 20xx } ou null.
+      // Insensible aux accents, à la casse et au point final. Les mois
+      // « juin » / « juillet » sont distingués (les 3 premières lettres
+      // « jui » sont communes aux deux).
+      function parseMoisLabel(label) {
+        const t = String(label == null ? '' : label)
+          .toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[.,']/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        const m = t.match(/^([a-z]+) ?(\d{2}|\d{4})$/);
+        if (!m) return null;
+        const w = m[1];
+        let idx;
+        if (w.startsWith('juil') || w === 'jul') idx = 6;
+        else if (w.startsWith('juin') || w === 'jun') idx = 5;
+        else idx = MOIS_KEY_TO_IDX[w.slice(0, 3)];
+        if (idx === undefined) return null;
+        let year = parseInt(m[2], 10);
         if (year < 100) year += 2000;
-        if (monthIdx === undefined || isNaN(year)) return fallback;
-        // 1er du mois, formaté en heure LOCALE (toISOString/UTC décalait
-        // d'un jour à Paris, ce qui corrompait month_date et l'unicité
-        // onConflict: user_id,month_date).
-        return year + '-' + String(monthIdx + 1).padStart(2, '0') + '-01';
+        if (year < 2000 || year > 2100) return null;
+        return { monthIdx: idx, year: year };
+      }
+
+      // Libellé → date du 1er du mois (YYYY-MM-01), ou null si le libellé
+      // n'est pas reconnu. IMPORTANT : on ne retombe PLUS sur la date du
+      // jour. Avant, « Fév », « Juin », « Juil », « Août », « Déc » (ou
+      // « février 2026 », etc.) étaient enregistrés à la date d'aujourd'hui :
+      // le mois se retrouvait au mauvais endroit des graphiques, et deux
+      // mois ainsi traités le même jour s'écrasaient l'un l'autre
+      // (unicité user_id + month_date).
+      function moisLabelToDate(label) {
+        const p = parseMoisLabel(label);
+        if (!p) return null;
+        return p.year + '-' + String(p.monthIdx + 1).padStart(2, '0') + '-01';
       }
 
       async function addHistorique() {
@@ -9223,6 +9246,7 @@
         const esp = parseFloat(document.getElementById('histEsp').value) || 0;
         if (!m || !total) { showToast('Mois et total requis', 'error'); return }
         const monthDate = moisLabelToDate(m);
+        if (!monthDate) { showToast('Mois non reconnu. Exemples : « Jan 26 », « Févr. 2026 », « juillet 2025 ».', 'error'); return }
 
         const { data, error } = await supabaseClient.from('net_worth_history').upsert({
           user_id: currentUserId, month_label: m, month_date: monthDate, total, livret, banque, especes: esp
@@ -10755,6 +10779,7 @@
         const banque = parseFloat(document.getElementById('editHistBanque').value) || 0;
         const esp = parseFloat(document.getElementById('editHistEsp').value) || 0;
         const monthDate = m !== row.m ? moisLabelToDate(m) : row.month_date;
+        if (!monthDate) { showToast('Mois non reconnu. Exemples : « Jan 26 », « Févr. 2026 », « juillet 2025 ».', 'error'); return }
 
         const { error } = await supabaseClient.from('net_worth_history')
           .update({ month_label: m, month_date: monthDate, total, livret, banque, especes: esp })
