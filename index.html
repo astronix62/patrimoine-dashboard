@@ -11919,77 +11919,55 @@
       // Action finale : supprime toutes les données utilisateur dans Supabase,
       // puis déconnecte. Si une fonction RPC "delete_user" existe côté
       // Supabase, elle est appelée pour supprimer aussi l'utilisateur Auth.
-      async function confirmDeleteAccount() {
+            async function confirmDeleteAccount() {
         if (!currentUserId) return;
         const btn = document.getElementById('deleteAccountConfirm');
         const btnCancel = document.getElementById('deleteAccountCancel');
         if (btn.disabled) return;
-        // Double-sécurité : on revérifie le contenu du champ
         const input = document.getElementById('deleteAccountConfirmInput');
         if (!input || input.value.trim() !== DELETE_CONFIRM_TEXT) {
           showToast('Saisie incorrecte.', 'error');
           return;
         }
-        // Désactive les boutons pour éviter le double-clic
         btn.disabled = true;
         btn.textContent = 'Suppression…';
         if (btnCancel) btnCancel.disabled = true;
 
         try {
-          // 1. Suppression des données utilisateur dans TOUTES les tables
-          //    (RLS garantit qu'on ne supprime QUE ses propres données,
-          //    et le .eq('user_id', currentUserId) renforce ce filtre).
+          const failures = [];
+          // user_id partout, sauf profiles (clé = id)
           const tables = [
-            'transactions',
-            'accounts',
-            'objectives',
-            'net_worth_history',
-            'settings',
-            'indicators',
-            'push_subscriptions',
-            'notification_prefs',
-            'profiles',
+            ['transactions','user_id'], ['accounts','user_id'], ['objectives','user_id'],
+            ['net_worth_history','user_id'], ['settings','user_id'], ['indicators','user_id'],
+            ['push_subscriptions','user_id'], ['notification_prefs','user_id'],
+            ['account_types','user_id'], ['transaction_categories','user_id'],
+            ['profiles','id'],
           ];
-          for (const t of tables) {
-            const { error } = await supabaseClient.from(t).delete().eq('user_id', currentUserId);
-            if (error) {
-              // Si RLS bloque (ex: l'utilisateur n'a pas le droit de DELETE
-              // sur cette table), on continue quand même. La fonction RPC
-              // "delete_user" ci-dessous fera le ménage en une seule fois.
-              console.warn(`Suppression partielle de la table ${t} :`, error.message);
-            }
+          for (const [t, col] of tables) {
+            const { error } = await supabaseClient.from(t).delete().eq(col, currentUserId);
+            if (error) { failures.push(t); console.warn('Suppression ' + t + ' :', error.message); }
           }
 
-          // 2. Tentative d'appel à une fonction RPC "delete_user" qui
-          //    supprimerait l'utilisateur Auth côté serveur. Si elle
-          //    n'existe pas, on se contente des étapes 1 + 3.
+          let authDeleted = false;
           try {
             const { error: rpcErr } = await supabaseClient.rpc('delete_user');
-            if (rpcErr) {
-              console.warn('RPC delete_user indisponible :', rpcErr.message);
-            }
-          } catch (e) {
-            // Silencieux : la fonction n'existe peut-être pas
-          }
+            if (rpcErr) console.warn('RPC delete_user indisponible :', rpcErr.message);
+            else authDeleted = true;
+          } catch (e) { /* RPC absente */ }
 
-          // 3. Déconnexion + reset local
           await supabaseClient.auth.signOut();
-          if (typeof window.onUserLoggedOut === 'function') {
-            window.onUserLoggedOut();
-          }
-          if (typeof window.refreshAuthUI === 'function') {
-            await window.refreshAuthUI();
-          }
+          if (typeof window.onUserLoggedOut === 'function') window.onUserLoggedOut();
+          if (typeof window.refreshAuthUI === 'function') await window.refreshAuthUI();
 
-          // 4. Fermeture de la modal + toast de confirmation
           closeDeleteAccountModal();
-          showToast('Votre compte et toutes vos données ont été supprimés.', 'success');
-
-          // Réinitialise le bouton pour la prochaine ouverture
+          if (failures.length === 0 && authDeleted) {
+            showToast('Votre compte et toutes vos données ont été supprimés.', 'success');
+          } else {
+            showToast('Suppression incomplète' + (failures.length ? ' (' + failures.join(', ') + ')' : '') + (authDeleted ? '' : ' : compte de connexion non supprimé') + '. Contactez l\'administrateur.', 'error');
+          }
           if (btn) { btn.textContent = 'Supprimer définitivement'; btn.disabled = true; }
           if (btnCancel) btnCancel.disabled = false;
         } catch (err) {
-          // En cas d'erreur réseau, on restaure l'état des boutons
           if (btn) { btn.textContent = 'Supprimer définitivement'; btn.disabled = false; }
           if (btnCancel) btnCancel.disabled = false;
           showToast('Erreur lors de la suppression : ' + (err.message || err), 'error');
