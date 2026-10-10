@@ -4569,7 +4569,6 @@
             <div class="kpi-card" style="border-top:2px solid var(--gold)">
               <div class="kpi-card-header">
                 <div class="kpi-icon">💎</div>
-                <button class="edit-btn" onclick="openModal('editTotal')" title="Modifier">✏️ Modifier</button>
               </div>
               <div class="kpi-label">PATRIMOINE TOTAL</div>
               <div class="kpi-value" id="kpi-total">—</div>
@@ -5257,18 +5256,6 @@
     </div>
 
     <!-- ======= MODALS ======= -->
-    <!-- Edit KPI Total -->
-    <div class="modal-overlay" id="modal-editTotal">
-      <div class="modal">
-        <div class="modal-title">✏️ Modifier la variation mensuelle</div>
-        <div class="form-group"><label class="form-label">Variation vs mois dernier (€)</label><input type="number"
-            class="form-input" id="editDeltaVal" value="485"></div>
-        <div class="modal-actions">
-          <button class="btn btn-ghost" onclick="closeModal('editTotal')">Annuler</button>
-          <button class="btn btn-gold" onclick="saveEditDelta()">Sauvegarder</button>
-        </div>
-      </div>
-    </div>
 
     <!-- Edit Banque -->
     <div class="modal-overlay" id="modal-editBanque">
@@ -5734,7 +5721,22 @@
       <div class="modal modal-demo-notice">
         <div class="demo-notice-icon">🎭</div>
         <h2 class="demo-notice-title">Mode Démonstration</h2>
-
+        <p class="demo-notice-text">
+          Bienvenue dans le <strong style="color:var(--gold)">mode démo</strong> !
+          Une session <strong>temporaire et privée</strong> vient d'être créée pour vous :
+          vous pouvez tester toutes les fonctionnalités.
+        </p>
+        <div class="demo-notice-warning">
+          <div class="demo-notice-warning-icon">⚠️</div>
+          <div>
+            <strong>Données temporaires</strong><br>
+            Tout ce que vous saisissez est <strong>supprimé à la déconnexion</strong>
+            (et au plus tard après 24 h). N'y saisissez pas vos vraies données personnelles ou bancaires.
+          </div>
+        </div>
+        <p class="demo-notice-subtext">
+          Pour utiliser l'application avec vos propres données, déconnectez-vous et créez votre compte depuis le formulaire d'inscription.
+        </p>
         <p class="demo-notice-text">
           Bienvenue dans le <strong style="color:var(--gold)">mode démo</strong> !
           Ce mode vous permet de découvrir l'application et toutes ses fonctionnalités
@@ -6103,9 +6105,8 @@
 
         const logoutBtn = document.getElementById("logoutBtn");
         if (logoutBtn) {
-          logoutBtn.addEventListener("click", async function () {
-            await supabaseClient.auth.signOut();
-            await refreshAuthUI();
+                    logoutBtn.addEventListener("click", async function () {
+            await window.logoutCurrentUser();
           });
         }
 
@@ -6128,9 +6129,10 @@
           if (session) {
             openBtnEl.style.display = "none";
             userBar.style.display = "flex";
-            userEmailLabel.textContent = session.user.email;
-            if (window.onUserLoggedIn) await window.onUserLoggedIn(session.user);
-          } else {
+            userEmailLabel.textContent = session.user.email || 'Visiteur (démo)';
+          if (user && user.is_anonymous) {
+          showDemoNotice();
+        } else {
             openBtnEl.style.display = "inline-block";
             userBar.style.display = "none";
             userEmailLabel.textContent = "";
@@ -6277,7 +6279,24 @@
           showDemoNotice();
         }
       };
-
+      
+      // Un visiteur démo (session anonyme) n'a aucun identifiant pour revenir :
+      // on supprime son utilisateur et ses données AVANT de fermer la session.
+      window.logoutCurrentUser = async function () {
+        let isAnon = false;
+        try {
+          const { data } = await supabaseClient.auth.getSession();
+          const user = data && data.session && data.session.user;
+          if (user && user.is_anonymous) {
+            isAnon = true;
+            const { error } = await supabaseClient.rpc('delete_user');
+            if (error) console.warn('Purge démo échouée (le nettoyage planifié prendra le relais) :', error.message);
+          }
+        } catch (e) { console.warn('Déconnexion :', e.message); }
+        await supabaseClient.auth.signOut(isAnon ? { scope: 'local' } : undefined);
+        if (typeof window.refreshAuthUI === 'function') await window.refreshAuthUI();
+      };
+      
       window.onUserLoggedOut = function () {
         currentUserId = null;
         D.accounts = [];
@@ -8617,18 +8636,6 @@
         acc.balance = balance;
         renderOverview();
         showToast('Solde mis à jour ✓');
-      }
-
-      async function saveEditDelta() {
-        if (!requireLogin()) return;
-        const delta = parseFloat(document.getElementById('editDeltaVal').value) || 0;
-
-        const { error } = await supabaseClient.from('settings').update({ delta }).eq('user_id', currentUserId);
-
-        if (error) { showToast('Erreur : ' + error.message, 'error'); return }
-
-        D.settings.delta = delta;
-        closeModal('editTotal'); renderOverview(); showToast('Variation mise à jour ✓');
       }
 
       async function saveEditGoal() {
@@ -11363,7 +11370,7 @@
         }
       }
 
-      async function confirmResetData() {
+            async function confirmResetData() {
         if (!requireLogin()) return;
         const btn = document.getElementById('resetDataConfirm');
         const input = document.getElementById('resetDataConfirmInput');
@@ -11377,20 +11384,25 @@
         if (btnCancel) btnCancel.disabled = true;
 
         try {
-          const tables = [
-            'transactions', 'accounts', 'objectives',
-            'net_worth_history', 'settings', 'indicators'
-          ];
-          for (const t of tables) {
+          // Transactions d'abord (elles référencent les comptes)
+          for (const t of ['transactions', 'accounts', 'objectives', 'net_worth_history']) {
             const { error } = await supabaseClient.from(t).delete().eq('user_id', currentUserId);
-            if (error) console.warn('Réinitialisation — table ' + t + ' :', error.message);
+            if (error) throw new Error(t + ' : ' + error.message);
           }
-          // Reset local (mêmes valeurs que l'état initial)
+          // settings / indicators : lignes uniques (créées à l'inscription) → remise à zéro, pas de suppression
+          const { error: setErr } = await supabaseClient.from('settings')
+            .update({ revenu: 2200, goal: 20000, budget: 1800 }).eq('user_id', currentUserId);
+          if (setErr) throw new Error('settings : ' + setErr.message);
+          const { error: indErr } = await supabaseClient.from('indicators')
+            .update({ best_val: null, best_date: null, worst_val: null, worst_date: null, avg_epargne: null })
+            .eq('user_id', currentUserId);
+          if (indErr) throw new Error('indicators : ' + indErr.message);
+
           D.accounts = [];
           D.transactions = [];
           D.objectives = [];
           D.history = [];
-          D.settings = { revenu: 2200, goal: 20000, delta: 0, budget: 1800 };
+          D.settings = { revenu: 2200, goal: 20000, delta: 0, budget: 1800, currency: D.settings.currency, dateFormat: D.settings.dateFormat };
           D.indicators = { bestVal: 0, bestDate: '-', worstVal: 0, worstDate: '-', avgEpargne: 0 };
           closeResetDataModal();
           renderAll();
@@ -11401,6 +11413,7 @@
           if (btn) { btn.textContent = 'Réinitialiser'; btn.disabled = false; }
           if (btnCancel) btnCancel.disabled = false;
           showToast('Erreur lors de la réinitialisation : ' + (err.message || err), 'error');
+          await loadAllData(); // resynchronise l'affichage avec la base (réinitialisation éventuellement partielle)
         }
       }
 
@@ -11771,8 +11784,13 @@
         const btnLogout = document.getElementById('demoNoticeLogout');
         if (btnLogout && !btnLogout.dataset.bound) {
           btnLogout.dataset.bound = '1';
-          btnLogout.addEventListener('click', async function () {
+                    btnLogout.addEventListener('click', async function () {
             closeDemoNotice();
+            await window.logoutCurrentUser();
+            const authModal = document.getElementById('authModal');
+            if (authModal) authModal.classList.add('show');
+            showToast('Session de démonstration fermée', 'success');
+          });
             // Utilise la même fonction que le bouton logout du header
             if (typeof supabaseClient !== 'undefined') {
               try { await supabaseClient.auth.signOut(); } catch (e) { /* noop */ }
@@ -11928,7 +11946,7 @@
       // Action finale : supprime toutes les données utilisateur dans Supabase,
       // puis déconnecte. Si une fonction RPC "delete_user" existe côté
       // Supabase, elle est appelée pour supprimer aussi l'utilisateur Auth.
-            async function confirmDeleteAccount() {
+                  async function confirmDeleteAccount() {
         if (!currentUserId) return;
         const btn = document.getElementById('deleteAccountConfirm');
         const btnCancel = document.getElementById('deleteAccountCancel');
@@ -11943,37 +11961,15 @@
         if (btnCancel) btnCancel.disabled = true;
 
         try {
-          const failures = [];
-          // user_id partout, sauf profiles (clé = id)
-          const tables = [
-            ['transactions','user_id'], ['accounts','user_id'], ['objectives','user_id'],
-            ['net_worth_history','user_id'], ['settings','user_id'], ['indicators','user_id'],
-            ['push_subscriptions','user_id'], ['notification_prefs','user_id'],
-            ['account_types','user_id'], ['transaction_categories','user_id'],
-            ['profiles','id'],
-          ];
-          for (const [t, col] of tables) {
-            const { error } = await supabaseClient.from(t).delete().eq(col, currentUserId);
-            if (error) { failures.push(t); console.warn('Suppression ' + t + ' :', error.message); }
-          }
-
-          let authDeleted = false;
-          try {
-            const { error: rpcErr } = await supabaseClient.rpc('delete_user');
-            if (rpcErr) console.warn('RPC delete_user indisponible :', rpcErr.message);
-            else authDeleted = true;
-          } catch (e) { /* RPC absente */ }
-
-          await supabaseClient.auth.signOut();
+          // Une seule opération côté serveur : supprime l'utilisateur Auth,
+          // et ON DELETE CASCADE purge toutes les tables liées.
+          const { error } = await supabaseClient.rpc('delete_user');
+          if (error) throw error;
+          await supabaseClient.auth.signOut({ scope: 'local' });
           if (typeof window.onUserLoggedOut === 'function') window.onUserLoggedOut();
           if (typeof window.refreshAuthUI === 'function') await window.refreshAuthUI();
-
           closeDeleteAccountModal();
-          if (failures.length === 0 && authDeleted) {
-            showToast('Votre compte et toutes vos données ont été supprimés.', 'success');
-          } else {
-            showToast('Suppression incomplète' + (failures.length ? ' (' + failures.join(', ') + ')' : '') + (authDeleted ? '' : ' : compte de connexion non supprimé') + '. Contactez l\'administrateur.', 'error');
-          }
+          showToast('Votre compte et toutes vos données ont été supprimés.', 'success');
           if (btn) { btn.textContent = 'Supprimer définitivement'; btn.disabled = true; }
           if (btnCancel) btnCancel.disabled = false;
         } catch (err) {
