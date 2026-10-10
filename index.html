@@ -6065,12 +6065,21 @@
           });
         }
 
-        const demoBtn = document.getElementById("demoAccess");
+                const demoBtn = document.getElementById("demoAccess");
         if (demoBtn) {
-          demoBtn.addEventListener("click", function () {
-            document.getElementById("loginEmail").value = "demo@patrimoine.fr";
-            document.getElementById("loginPassword").value = "demo123";
-            setMessage(loginMsg, "Identifiants de démonstration préremplis (ce compte doit exister dans Supabase).", "success");
+          demoBtn.addEventListener("click", async function () {
+            if (demoBtn.disabled) return;
+            demoBtn.disabled = true;
+            setMessage(loginMsg, "Création de votre session de démonstration…", "");
+            const { error } = await supabaseClient.auth.signInAnonymously();
+            demoBtn.disabled = false;
+            if (error) {
+              setMessage(loginMsg, "Mode démo indisponible : " + traduireErreurAuth(error), "error");
+              return;
+            }
+            setMessage(loginMsg, "Session de démonstration ouverte.", "success");
+            await refreshAuthUI();
+            setTimeout(closeModal, 400);
           });
         }
 
