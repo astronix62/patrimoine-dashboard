@@ -5737,28 +5737,6 @@
         <p class="demo-notice-subtext">
           Pour utiliser l'application avec vos propres données, déconnectez-vous et créez votre compte depuis le formulaire d'inscription.
         </p>
-        <p class="demo-notice-text">
-          Bienvenue dans le <strong style="color:var(--gold)">mode démo</strong> !
-          Ce mode vous permet de découvrir l'application et toutes ses fonctionnalités
-          sans avoir à créer votre propre compte.
-        </p>
-
-        <div class="demo-notice-warning">
-          <div class="demo-notice-warning-icon">⚠️</div>
-          <div>
-            <strong>Avertissement important</strong><br>
-            Ce compte démo est <strong>accessible par tout le monde</strong>.
-            <strong>N'y saisissez jamais</strong> vos vraies données personnelles,
-            bancaires ou patrimoniales : tout ce que vous y ajoutez pourra être vu
-            et modifié par n'importe quel autre utilisateur.
-          </div>
-        </div>
-
-        <p class="demo-notice-subtext">
-          Pour utiliser l'application avec vos <strong>propres données</strong>,
-          déconnectez-vous et créez votre compte personnel depuis le formulaire
-          d'inscription.
-        </p>
 
         <div class="demo-notice-actions">
           <button class="btn btn-ghost" id="demoNoticeOk">Je sais</button>
@@ -6130,9 +6108,8 @@
             openBtnEl.style.display = "none";
             userBar.style.display = "flex";
             userEmailLabel.textContent = session.user.email || 'Visiteur (démo)';
-          if (user && user.is_anonymous) {
-          showDemoNotice();
-        } else {
+            if (window.onUserLoggedIn) await window.onUserLoggedIn(session.user);
+          } else {
             openBtnEl.style.display = "inline-block";
             userBar.style.display = "none";
             userEmailLabel.textContent = "";
@@ -6275,7 +6252,7 @@
         // s'est connecté avec le compte de démonstration. Cette modal
         // s'affiche à CHAQUE connexion (pas de flag "déjà vu") pour
         // rappeler systématiquement les règles de sécurité.
-        if (user && user.email && user.email.toLowerCase() === 'demo@patrimoine.fr') {
+        if (user && user.is_anonymous) {
           showDemoNotice();
         }
       };
@@ -11790,20 +11767,6 @@
             const authModal = document.getElementById('authModal');
             if (authModal) authModal.classList.add('show');
             showToast('Session de démonstration fermée', 'success');
-          });
-            // Utilise la même fonction que le bouton logout du header
-            if (typeof supabaseClient !== 'undefined') {
-              try { await supabaseClient.auth.signOut(); } catch (e) { /* noop */ }
-            }
-            // refreshAuthUI est exposé sur window par le bloc DOMContentLoaded
-            if (typeof window.refreshAuthUI === 'function') {
-              await window.refreshAuthUI();
-            }
-            // Ouvre l'auth-modal pour que l'utilisateur puisse se reconnecter
-            // ou créer son propre compte immédiatement.
-            const authModal = document.getElementById('authModal');
-            if (authModal) authModal.classList.add('show');
-            showToast('Déconnecté du mode démo', 'success');
           });
         }
       }
