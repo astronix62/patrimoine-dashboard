@@ -79,6 +79,22 @@
         document.documentElement.classList.add('is-mobile');
       }
       if (isMobileUA) document.documentElement.classList.add('is-touch');
+
+      // ── iPhone : classes utilisées par l'interface « iPhone v2 » ──────────
+      // `is-iphone`   : iPhone / iPod (Safari, Opera, Chrome iOS : même moteur).
+      //                 Un iPad (même en « site pour ordinateur ») n'est PAS concerné.
+      // `is-standalone`: lancé depuis l'icône de l'écran d'accueil (sans barre d'adresse).
+      // `iphone-v2`   : nouvelle interface, activée par l'interrupteur des Paramètres
+      //                 (choix mémorisé sur CET appareil ; « classique » par défaut).
+      var rootEl = document.documentElement;
+      var isIphone = /iPhone|iPod/i.test(ua);
+      if (isIphone) rootEl.classList.add('is-iphone');
+      var isStandalone = (window.navigator && window.navigator.standalone === true) ||
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+      if (isStandalone) rootEl.classList.add('is-standalone');
+      try {
+        if (isIphone && localStorage.getItem('patrimoine_iphone_ui') === 'v2') rootEl.classList.add('iphone-v2');
+      } catch (e) { /* stockage indisponible : mode classique */ }
     })();
   </script>
 
@@ -4410,6 +4426,169 @@
         border-bottom: none !important;
       }
     }
+
+    /* =====================================================================
+       INTERFACE iPHONE v2 — ÉTAPE 0 : FONDATIONS
+       ---------------------------------------------------------------------
+       Actif UNIQUEMENT si <html> porte `is-iphone` ET `iphone-v2`
+       (interrupteur « Affichage iPhone » dans Paramètres). Aucune règle
+       ci-dessous ne s'applique à l'ordinateur, à la tablette, au mobile
+       Android ni au mode « classique » : l'ancien affichage est intact.
+       Les règles mobiles historiques utilisent beaucoup de `!important` :
+       on les surpasse par une spécificité plus haute (3 classes sur <html>)
+       et ce bloc est placé en FIN de feuille.
+       ===================================================================== */
+    #iphoneUiSection { display: none }
+    html.is-iphone #iphoneUiSection { display: block }
+
+    /* ── 1. Typographie système iOS + chiffres tabulaires ───────────────── */
+    html.iphone-v2.is-iphone body,
+    html.iphone-v2.is-iphone button,
+    html.iphone-v2.is-iphone input,
+    html.iphone-v2.is-iphone select,
+    html.iphone-v2.is-iphone textarea {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+    }
+    html.iphone-v2.is-iphone body { font-size: 15px; line-height: 1.35 }
+    html.iphone-v2.is-iphone .kpi-value,
+    html.iphone-v2.is-iphone .tx-amount,
+    html.iphone-v2.is-iphone .bar-val,
+    html.iphone-v2.is-iphone .ind-value,
+    html.iphone-v2.is-iphone .s-val,
+    html.iphone-v2.is-iphone .r-val,
+    html.iphone-v2.is-iphone .donut-total,
+    html.iphone-v2.is-iphone .ring-pct,
+    html.iphone-v2.is-iphone .apercu-val,
+    html.iphone-v2.is-iphone .data-table td,
+    html.iphone-v2.is-iphone .hw-num { font-variant-numeric: tabular-nums }
+
+    /* Échelle minimale : plus aucun texte courant sous 11 pt (cf. HIG Apple). */
+    html.iphone-v2.is-iphone .panel-title { font-size: 12px !important; letter-spacing: 0.8px }
+    html.iphone-v2.is-iphone .kpi-label { font-size: 11px }
+    html.iphone-v2.is-iphone .kpi-sub { font-size: 12px }
+    html.iphone-v2.is-iphone .kpi-delta { font-size: 13px }
+    html.iphone-v2.is-iphone .kpi-value { font-size: 20px !important }
+    html.iphone-v2.is-iphone .ind-label { font-size: 11px }
+    html.iphone-v2.is-iphone .ind-sub { font-size: 11px }
+    html.iphone-v2.is-iphone .ind-value { font-size: 16px !important }
+    html.iphone-v2.is-iphone .bar-name { font-size: 12px !important; width: 92px !important }
+    html.iphone-v2.is-iphone .bar-val { font-size: 12px !important }
+    html.iphone-v2.is-iphone .legend-item { font-size: 13px }
+    html.iphone-v2.is-iphone .donut-lbl,
+    html.iphone-v2.is-iphone .r-label { font-size: 11px }
+    html.iphone-v2.is-iphone .r-val { font-size: 14px }
+    html.iphone-v2.is-iphone .page-title { font-size: 22px !important }
+    html.iphone-v2.is-iphone .page-sub { font-size: 12px !important }
+    html.iphone-v2.is-iphone .data-table { font-size: 12px !important }
+    html.iphone-v2.is-iphone .data-table th { font-size: 11px }
+    html.iphone-v2.is-iphone .tx-name { font-size: 14px }
+    html.iphone-v2.is-iphone .tx-date { font-size: 12px }
+    html.iphone-v2.is-iphone .tx-amount { font-size: 15px }
+    html.iphone-v2.is-iphone .s-key { font-size: 15px }
+    html.iphone-v2.is-iphone .s-desc { font-size: 12px }
+    html.iphone-v2.is-iphone .settings-title { font-size: 12px }
+    html.iphone-v2.is-iphone .form-label { font-size: 13px }
+    html.iphone-v2.is-iphone .badge { font-size: 11px; padding: 3px 8px }
+    html.iphone-v2.is-iphone .hw-title,
+    html.iphone-v2.is-iphone .score-title,
+    html.iphone-v2.is-iphone .sidebar-label { font-size: 11px !important }
+    html.iphone-v2.is-iphone .hw-details { font-size: 12px }
+    html.iphone-v2.is-iphone .budget-row,
+    html.iphone-v2.is-iphone .apercu-left { font-size: 13px }
+    html.iphone-v2.is-iphone .apercu-val { font-size: 14px }
+    html.iphone-v2.is-iphone .quote-box p { font-size: 12px }
+    html.iphone-v2.is-iphone .quote-box .author { font-size: 11px }
+    html.iphone-v2.is-iphone .s-lbl { font-size: 12px }
+    html.iphone-v2.is-iphone .slider-label,
+    html.iphone-v2.is-iphone .proj-legend-item { font-size: 12px }
+    html.iphone-v2.is-iphone .insight-text { font-size: 13px }
+    html.iphone-v2.is-iphone .insight-text .insight-detail { font-size: 12px }
+    html.iphone-v2.is-iphone .empty-state-title { font-size: 15px }
+    html.iphone-v2.is-iphone .empty-state-desc { font-size: 13px }
+    html.iphone-v2.is-iphone .toast { font-size: 14px }
+    html.iphone-v2.is-iphone .modal-title { font-size: 17px }
+    html.iphone-v2.is-iphone .logo-text p { display: none }
+
+    /* ── 2. Zones tactiles confortables ────────────────────────────────── */
+    html.iphone-v2.is-iphone .btn { font-size: 14px; min-height: 44px }
+    html.iphone-v2.is-iphone .btn-sm { font-size: 13px; min-height: 40px; padding: 8px 14px }
+    html.iphone-v2.is-iphone .panel-action { font-size: 12px; min-height: 36px; padding: 6px 12px }
+    html.iphone-v2.is-iphone .edit-btn,
+    html.iphone-v2.is-iphone .edit-btn-panel { font-size: 12px; min-height: 36px; padding: 6px 10px }
+    html.iphone-v2.is-iphone .action-btn { width: 40px; height: 40px }
+
+    /* ── 3. Encoche : UNE seule réserve de zone sûre ───────────────────────
+       Avant : la barre « Connexion » réservait l'encoche, PUIS l'en-tête la
+       réservait une seconde fois (≈ 47 pt de bande vide au-dessus du logo).
+       Maintenant : le <body> réserve la zone une fois ; un masque plein
+       (html::before) cache le contenu qui défile sous l'heure / la batterie ;
+       l'en-tête collant se cale juste sous ce masque. */
+    html.iphone-v2.is-iphone body { padding-top: var(--safe-top, 0px) }
+    html.iphone-v2.is-iphone::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--safe-top, 0px);
+      background: var(--bg);
+      z-index: 260;
+      pointer-events: none;
+    }
+    html.iphone-v2.is-iphone #authStatusBar {
+      padding: 8px max(12px, var(--safe-right, 0px)) 8px max(12px, var(--safe-left, 0px)) !important;
+    }
+    html.iphone-v2.is-iphone .header {
+      padding: 0 max(12px, var(--safe-right, 0px)) 0 max(12px, var(--safe-left, 0px)) !important;
+      height: 52px !important;
+      top: var(--safe-top, 0px) !important;
+    }
+
+    /* ── 4. Pas de flou d'arrière-plan (suspect du halo vu sur iPhone) ─────
+       Coûteux pour le GPU et mal rendu par WebKit en mode application. */
+    html.iphone-v2.is-iphone *,
+    html.iphone-v2.is-iphone *::before,
+    html.iphone-v2.is-iphone *::after {
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+
+    /* ── 4b. En-tête réellement collant ────────────────────────────────────
+       `overflow-x: hidden` posé à la fois sur <html> et <body> fait de <body>
+       un conteneur de défilement : `position: sticky` ne colle alors plus
+       (l'en-tête partait avec la page). `clip` coupe le débordement
+       horizontal SANS créer de conteneur de défilement (iOS 16+). Sur un
+       navigateur qui ne le connaît pas, la règle est ignorée : rien ne casse. */
+    html.iphone-v2.is-iphone,
+    html.iphone-v2.is-iphone body {
+      overflow-x: clip !important;
+      overflow-y: visible !important;
+    }
+
+    /* ── 4c. Textes en ligne (style="font-size:10px") sous le seuil lisible ── */
+    html.iphone-v2.is-iphone [style*="font-size:10px"],
+    html.iphone-v2.is-iphone [style*="font-size: 10px"] { font-size: 12px !important }
+    html.iphone-v2.is-iphone [style*="font-size:9px"],
+    html.iphone-v2.is-iphone [style*="font-size: 9px"] { font-size: 11px !important }
+    html.iphone-v2.is-iphone .logo-icon { font-size: 11px !important }
+    html.iphone-v2.is-iphone .insights-count-badge { font-size: 11px }
+    html.iphone-v2.is-iphone .expense-tool-label { font-size: 12px }
+    html.iphone-v2.is-iphone .expense-tool-hint,
+    html.iphone-v2.is-iphone .expense-tool-disclaimer { font-size: 12px }
+
+    /* ── 5. Comportement « application » ───────────────────────────────── */
+    html.iphone-v2.is-iphone,
+    html.iphone-v2.is-iphone body { overscroll-behavior-y: none }
+    html.iphone-v2.is-iphone * { -webkit-tap-highlight-color: transparent }
+    html.iphone-v2.is-iphone button,
+    html.iphone-v2.is-iphone .sidebar-item,
+    html.iphone-v2.is-iphone .panel-title,
+    html.iphone-v2.is-iphone .kpi-label {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+    /* Pas d'animation d'apparition rejouée à chaque rendu (saccades). */
+    html.iphone-v2.is-iphone .kpi-card,
+    html.iphone-v2.is-iphone .panel { animation: none !important }
   </style>
 </head>
 
@@ -5270,6 +5449,20 @@
                 <option value="EUR">Euro (€)</option>
                 <option value="USD">Dollar ($)</option>
                 <option value="JPY">Yen (¥)</option>
+              </select>
+            </div>
+          </div>
+          <!-- Visible uniquement sur iPhone (classe is-iphone, voir CSS) -->
+          <div class="settings-section" id="iphoneUiSection">
+            <div class="settings-title">📱 Affichage iPhone</div>
+            <div class="settings-row">
+              <div>
+                <div class="s-key">Interface iPhone</div>
+                <div class="s-desc">« Nouveau » : interface optimisée iPhone, livrée par étapes. « Classique » : affichage mobile actuel. La page se recharge au changement ; réglage propre à cet appareil.</div>
+              </div>
+              <select class="filter-select" style="width:auto" id="iphoneUiMode" onchange="changeIphoneUiMode(this.value)">
+                <option value="classic">Classique</option>
+                <option value="v2">Nouveau (en développement)</option>
               </select>
             </div>
           </div>
@@ -6324,6 +6517,13 @@
         return true;
       }
 
+
+      // Interface iPhone v2 : pas d'animation de tracé à chaque rafraîchissement
+      // (les graphiques sont recréés à chaque rendu : l'animation répétée
+      // saccade sur iPhone et n'apporte rien).
+      if (window.Chart && document.documentElement.classList.contains('iphone-v2')) {
+        Chart.defaults.animation = false;
+      }
 
       let charts = {};
 
@@ -11275,7 +11475,22 @@
         showToast('Paramètres sauvegardés ✓');
       }
 
+      // ── Interrupteur « Interface iPhone » (classique / nouveau) ──────────
+      function getIphoneUiMode() {
+        try { return localStorage.getItem('patrimoine_iphone_ui') === 'v2' ? 'v2' : 'classic'; }
+        catch (e) { return 'classic'; }
+      }
+      function changeIphoneUiMode(mode) {
+        const value = (mode === 'v2') ? 'v2' : 'classic';
+        try { localStorage.setItem('patrimoine_iphone_ui', value); }
+        catch (e) { showToast("Impossible d'enregistrer le choix sur cet appareil", 'error'); return; }
+        showToast(value === 'v2' ? 'Interface iPhone : nouveau — rechargement…' : 'Interface iPhone : classique — rechargement…');
+        setTimeout(function () { location.reload(); }, 700);
+      }
+
       function renderParametres() {
+        const uiSel = document.getElementById('iphoneUiMode');
+        if (uiSel) uiSel.value = getIphoneUiMode();
         // ── Paramètres ─────────────────────────────────────────────
         const r = document.getElementById('settingRevenu');
         const g = document.getElementById('settingGoal');
