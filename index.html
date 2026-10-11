@@ -476,6 +476,25 @@
       overflow: hidden
     }
 
+    /* Colonne flex : la navigation reste en haut, `.sidebar-bottom` (Santé
+       financière + Citation) est poussé en bas par `margin-top: auto`.
+       `flex-shrink: 0` : un enfant ne se compresse jamais (sinon son contenu
+       déborderait et chevaucherait le voisin) ; si le total dépasse la
+       hauteur de l'écran, c'est la barre latérale qui défile. */
+    .sidebar {
+      display: flex;
+      flex-direction: column
+    }
+
+    .sidebar > * {
+      flex-shrink: 0
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding-top: 8px
+    }
+
     .sidebar-section {
       padding: 0 10px;
       margin-bottom: 16px
@@ -1399,6 +1418,11 @@
       padding: 9px 20px;
       font-size: 13px;
     }
+
+    /* Menus « Modifier » des widgets (Argent bancaire / Livret A / Espèces) */
+    .widget-acc-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 10px }
+    .widget-acc-main { flex: 1; min-width: 0 }
+    .widget-attach { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border) }
 
     /* ============================================
        FIX ZOOM AUTO MOBILE SUR LES INPUTS
@@ -4541,6 +4565,11 @@
             <span class="sidebar-icon">⚙️</span> Paramètres
           </button>
         </div>
+        <!-- Bloc du bas : Santé financière + Citation. `margin-top:auto` le colle
+             en bas de la barre latérale ; si la citation est longue, il grandit
+             vers le HAUT (flux normal, aucune position absolue) : aucun
+             chevauchement possible, la barre défile si l'écran est trop bas. -->
+        <div class="sidebar-bottom" id="sidebarBottom">
         <div class="score-mini" id="scoreMini">
           <div class="score-title">SANTÉ FINANCIÈRE</div>
           <div class="hw-score">
@@ -4557,6 +4586,7 @@
           <div class="q">"</div>
           <p id="quoteText"></p>
           <div class="author" id="quoteAuthor"></div>
+        </div>
         </div>
       </aside>
 
@@ -5523,11 +5553,11 @@
       <div class="modal">
         <div class="modal-title">📅 Ajouter / Modifier données mensuelles</div>
         <div class="form-group">
-          <label class="form-label">Mois (ex: Jan 24)</label>
-          <input class="form-input" id="histMois" placeholder="Jan 24">
+          <label class="form-label">Mois (ex: Jan 26)</label>
+          <input class="form-input" id="histMois" placeholder="Jan 26">
           <div class="s-desc" style="margin-top:3px">
-            Pré-rempli avec le mois suivant le dernier mois enregistré
-            (ou le mois courant si aucun historique).
+            Pré-rempli avec le mois en cours, modifiable (ex : Jan 26,
+            Févr. 2026, juillet 2025). Le dernier nombre est l'<strong>année</strong>.
           </div>
         </div>
         <div class="form-row">
@@ -6462,29 +6492,15 @@
           // et n'ont pas besoin d'être pré-remplis.
         }
         if (id === 'addHistorique') {
-          // Pré-remplir le champ "Mois" avec le mois suivant le dernier
-          // mois enregistré (ou le mois courant si aucun historique).
-          // Format exact : "Jan 24" (1re lettre majuscule + 2 chiffres année)
+          // Mois EN COURS pré-rempli à chaque ouverture (toujours modifiable).
+          // Les montants repartent à vide : pas de valeurs d'une saisie annulée.
           const hm = document.getElementById('histMois');
-          if (hm && !hm.value) {
-            let nextDate = new Date();
-            if (D.history && D.history.length > 0) {
-              // D.history est trié ASC, le dernier élément est le plus récent
-              const last = D.history[D.history.length - 1];
-              if (last.month_date) {
-                // month_date est en YYYY-MM-DD
-                const parts = last.month_date.split('-');
-                if (parts.length >= 2) {
-                  const y = parseInt(parts[0]);
-                  const m = parseInt(parts[1]) - 1; // 0-based
-                  // +1 mois
-                  nextDate = new Date(y, m + 1, 1);
-                }
-              }
-            }
-            hm.value = moisLabelFromDate(nextDate);
-          }
+          if (hm) hm.value = moisLabelFromDate(new Date());
+          ['histTotal', 'histLivret', 'histBanque', 'histEsp'].forEach(i => {
+            const el = document.getElementById(i); if (el) el.value = '';
+          });
         }
+        if (id === 'addAccount' || id === 'editAccount') window._widgetReturn = null;
         if (id === 'addAccount') {
           populateAccountTypeSelect('add');
           // Reset du champ texte custom
@@ -6540,6 +6556,13 @@
           if (!sb.classList.contains('mobile-open')) {
             document.body.style.overflow = '';
           }
+        }
+        // Fiche compte ouverte depuis le menu d'un widget : on y retourne
+        // (qu'on valide ou qu'on annule), le menu se re-génère avec les données à jour.
+        if ((id === 'addAccount' || id === 'editAccount') && window._widgetReturn) {
+          const back = window._widgetReturn;
+          window._widgetReturn = null;
+          openModal(back);
         }
       }
       document.querySelectorAll('.modal-overlay').forEach(o => {
@@ -8563,30 +8586,103 @@
 
       function typeColor(t) { return { livret: '#4CAF50', banque: '#2196F3', especes: '#FF9800', invest: '#9C27B0' }[t] || '#888' }
 
-      // Edit modals quick
+      // ================================================================
+      // MENUS « MODIFIER » DES WIDGETS (Argent bancaire / Livret A / Espèces)
+      // ================================================================
+      // Un widget additionne les comptes dont le TYPE correspond (banque,
+      // livret, especes). Ce menu permet de : modifier un solde, ouvrir la
+      // fiche d'un compte (✏️ : nom, banque, TYPE…), supprimer un compte (🗑️),
+      // rattacher un compte existant d'un autre type, ou créer un compte
+      // directement dans ce widget.
+      // Pour qu'un compte (ex. « Livret Jeune ») ne soit plus compté dans
+      // « Livret A » : ✏️ → Type → « + Type personnalisé… » → « Livret Jeune ».
+      function accTypeLabel(v) {
+        const t = getAllAccountTypes().find(x => x.value === v);
+        return t ? t.label : typeLabel(v);
+      }
+      function widgetModalId(type) { return 'edit' + type.charAt(0).toUpperCase() + type.slice(1); }
+
       function renderEditAccountType(type, containerId) {
+        const box = document.getElementById(containerId);
+        if (!box) return;
+        const modalId = widgetModalId(type);
         const accs = D.accounts.filter(a => a.type === type);
+        const others = D.accounts.filter(a => a.type !== type);
+
+        let html = `<div class="s-desc" style="margin-bottom:12px">Ce widget additionne les comptes de type « <strong>${escHtml(accTypeLabel(type))}</strong> ». ✏️ permet de changer le type d'un compte (par exemple pour sortir un Livret Jeune du Livret A).</div>`;
+
         if (accs.length === 0) {
-          // Empty state intelligent (point 5)
-          document.getElementById(containerId).innerHTML = `<div class="empty-state">
+          html += `<div class="empty-state" style="padding:16px 10px">
             <div class="empty-state-icon">💼</div>
-            <div class="empty-state-title">Aucun compte de ce type</div>
-            <div class="empty-state-desc">Connectez votre premier compte pour commencer à suivre votre patrimoine.</div>
-            <div class="empty-state-actions">
-              <button class="btn btn-gold btn-sm" onclick="closeModal('edit${type.charAt(0).toUpperCase() + type.slice(1)}');openModal('addAccount')">+ Ajouter un compte</button>
-            </div>
+            <div class="empty-state-title">Aucun compte dans ce widget</div>
+            <div class="empty-state-desc">Rattachez un compte existant ou créez-en un nouveau ci-dessous.</div>
           </div>`;
-          return;
+        } else {
+          html += accs.map(a => {
+            const idx = D.accounts.indexOf(a);
+            return `<div class="widget-acc-row">
+              <div class="widget-acc-main">
+                <label class="form-label">${escHtml(a.name)} <span style="color:var(--text3)">· ${escHtml(a.bank || '-')}</span></label>
+                <input type="number" class="form-input" value="${a.balance}" id="qedit-${idx}" onchange="quickEditBalance(${idx},this.value)">
+              </div>
+              <div class="action-btns">
+                <button class="action-btn" title="Modifier le compte (nom, type, banque)" onclick="openAccountEditFromWidget(${idx},'${modalId}')">✏️</button>
+                <button class="action-btn del" title="Supprimer le compte" onclick="deleteAccountFromWidget(${idx},'${type}','${containerId}')">🗑️</button>
+              </div>
+            </div>`;
+          }).join('');
         }
-        document.getElementById(containerId).innerHTML = accs.map((a, _) => {
-          const idx = D.accounts.indexOf(a);
-          return `<div class="form-row" style="margin-bottom:10px;align-items:center">
-        <div class="form-group" style="margin-bottom:0"><label class="form-label">${escHtml(a.name)}</label>
-          <input type="number" class="form-input" value="${a.balance}" id="qedit-${idx}" onchange="quickEditBalance(${idx},this.value)">
-        </div>
-        <div style="padding-top:18px"><span style="color:var(--text3);font-size:11px">${escHtml(a.bank)}</span></div>
-      </div>`;
-        }).join('');
+
+        if (others.length > 0) {
+          const opts = others.map(a => `<option value="${escHtml(String(a.id))}">${escHtml(a.name)} — ${escHtml(accTypeLabel(a.type))} (${escHtml(fmt(a.balance))})</option>`).join('');
+          html += `<div class="widget-attach">
+            <label class="form-label">Rattacher un compte existant à ce widget</label>
+            <div style="display:flex;gap:8px;align-items:stretch">
+              <select class="form-input" id="widgetAttachSel-${type}" style="flex:1;min-width:0">${opts}</select>
+              <button class="btn btn-ghost btn-sm" onclick="attachAccountToWidget('${type}','${containerId}')">Rattacher</button>
+            </div>
+            <div class="s-desc" style="margin-top:3px">Le compte prend le type « ${escHtml(accTypeLabel(type))} » et sera compté dans ce widget.</div>
+          </div>`;
+        }
+
+        html += `<div style="margin-top:12px"><button class="btn btn-gold btn-sm" onclick="openAccountAddFromWidget('${type}','${modalId}')">+ Nouveau compte dans ce widget</button></div>`;
+        box.innerHTML = html;
+      }
+
+      // Ouvre la fiche d'ajout de compte, type pré-sélectionné ; revient au menu du widget ensuite.
+      function openAccountAddFromWidget(type, modalId) {
+        closeModal(modalId);
+        openModal('addAccount');
+        const sel = document.getElementById('newAccType');
+        if (sel && Array.from(sel.options).some(o => o.value === type)) sel.value = type;
+        window._widgetReturn = modalId;
+      }
+
+      // Ouvre la fiche d'édition d'un compte ; revient au menu du widget ensuite.
+      function openAccountEditFromWidget(idx, modalId) {
+        if (!D.accounts[idx]) return;
+        closeModal(modalId);
+        editAccount(idx);
+        window._widgetReturn = modalId;
+      }
+
+      async function deleteAccountFromWidget(idx, type, containerId) {
+        await deleteAccount(idx);   // demande confirmation, supprime, rafraîchit l'app
+        renderEditAccountType(type, containerId);
+      }
+
+      async function attachAccountToWidget(type, containerId) {
+        if (!requireLogin()) return;
+        const sel = document.getElementById('widgetAttachSel-' + type);
+        if (!sel || !sel.value) return;
+        const acc = D.accounts.find(a => String(a.id) === sel.value);
+        if (!acc) return;
+        const { error } = await supabaseClient.from('accounts').update({ type }).eq('id', acc.id);
+        if (error) { showToast('Erreur : ' + error.message, 'error'); return; }
+        acc.type = type;
+        renderAll();
+        renderEditAccountType(type, containerId);
+        showToast('Compte rattaché ✓');
       }
 
       function renderEditRepartition() {
@@ -8904,8 +9000,9 @@
 
       async function deleteAccount(i) {
         if (!requireLogin()) return;
-        if (!confirm('Supprimer ce compte ?')) return;
         const acc = D.accounts[i];
+        if (!acc) return;
+        if (!confirm('Supprimer définitivement le compte « ' + acc.name + ' » (' + fmt(acc.balance) + ') ?\nSes transactions restent dans l\'historique.')) return;
 
         const { error } = await supabaseClient.from('accounts').delete().eq('id', acc.id);
 
@@ -9185,7 +9282,7 @@
       // Le format de sortie est exactement celui demandé par l'utilisateur :
       //   "Jan 24" (3 lettres du mois + 2 chiffres de l'année sur 2000+)
       // ================================================================
-      const MOIS_FR_COURT = ['jan', 'fev', 'mar', 'avr', 'mai', 'jun', 'jul', 'aou', 'sep', 'oct', 'nov', 'dec'];
+      const MOIS_FR_COURT = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
       const MOIS_KEY_TO_IDX = {
         jan: 0, fev: 1, mar: 2, avr: 3, mai: 4, jun: 5,
         jul: 6, aou: 7, sep: 8, oct: 9, nov: 10, dec: 11,
@@ -9194,9 +9291,8 @@
       function moisLabelFromDate(d) {
         if (!(d instanceof Date) || isNaN(d.getTime())) d = new Date();
         const m = MOIS_FR_COURT[d.getMonth()];
-        const y = String(d.getFullYear()).slice(-2); // "24" pour 2024
-        // 1re lettre en majuscule, le reste en minuscule : "Jan 24"
-        return m.charAt(0).toUpperCase() + m.slice(1) + ' ' + y;
+        const y = String(d.getFullYear()).slice(-2); // "26" pour 2026
+        return m + ' ' + y; // ex. "Oct 26" (lu par parseMoisLabel)
       }
       // Analyse un libellé de mois ("Jan 26", "Févr. 2026", "juillet 2025",
       // "Août 25", "sept 2025"…) → { monthIdx: 0-11, year: 20xx } ou null.
@@ -9247,6 +9343,8 @@
         if (!m || !total) { showToast('Mois et total requis', 'error'); return }
         const monthDate = moisLabelToDate(m);
         if (!monthDate) { showToast('Mois non reconnu. Exemples : « Jan 26 », « Févr. 2026 », « juillet 2025 ».', 'error'); return }
+        const already = D.history.find(x => x.month_date === monthDate);
+        if (already && !confirm('Le mois « ' + already.m + ' » existe déjà (total ' + fmt(already.total) + '). Le remplacer par ces valeurs ?')) return;
 
         const { data, error } = await supabaseClient.from('net_worth_history').upsert({
           user_id: currentUserId, month_label: m, month_date: monthDate, total, livret, banque, especes: esp
