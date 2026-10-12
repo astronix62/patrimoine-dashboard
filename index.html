@@ -93,7 +93,15 @@
         (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
       if (isStandalone) rootEl.classList.add('is-standalone');
       try {
-        if (isIphone && localStorage.getItem('patrimoine_iphone_ui') === 'v2') rootEl.classList.add('iphone-v2');
+        if (isIphone && localStorage.getItem('patrimoine_iphone_ui') === 'v2') {
+          rootEl.classList.add('iphone-v2');
+          // Barre d'état OPAQUE : la page démarre sous l'heure / la batterie au lieu de
+          // passer dessous. Évite le halo flou que iOS applique au contenu situé juste
+          // sous la barre d'état en mode « black-translucent ». (Si iOS ne relit pas la
+          // balise en cours de route : supprimer l'icône de l'écran d'accueil et la recréer.)
+          var sb = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+          if (sb) sb.setAttribute('content', 'black');
+        }
       } catch (e) { /* stockage indisponible : mode classique */ }
     })();
   </script>
@@ -4589,6 +4597,122 @@
     /* Pas d'animation d'apparition rejouée à chaque rendu (saccades). */
     html.iphone-v2.is-iphone .kpi-card,
     html.iphone-v2.is-iphone .panel { animation: none !important }
+
+    /* =====================================================================
+       INTERFACE iPHONE v2 — ÉTAPE 1 : COQUE
+       En-tête compact + barre d'onglets du bas + menu (feuille) + écran de
+       connexion plein écran + écran de démarrage. Tout est masqué hors
+       iPhone v2 (règles `display:none` de base ci-dessous).
+       ===================================================================== */
+    .ip-header, .ip-tabbar, .ip-overlay, .ip-sheet, #ipSplash { display: none }
+
+    /* Ancienne coque masquée : en-tête, barre de connexion, menu latéral */
+    html.iphone-v2.is-iphone .header,
+    html.iphone-v2.is-iphone #authStatusBar,
+    html.iphone-v2.is-iphone .sidebar,
+    html.iphone-v2.is-iphone .sidebar-backdrop { display: none !important }
+
+    /* Titre de page redondant avec l'en-tête (boutons d'action conservés) */
+    html.iphone-v2.is-iphone .page-header > div:first-child:not(:only-child) { display: none }
+    html.iphone-v2.is-iphone .page-header:not(:has(> div:nth-child(2))) { display: none }
+    html.iphone-v2.is-iphone .page-header { margin-bottom: 10px }
+
+    /* En-tête compact collant, sous la zone sûre */
+    html.iphone-v2.is-iphone .ip-header {
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: var(--safe-top, 0px); z-index: 200;
+      height: 52px; padding: 0 max(16px, var(--safe-right, 0px)) 0 max(16px, var(--safe-left, 0px));
+      background: var(--bg); border-bottom: 1px solid var(--border);
+    }
+    html.iphone-v2.is-iphone .ip-header h1 {
+      font-size: 22px; font-weight: 700; letter-spacing: -0.3px; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    html.iphone-v2.is-iphone .ip-avatar {
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer;
+      background: var(--gold); color: #000; font-size: 15px; font-weight: 700; font-family: inherit;
+    }
+    html.iphone-v2.is-iphone .ip-avatar-lg { width: 48px; height: 48px; font-size: 19px; cursor: default }
+
+    /* Barre d'onglets du bas */
+    html.iphone-v2.is-iphone .ip-tabbar {
+      display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 240;
+      background: var(--bg2); border-top: 1px solid var(--border);
+      padding: 4px max(4px, var(--safe-right, 0px)) calc(4px + var(--safe-bottom, 0px)) max(4px, var(--safe-left, 0px));
+    }
+    html.iphone-v2.is-iphone .ip-tab {
+      flex: 1; min-width: 0; min-height: 49px; padding: 4px 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      background: transparent; border: 0; color: var(--text3);
+      font-family: inherit; font-size: 11px; font-weight: 500; cursor: pointer;
+    }
+    html.iphone-v2.is-iphone .ip-tab svg,
+    html.iphone-v2.is-iphone .ip-tile svg {
+      width: 24px; height: 24px; fill: none; stroke: currentColor;
+      stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+    }
+    html.iphone-v2.is-iphone .ip-tab.active { color: var(--gold) }
+
+    /* Le contenu et les notifications passent AU-DESSUS de la barre d'onglets */
+    html.iphone-v2.is-iphone .content { padding-bottom: calc(86px + var(--safe-bottom, 0px)) !important }
+    html.iphone-v2.is-iphone .toast-container { bottom: calc(72px + var(--safe-bottom, 0px)) !important }
+
+    /* Menu : feuille qui monte du bas */
+    html.iphone-v2.is-iphone .ip-overlay {
+      display: block; position: fixed; inset: 0; z-index: 1500;
+      background: rgba(0, 0, 0, 0.6); opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease; touch-action: none;
+    }
+    html.iphone-v2.is-iphone .ip-overlay.open { opacity: 1; pointer-events: auto }
+    html.iphone-v2.is-iphone .ip-sheet {
+      display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1501;
+      max-height: calc(100dvh - var(--safe-top, 0px) - 24px); overflow-y: auto; overscroll-behavior: contain;
+      background: var(--bg2); border: 1px solid var(--border); border-bottom: 0;
+      border-radius: 20px 20px 0 0;
+      transform: translateY(105%); transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+      will-change: transform;
+    }
+    html.iphone-v2.is-iphone .ip-sheet.open { transform: translateY(0) }
+    html.iphone-v2.is-iphone .ip-sheet-grab { display: flex; justify-content: center; padding: 10px 0 6px; touch-action: none }
+    html.iphone-v2.is-iphone .ip-sheet-grab span { width: 40px; height: 5px; border-radius: 3px; background: var(--border) }
+    html.iphone-v2.is-iphone .ip-sheet-body { padding: 4px max(16px, var(--safe-left, 0px)) calc(20px + var(--safe-bottom, 0px)) max(16px, var(--safe-right, 0px)) }
+    html.iphone-v2.is-iphone .ip-account { display: flex; align-items: center; gap: 12px; padding: 8px 0 16px }
+    html.iphone-v2.is-iphone .ip-account-text { min-width: 0 }
+    html.iphone-v2.is-iphone .ip-account-name { font-size: 16px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+    html.iphone-v2.is-iphone .ip-account-sub { font-size: 12px; color: var(--text3); margin-top: 2px }
+    html.iphone-v2.is-iphone .ip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px }
+    html.iphone-v2.is-iphone .ip-tile {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+      min-height: 92px; padding: 12px 6px; border-radius: 16px; border: 1px solid var(--border);
+      background: var(--bg3); color: var(--gold); font-family: inherit; cursor: pointer;
+    }
+    html.iphone-v2.is-iphone .ip-tile svg { width: 28px; height: 28px }
+    html.iphone-v2.is-iphone .ip-tile span { font-size: 12px; font-weight: 500; color: var(--text); text-align: center; line-height: 1.25 }
+    html.iphone-v2.is-iphone .ip-logout { width: 100%; min-height: 48px }
+    html.iphone-v2.is-iphone .ip-diag { margin-top: 14px; font-size: 11px; color: var(--text3); text-align: center }
+
+    /* Écran de démarrage (jusqu'au 1er état d'authentification + données) */
+    html.iphone-v2.is-iphone #ipSplash {
+      display: flex; position: fixed; inset: 0; z-index: 9500; align-items: center; justify-content: center;
+      background: var(--bg);
+    }
+    html.iphone-v2.is-iphone.ip-ready #ipSplash { display: none }
+    html.iphone-v2.is-iphone .ip-splash-logo {
+      width: 72px; height: 72px; border: 2px solid var(--gold); border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold); font-size: 36px; font-weight: 800; animation: ipPulse 1.2s ease-in-out infinite;
+    }
+    @keyframes ipPulse { 0%, 100% { opacity: 0.45 } 50% { opacity: 1 } }
+
+    /* Déconnecté : l'écran de connexion est plein écran et ne se ferme pas */
+    html.iphone-v2.is-iphone.ip-loggedout #closeAuth { display: none }
+    /* Fond de l'écran de connexion OPAQUE : sans flou, le tableau de bord
+       se devinait par transparence derrière la marque (halo / doublon de titre). */
+    html.iphone-v2.is-iphone .auth-backdrop { background: var(--bg) !important }
+
+    /* Verrouillage du défilement pendant une fenêtre (le code met overflow:hidden sur <body>) */
+    html.iphone-v2.is-iphone body[style*="overflow: hidden"] { overflow: hidden !important }
   </style>
 </head>
 
@@ -4687,6 +4811,12 @@
         </div>
       </div>
     </div>
+
+    <!-- ===== INTERFACE iPHONE v2 : en-tête compact (masqué hors iPhone v2) ===== -->
+    <header class="ip-header" id="ipHeader">
+      <h1 id="ipTitle">Patrimoine</h1>
+      <button class="ip-avatar" id="ipAvatar" type="button" onclick="ipOpenMenu()" aria-label="Compte et menu">?</button>
+    </header>
 
     <!-- HEADER -->
     <header class="header">
@@ -6056,6 +6186,41 @@
         </div>
       </div>
     </div>
+
+    <!-- ===== INTERFACE iPHONE v2 : barre d'onglets, menu, écran de démarrage ===== -->
+    <nav class="ip-tabbar" id="ipTabbar" aria-label="Navigation principale">
+      <button class="ip-tab active" type="button" data-page="overview" onclick="showPage('overview')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span>Accueil</span></button>
+      <button class="ip-tab" type="button" data-page="evolution" onclick="showPage('evolution')"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg><span>Évolution</span></button>
+      <button class="ip-tab" type="button" data-page="comptes" onclick="showPage('comptes')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg><span>Comptes</span></button>
+      <button class="ip-tab" type="button" data-page="objectifs" onclick="showPage('objectifs')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg><span>Objectifs</span></button>
+      <button class="ip-tab" type="button" data-page="__menu" onclick="ipOpenMenu()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg><span>Menu</span></button>
+    </nav>
+
+    <div class="ip-overlay" id="ipOverlay" onclick="ipCloseMenu()"></div>
+    <div class="ip-sheet" id="ipSheet" role="dialog" aria-modal="true" aria-label="Menu" aria-hidden="true">
+      <div class="ip-sheet-grab" id="ipGrab"><span></span></div>
+      <div class="ip-sheet-body">
+        <div class="ip-account">
+          <div class="ip-avatar ip-avatar-lg" id="ipAccAvatar">?</div>
+          <div class="ip-account-text">
+            <div class="ip-account-name" id="ipAccName">Non connecté</div>
+            <div class="ip-account-sub" id="ipAccSub"></div>
+          </div>
+        </div>
+        <div class="ip-grid">
+          <button class="ip-tile" type="button" onclick="ipGo('analyse')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>Analyse</span></button>
+          <button class="ip-tile" type="button" onclick="ipGo('projection')"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span>Projection</span></button>
+          <button class="ip-tile" type="button" onclick="ipGo('parametres')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg><span>Paramètres</span></button>
+          <button class="ip-tile" type="button" onclick="ipAct('import')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10M8 10l4 4 4-4"/><path d="M5 18h14"/></svg><span>Importer CSV</span></button>
+          <button class="ip-tile" type="button" onclick="ipAct('reconcile')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg><span>Vérifier les soldes</span></button>
+          <button class="ip-tile" type="button" onclick="ipAct('export')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V5M8 9l4-4 4 4"/><path d="M5 19h14"/></svg><span>Exporter CSV</span></button>
+        </div>
+        <button class="btn btn-danger ip-logout" type="button" onclick="ipLogout()">Se déconnecter</button>
+        <div class="ip-diag" id="ipDiag"></div>
+      </div>
+    </div>
+
+    <div id="ipSplash" aria-hidden="true"><div class="ip-splash-logo">P</div></div>
 
     <div class="toast-container" id="toastContainer"></div>
 
@@ -12542,6 +12707,127 @@
           }
         });
       }
+
+
+      // ================================================================
+      // INTERFACE iPHONE v2 — ÉTAPE 1 : COQUE
+      // En-tête compact, barre d'onglets, menu (feuille), écran de connexion.
+      // Ne s'exécute QUE sur iPhone avec l'interrupteur « Nouveau ».
+      // Ne modifie ni les données ni les fonctions métier : présentation seule.
+      // ================================================================
+      (function ipShell() {
+        const root = document.documentElement;
+        if (!root.classList.contains('iphone-v2') || !root.classList.contains('is-iphone')) return;
+
+        const TITLES = { overview: 'Patrimoine', evolution: 'Évolution', comptes: 'Comptes', objectifs: 'Objectifs', analyse: 'Analyse', projection: 'Projection', parametres: 'Paramètres' };
+        const TAB_OF = { overview: 'overview', evolution: 'evolution', comptes: 'comptes', objectifs: 'objectifs', analyse: '__menu', projection: '__menu', parametres: '__menu' };
+
+        // ── Titre + onglet actif, à chaque changement de page ─────────────
+        function sync(id) {
+          const title = document.getElementById('ipTitle');
+          if (title) title.textContent = TITLES[id] || 'Patrimoine';
+          const active = TAB_OF[id] || 'overview';
+          document.querySelectorAll('#ipTabbar .ip-tab').forEach(t => {
+            const on = t.dataset.page === active;
+            t.classList.toggle('active', on);
+            if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+          });
+        }
+        const originalShowPage = window.showPage;
+        window.showPage = function (id) { originalShowPage(id); sync(id); };
+
+        // ── Menu (feuille du bas) ─────────────────────────────────────────
+        const overlay = document.getElementById('ipOverlay');
+        const sheet = document.getElementById('ipSheet');
+        function diag() {
+          const el = document.getElementById('ipDiag');
+          if (!el) return;
+          const pt = Math.round(parseFloat(getComputedStyle(document.body).paddingTop) || 0);
+          el.textContent = 'Zone sûre haut : ' + pt + ' pt · Mode application : ' +
+            (root.classList.contains('is-standalone') ? 'oui' : 'non') + ' · Interface iPhone v2 (étape 1)';
+        }
+        window.ipOpenMenu = function () {
+          diag();
+          sheet.style.transform = '';
+          overlay.classList.add('open');
+          sheet.classList.add('open');
+          sheet.setAttribute('aria-hidden', 'false');
+        };
+        window.ipCloseMenu = function () {
+          overlay.classList.remove('open');
+          sheet.classList.remove('open');
+          sheet.style.transform = '';
+          sheet.setAttribute('aria-hidden', 'true');
+        };
+        window.ipGo = function (id) { ipCloseMenu(); showPage(id); };
+        window.ipAct = function (name) {
+          ipCloseMenu();
+          setTimeout(function () {
+            if (name === 'import') openImportCsvModal();
+            else if (name === 'reconcile') openReconcile();
+            else if (name === 'export') exportCSV();
+          }, 200);
+        };
+        window.ipLogout = async function () { ipCloseMenu(); await window.logoutCurrentUser(); };
+
+        // Glisser la poignée vers le bas ferme la feuille
+        const grab = document.getElementById('ipGrab');
+        let startY = null, dy = 0;
+        if (grab) {
+          grab.addEventListener('touchstart', function (e) {
+            startY = e.touches[0].clientY; dy = 0; sheet.style.transition = 'none';
+          }, { passive: true });
+          grab.addEventListener('touchmove', function (e) {
+            if (startY === null) return;
+            dy = Math.max(0, e.touches[0].clientY - startY);
+            sheet.style.transform = 'translateY(' + dy + 'px)';
+          }, { passive: true });
+          const end = function () {
+            if (startY === null) return;
+            startY = null; sheet.style.transition = '';
+            if (dy > 90) ipCloseMenu(); else sheet.style.transform = '';
+          };
+          grab.addEventListener('touchend', end);
+          grab.addEventListener('touchcancel', end);
+        }
+
+        // ── Compte affiché (avatar + menu) ────────────────────────────────
+        function setUser(user) {
+          let initial = '?', name = 'Non connecté', sub = '';
+          if (user && user.is_anonymous) {
+            initial = 'D'; name = 'Visiteur (démo)'; sub = 'Session temporaire : supprimée à la déconnexion';
+          } else if (user) {
+            const email = user.email || '';
+            const prenom = (typeof D !== 'undefined' && D.profile && D.profile.prenom) ? D.profile.prenom : '';
+            name = prenom || email || 'Connecté';
+            initial = (name[0] || '?').toUpperCase();
+            sub = prenom ? email : 'Connecté';
+          }
+          const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+          set('ipAvatar', initial); set('ipAccAvatar', initial); set('ipAccName', name); set('ipAccSub', sub);
+        }
+
+        // ── Authentification : écran plein écran, jamais de tableau vide ──
+        function ready() { root.classList.add('ip-ready'); }
+        const originalIn = window.onUserLoggedIn;
+        const originalOut = window.onUserLoggedOut;
+        window.onUserLoggedIn = async function (user) {
+          try { await originalIn(user); }
+          finally { root.classList.remove('ip-loggedout'); setUser(user); ready(); }
+        };
+        window.onUserLoggedOut = function () {
+          originalOut();
+          setUser(null);
+          root.classList.add('ip-loggedout');
+          const m = document.getElementById('authModal');
+          if (m) m.classList.add('show');
+          ready();
+        };
+        // Filet de sécurité : si le réseau ne répond pas, on ne reste pas sur l'écran de démarrage
+        setTimeout(ready, 6000);
+
+        sync('overview');
+      })();
 
       init();
     </script>
