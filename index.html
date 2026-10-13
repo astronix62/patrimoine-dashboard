@@ -4713,6 +4713,83 @@
 
     /* Verrouillage du défilement pendant une fenêtre (le code met overflow:hidden sur <body>) */
     html.iphone-v2.is-iphone body[style*="overflow: hidden"] { overflow: hidden !important }
+
+    /* =====================================================================
+       INTERFACE iPHONE v2 — ÉTAPE 2 : ACCUEIL
+       Chiffre héros, carrousel de cartes, graphique en tête, puces de période,
+       Santé financière et Citation intégrées. Ordre par `order` (flex).
+       ===================================================================== */
+    html.iphone-v2.is-iphone #page-overview.active { display: flex; flex-direction: column }
+    html.iphone-v2.is-iphone #page-overview > .kpi-row { order: 1 }
+    html.iphone-v2.is-iphone #page-overview > .ip-cards { order: 2 }
+    html.iphone-v2.is-iphone #page-overview > .score-mini { order: 3 }
+    html.iphone-v2.is-iphone #page-overview > #top3ChartContainer { order: 4 }
+    html.iphone-v2.is-iphone #page-overview > .grid-3cols { order: 5 }
+    html.iphone-v2.is-iphone #page-overview > .grid-3eq { order: 6 }
+    html.iphone-v2.is-iphone #page-overview > .insights-card { order: 7 }
+    html.iphone-v2.is-iphone #page-overview > .quote-box { order: 8 }
+
+    /* Cartes et panneaux : angles plus doux, contour discret */
+    html.iphone-v2.is-iphone .kpi-card,
+    html.iphone-v2.is-iphone .panel { border-radius: 18px; border-color: rgba(255, 255, 255, 0.07) }
+
+    /* ── Chiffre héros : le patrimoine total ──────────────────────────── */
+    html.iphone-v2.is-iphone .kpi-row { grid-template-columns: 1fr !important; grid-auto-rows: auto !important; gap: 0 !important; margin-bottom: 12px !important }
+    html.iphone-v2.is-iphone .kpi-row .kpi-card:first-child {
+      flex-direction: row !important; flex-wrap: wrap; align-items: baseline; align-content: flex-start;
+      padding: 20px 20px 14px !important;
+      background: linear-gradient(180deg, rgba(200, 168, 75, 0.12), var(--bg2) 70%);
+    }
+    html.iphone-v2.is-iphone .kpi-row .kpi-card:first-child .kpi-card-header { display: none }
+    html.iphone-v2.is-iphone .kpi-row .kpi-card:first-child .kpi-label { flex: 0 0 100%; font-size: 12px; letter-spacing: 1.5px; margin-bottom: 4px }
+    html.iphone-v2.is-iphone .kpi-row .kpi-card:first-child .kpi-value { flex: 0 0 100%; font-size: 38px !important; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px }
+    html.iphone-v2.is-iphone .kpi-row .kpi-card:first-child .kpi-delta { padding: 3px 10px; border-radius: 999px; font-size: 13px }
+    html.iphone-v2.is-iphone .kpi-row .kpi-card:first-child .kpi-delta.up { background: rgba(76, 175, 80, 0.15) }
+    html.iphone-v2.is-iphone .kpi-row .kpi-card:first-child .kpi-delta.down { background: rgba(244, 67, 54, 0.15) }
+    html.iphone-v2.is-iphone .kpi-row .kpi-card:first-child .kpi-sub { margin-left: 8px }
+    html.iphone-v2.is-iphone .kpi-row .kpi-card:first-child .sparkline-wrap { flex: 0 0 100%; height: 64px !important; margin-top: 14px }
+
+    /* ── Carrousel : Argent bancaire / Livret A / Espèces ─────────────── */
+    html.iphone-v2.is-iphone .ip-cards {
+      display: flex; gap: 10px; order: 2;
+      overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+      margin: 0 -12px 12px; padding: 0 12px; scroll-padding: 0 12px;
+      scrollbar-width: none;
+    }
+    html.iphone-v2.is-iphone .ip-cards::-webkit-scrollbar { display: none }
+    html.iphone-v2.is-iphone .ip-cards .kpi-card {
+      flex: 0 0 72%; min-width: 0; scroll-snap-align: start; padding: 16px !important; cursor: pointer;
+    }
+    html.iphone-v2.is-iphone .ip-cards .kpi-card .edit-btn { display: none }
+    html.iphone-v2.is-iphone .ip-cards .kpi-card::after {
+      content: '›'; position: absolute; top: 12px; right: 16px; font-size: 24px; line-height: 1; color: var(--text3);
+    }
+    html.iphone-v2.is-iphone .ip-cards .kpi-card:active { background: var(--bg3) }
+    html.iphone-v2.is-iphone .ip-cards .kpi-value { font-size: 22px !important }
+
+    /* ── Graphique d'évolution en tête + puces de période ─────────────── */
+    html.iphone-v2.is-iphone .grid-3cols { display: flex; flex-direction: column; gap: 12px }
+    html.iphone-v2.is-iphone .grid-3cols > .panel:nth-child(2) { order: -1 }
+    html.iphone-v2.is-iphone #evoSelect { display: none !important }
+    html.iphone-v2.is-iphone .ip-chips { display: inline-flex; gap: 4px; padding: 3px; background: var(--bg3); border-radius: 12px }
+    html.iphone-v2.is-iphone .ip-chip {
+      min-height: 34px; min-width: 44px; padding: 0 12px; border: 0; border-radius: 9px;
+      background: transparent; color: var(--text2); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    html.iphone-v2.is-iphone .ip-chip.active { background: var(--gold); color: #000 }
+    html.iphone-v2.is-iphone .ip-chip { white-space: nowrap }
+
+    /* ── Santé financière et Citation dans l'Accueil ───────────────────── */
+    html.iphone-v2.is-iphone #page-overview .score-mini {
+      margin: 0 0 12px !important; padding: 16px 18px; border-radius: 18px;
+      background: var(--bg2); border-color: rgba(255, 255, 255, 0.07);
+    }
+    html.iphone-v2.is-iphone #page-overview .score-mini .hw-num { font-size: 36px }
+    html.iphone-v2.is-iphone #page-overview .quote-box {
+      margin: 4px 0 8px !important; padding: 16px 18px; border-radius: 18px;
+    }
+    html.iphone-v2.is-iphone #page-overview .quote-box p { font-size: 14px; line-height: 1.5 }
   </style>
 </head>
 
@@ -6647,6 +6724,28 @@
       
       // Un visiteur démo (session anonyme) n'a aucun identifiant pour revenir :
       // on supprime son utilisateur et ses données AVANT de fermer la session.
+      // Vide les champs des formulaires de connexion / d'inscription.
+      // Appelée UNIQUEMENT par une déconnexion (ou suppression de compte)
+      // demandée par l'utilisateur : surtout PAS depuis onUserLoggedOut(),
+      // qui se déclenche aussi au démarrage et à chaque événement d'auth
+      // (cela effacerait la saisie en cours de quelqu'un qui se connecte).
+      window.clearAuthFormFields = function () {
+        ['loginEmail', 'loginPassword', 'signupEmail', 'signupPassword'].forEach(function (id) {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.value = '';
+          if (/Password$/.test(id)) el.type = 'password';   // mot de passe de nouveau masqué
+        });
+        const terms = document.getElementById('acceptTerms');
+        if (terms) terms.checked = false;
+        ['loginMessage', 'signupMessage'].forEach(function (id) {
+          const m = document.getElementById(id);
+          if (m) { m.textContent = ''; m.className = 'auth-message'; }
+        });
+        document.querySelectorAll('.auth-eye').forEach(function (b) { b.textContent = '👁'; });
+        document.querySelectorAll('.auth-form input.input-error').forEach(function (i) { i.classList.remove('input-error'); });
+      };
+
       window.logoutCurrentUser = async function () {
         let isAnon = false;
         try {
@@ -6660,6 +6759,7 @@
         } catch (e) { console.warn('Déconnexion :', e.message); }
         await supabaseClient.auth.signOut(isAnon ? { scope: 'local' } : undefined);
         if (typeof window.refreshAuthUI === 'function') await window.refreshAuthUI();
+        window.clearAuthFormFields();   // après la déconnexion : rien ne reste dans les champs
       };
       
       window.onUserLoggedOut = function () {
@@ -12434,6 +12534,7 @@
           await supabaseClient.auth.signOut({ scope: 'local' });
           if (typeof window.onUserLoggedOut === 'function') window.onUserLoggedOut();
           if (typeof window.refreshAuthUI === 'function') await window.refreshAuthUI();
+          if (typeof window.clearAuthFormFields === 'function') window.clearAuthFormFields();
           closeDeleteAccountModal();
           showToast('Votre compte et toutes vos données ont été supprimés.', 'success');
           if (btn) { btn.textContent = 'Supprimer définitivement'; btn.disabled = true; }
@@ -12825,6 +12926,66 @@
         };
         // Filet de sécurité : si le réseau ne répond pas, on ne reste pas sur l'écran de démarrage
         setTimeout(ready, 6000);
+
+
+        // ── ACCUEIL (étape 2) ─────────────────────────────────────────────
+        // Réorganisation de la vue d'ensemble pour l'iPhone. Les identifiants
+        // (kpi-*, scoreNum, quoteText…) sont conservés : toute la logique de
+        // calcul et d'affichage existante continue de fonctionner à l'identique.
+        (function ipHome() {
+          const page = document.getElementById('page-overview');
+          if (!page) return;
+
+          // 1. Les 3 cartes « type de compte » forment un carrousel (défilement
+          //    horizontal) ; toucher une carte ouvre le menu de modification
+          //    du widget (remplace les boutons « ✏️ Modifier »).
+          const kpiRow = page.querySelector('.kpi-row');
+          if (kpiRow) {
+            const rail = document.createElement('div');
+            rail.className = 'ip-cards';
+            rail.id = 'ipCards';
+            const MODAL_OF = { 'kpi-banque': 'editBanque', 'kpi-livret': 'editLivret', 'kpi-especes': 'editEspeces' };
+            Array.from(kpiRow.querySelectorAll('.kpi-card-type')).forEach(function (card) {
+              rail.appendChild(card);
+              const val = card.querySelector('.kpi-value');
+              const modal = val && MODAL_OF[val.id];
+              if (modal) {
+                card.setAttribute('role', 'button');
+                card.tabIndex = 0;
+                card.addEventListener('click', function () { openModal(modal); });
+              }
+            });
+            kpiRow.insertAdjacentElement('afterend', rail);
+          }
+
+          // 2. Période du graphique : puces (6 M / 1 A / Tout) à la place de la liste déroulante
+          const sel = document.getElementById('evoSelect');
+          if (sel && sel.parentNode) {
+            const bar = document.createElement('div');
+            bar.className = 'ip-chips';
+            bar.id = 'ipEvoChips';
+            const mark = function () {
+              bar.querySelectorAll('.ip-chip').forEach(function (b) { b.classList.toggle('active', b.dataset.v === sel.value); });
+            };
+            [['6m', '6M'], ['1y', '1A'], ['all', 'Tout']].forEach(function (pair) {
+              const b = document.createElement('button');
+              b.type = 'button';
+              b.className = 'ip-chip';
+              b.dataset.v = pair[0];
+              b.textContent = pair[1];
+              b.addEventListener('click', function () { sel.value = pair[0]; renderEvoChartMain(); mark(); });
+              bar.appendChild(b);
+            });
+            sel.parentNode.insertBefore(bar, sel);
+            mark();
+          }
+
+          // 3. « Santé financière » et « Citation » (ex-menu latéral) rejoignent l'Accueil
+          const score = document.getElementById('scoreMini');
+          const quote = document.getElementById('quoteBox');
+          if (score) page.appendChild(score);
+          if (quote) page.appendChild(quote);
+        })();
 
         sync('overview');
       })();
