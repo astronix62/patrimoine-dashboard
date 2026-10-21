@@ -2343,6 +2343,177 @@
       left: 2px
     }
 
+    /* Liaison d'un objectif à un compte : panneau discret, cohérent avec
+       les cartes de l'application, et révélation animée sans saut de layout. */
+    .goal-account-link {
+      margin-bottom: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: linear-gradient(135deg, rgba(200, 168, 75, 0.08), rgba(200, 168, 75, 0.025));
+      transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    }
+
+    .goal-account-link.is-linked {
+      border-color: var(--border-gold);
+      box-shadow: 0 0 0 1px rgba(200, 168, 75, 0.08);
+    }
+
+    .goal-account-link-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .goal-account-link-copy { min-width: 0; }
+
+    .goal-account-link-title {
+      display: block;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .goal-account-link-description {
+      margin-top: 2px;
+      color: var(--text3);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .goal-account-toggle {
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(200, 168, 75, 0);
+      transition: background 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+    }
+
+    .goal-account-toggle:hover { transform: scale(1.04); }
+    .goal-account-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+    .goal-account-toggle.on { box-shadow: 0 0 0 3px rgba(200, 168, 75, 0.13); }
+
+    .goal-account-reveal {
+      display: grid;
+      grid-template-rows: 0fr;
+      margin-top: 0;
+      opacity: 0;
+      transform: translateY(-5px);
+      pointer-events: none;
+      transition: grid-template-rows 0.34s cubic-bezier(0.2, 0.7, 0.2, 1),
+        margin-top 0.34s cubic-bezier(0.2, 0.7, 0.2, 1),
+        opacity 0.22s ease, transform 0.34s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+
+    .goal-account-reveal.is-open {
+      grid-template-rows: 1fr;
+      margin-top: 10px;
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .goal-account-reveal-inner { min-height: 0; overflow: hidden; }
+    .goal-account-reveal .form-group { margin-bottom: 0; }
+
+    .goal-account-select:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    .goal-account-status {
+      min-height: 0;
+      margin-top: 6px;
+      color: var(--gold);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .goal-current-linked {
+      border-color: var(--border-gold) !important;
+      background: rgba(200, 168, 75, 0.08) !important;
+      color: var(--gold) !important;
+      cursor: default;
+    }
+
+    .obj-linked-account {
+      margin-top: 6px;
+      color: var(--gold);
+      font-size: 10px;
+    }
+
+    .history-account-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 1px 2px 3px 1px;
+    }
+
+    .history-account-field {
+      min-width: 0;
+      padding: 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg3);
+    }
+
+    .history-account-field .form-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 6px;
+      color: var(--text2);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .history-account-field-type {
+      flex-shrink: 0;
+      color: var(--text3);
+      font-size: 9px;
+      font-weight: 400;
+    }
+
+    .history-total-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 2px 0 12px;
+      padding: 12px;
+      border: 1px solid var(--border-gold);
+      border-radius: 8px;
+      background: rgba(200, 168, 75, 0.08);
+      color: var(--text2);
+      font-size: 11px;
+    }
+
+    .history-total-summary strong {
+      color: var(--gold);
+      font-size: 16px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .evolution-reminder-modal { max-width: 440px; }
+    .evolution-reminder-icon { font-size: 28px; margin-bottom: 8px; }
+    .evolution-reminder-text {
+      margin-top: -8px;
+      color: var(--text2);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 480px) {
+      .history-account-fields { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .goal-account-link, .goal-account-toggle, .goal-account-reveal {
+        transition-duration: 0.01ms !important;
+      }
+    }
+
     /* PAGE HEADER */
     .page-header {
       display: flex;
@@ -6036,21 +6207,31 @@
             Févr. 2026, juillet 2025). Le dernier nombre est l'<strong>année</strong>.
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Patrimoine total (€)</label><input type="number"
-              class="form-input" id="histTotal"></div>
-          <div class="form-group"><label class="form-label">Livret A (€)</label><input type="number" class="form-input"
-              id="histLivret"></div>
+        <div class="form-group">
+          <label class="form-label">Soldes par compte (€)</label>
+          <div class="s-desc" style="margin:2px 0 8px">Saisissez le solde de chaque compte pour ce mois. Les champs laissés vides comptent pour 0.</div>
+          <div class="history-account-fields" id="histAccountFields"></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Banque (€)</label><input type="number" class="form-input"
-              id="histBanque"></div>
-          <div class="form-group"><label class="form-label">Espèces (€)</label><input type="number" class="form-input"
-              id="histEsp"></div>
+        <div class="history-total-summary">
+          <span>Patrimoine total calculé</span>
+          <strong id="histTotalPreview">0 €</strong>
         </div>
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="closeModal('addHistorique')">Annuler</button>
           <button class="btn btn-gold" onclick="addHistorique()">Ajouter</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rappel mensuel : proposer d'ajouter le point de patrimoine du mois -->
+    <div class="modal-overlay" id="modal-evolutionReminder" role="dialog" aria-modal="true" aria-labelledby="evolutionReminderTitle">
+      <div class="modal evolution-reminder-modal">
+        <div class="evolution-reminder-icon" aria-hidden="true">📈</div>
+        <div class="modal-title" id="evolutionReminderTitle">Votre point patrimoine du mois</div>
+        <p class="evolution-reminder-text">Souhaitez-vous enregistrer les soldes de vos comptes pour suivre l’évolution de votre patrimoine ce mois-ci ?</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="deferEvolutionMonthlyReminder()">Plus tard</button>
+          <button type="button" class="btn btn-gold" onclick="startEvolutionMonthlyEntry()">Ajouter</button>
         </div>
       </div>
     </div>
@@ -6063,9 +6244,28 @@
             placeholder="Ex: Fonds d'urgence"></div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Montant cible (€)</label><input type="number"
-              class="form-input" id="objTarget"></div>
+              class="form-input" id="objTarget" min="0" step="0.01"></div>
           <div class="form-group"><label class="form-label">Montant actuel (€)</label><input type="number"
-              class="form-input" id="objCurrent"></div>
+              class="form-input" id="objCurrent" min="0" step="0.01"></div>
+        </div>
+        <div class="goal-account-link" id="objAccountLinkCard">
+          <div class="goal-account-link-header">
+            <div class="goal-account-link-copy">
+              <span class="goal-account-link-title">Attacher à un Compte</span>
+              <div class="goal-account-link-description">Le montant actuel suivra le solde du compte sélectionné. La cible reste inchangée.</div>
+            </div>
+            <button type="button" class="toggle off goal-account-toggle" id="objAccountToggle"
+              aria-label="Attacher à un Compte" aria-controls="objAccountFields" aria-pressed="false" aria-expanded="false" onclick="toggleObjectifAccountLink('add')"></button>
+          </div>
+          <div class="goal-account-reveal" id="objAccountFields" aria-hidden="true">
+            <div class="goal-account-reveal-inner">
+              <div class="form-group">
+                <label class="form-label" for="objAccountSelect">Compte à suivre</label>
+                <select class="form-input goal-account-select" id="objAccountSelect" onchange="updateObjectifAccountPreview('add')"></select>
+                <div class="goal-account-status" id="objAccountStatus" aria-live="polite"></div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="form-group"><label class="form-label">Date cible</label><input type="date" class="form-input"
             id="objDate"></div>
@@ -6089,6 +6289,25 @@
             <input type="number" class="form-input" id="editObjTarget" min="0" step="0.01"></div>
           <div class="form-group"><label class="form-label">Montant actuel (€)</label>
             <input type="number" class="form-input" id="editObjCurrent" min="0" step="0.01"></div>
+        </div>
+        <div class="goal-account-link" id="editObjAccountLinkCard">
+          <div class="goal-account-link-header">
+            <div class="goal-account-link-copy">
+              <span class="goal-account-link-title">Attacher à un Compte</span>
+              <div class="goal-account-link-description">Le montant actuel suivra le solde du compte sélectionné. La cible reste inchangée.</div>
+            </div>
+            <button type="button" class="toggle off goal-account-toggle" id="editObjAccountToggle"
+              aria-label="Attacher à un Compte" aria-controls="editObjAccountFields" aria-pressed="false" aria-expanded="false" onclick="toggleObjectifAccountLink('edit')"></button>
+          </div>
+          <div class="goal-account-reveal" id="editObjAccountFields" aria-hidden="true">
+            <div class="goal-account-reveal-inner">
+              <div class="form-group">
+                <label class="form-label" for="editObjAccountSelect">Compte à suivre</label>
+                <select class="form-input goal-account-select" id="editObjAccountSelect" onchange="updateObjectifAccountPreview('edit')"></select>
+                <div class="goal-account-status" id="editObjAccountStatus" aria-live="polite"></div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="form-group"><label class="form-label">Date cible</label>
           <input type="date" class="form-input" id="editObjDate"></div>
@@ -6116,17 +6335,14 @@
         <div class="modal-title">✏️ Modifier les données du mois</div>
         <input type="hidden" id="editHistIdx">
         <div class="form-group"><label class="form-label">Mois</label><input class="form-input" id="editHistMois"></div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Total (€)</label><input type="number" class="form-input"
-              id="editHistTotal"></div>
-          <div class="form-group"><label class="form-label">Livret A (€)</label><input type="number" class="form-input"
-              id="editHistLivret"></div>
+        <div class="form-group">
+          <label class="form-label">Soldes par compte (€)</label>
+          <div class="s-desc" style="margin:2px 0 8px">Le patrimoine total est recalculé automatiquement à partir des soldes saisis.</div>
+          <div class="history-account-fields" id="editHistAccountFields"></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Banque (€)</label><input type="number" class="form-input"
-              id="editHistBanque"></div>
-          <div class="form-group"><label class="form-label">Espèces (€)</label><input type="number" class="form-input"
-              id="editHistEsp"></div>
+        <div class="history-total-summary">
+          <span>Patrimoine total calculé</span>
+          <strong id="editHistTotalPreview">0 €</strong>
         </div>
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="closeModal('editHistorique')">Annuler</button>
@@ -6442,6 +6658,9 @@
         function closeModal() {
           modal.classList.remove("show");
           document.body.style.overflow = "";
+          if (window.checkEvolutionMonthlyReminder) {
+            setTimeout(window.checkEvolutionMonthlyReminder, 100);
+          }
         }
 
         if (openBtn) openBtn.addEventListener("click", openModal);
@@ -6693,6 +6912,112 @@
       };
 
       let currentUserId = null;
+      // La colonne account_id est facultative afin de rester compatible avec
+      // les anciens schémas Supabase. Si elle n'existe pas, le lien est conservé
+      // dans le stockage local de l'utilisateur et le montant reste synchronisé.
+      let objectiveAccountIdColumn = false;
+      // `account_values` est également facultative : ancien schéma = détail
+      // par compte conservé localement, nouveau schéma = détail partagé via Supabase.
+      let historyAccountValuesColumn = false;
+      let evolutionMonthlyReminderPending = false;
+      let evolutionMonthlyReminderSessionStamp = null;
+
+      function objectiveAccountLinksStorageKey() {
+        return currentUserId ? 'patrimoine_objective_account_links_' + currentUserId : null;
+      }
+
+      function readObjectiveAccountLinks() {
+        const key = objectiveAccountLinksStorageKey();
+        if (!key) return {};
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (e) { return {}; }
+      }
+
+      function writeObjectiveAccountLinks(links) {
+        const key = objectiveAccountLinksStorageKey();
+        if (!key) return;
+        try { localStorage.setItem(key, JSON.stringify(links || {})); }
+        catch (e) { console.warn('Le lien compte/objectif ne peut pas être conservé sur cet appareil.', e); }
+      }
+
+      function storeObjectiveAccountLink(objectiveId, accountId) {
+        if (objectiveId == null) return;
+        const links = readObjectiveAccountLinks();
+        if (accountId == null || accountId === '') delete links[String(objectiveId)];
+        else links[String(objectiveId)] = String(accountId);
+        writeObjectiveAccountLinks(links);
+      }
+
+      function accountForObjective(obj) {
+        if (!obj || obj.accountId == null || obj.accountId === '') return null;
+        return D.accounts.find(a => String(a.id) === String(obj.accountId)) || null;
+      }
+
+      function isUnsupportedObjectiveAccountIdColumn(error) {
+        const message = String(error && error.message || '').toLowerCase();
+        const code = String(error && error.code || '');
+        return code === '42703' || (message.includes('account_id') &&
+          /column|schema cache|could not find|does not exist|not found|permission denied/.test(message));
+      }
+
+      async function syncLinkedObjectivesForAccount(account, options = {}) {
+        if (!account || !Array.isArray(D.objectives)) return { changed: false, failed: false };
+        const balance = Number.isFinite(parseFloat(account.balance)) ? parseFloat(account.balance) : 0;
+        const linked = D.objectives.filter(o => o.accountId != null && String(o.accountId) === String(account.id));
+        let changed = false;
+        let failed = false;
+
+        for (const obj of linked) {
+          const oldValue = parseFloat(obj.current);
+          if (Number.isFinite(oldValue) && Math.abs(oldValue - balance) < 0.000001) continue;
+          obj.current = balance;
+          changed = true;
+          if (!obj.id) continue;
+          const { error } = await supabaseClient.from('objectives')
+            .update({ current: balance })
+            .eq('id', obj.id);
+          if (error) {
+            failed = true;
+            console.warn('Synchronisation du montant de l’objectif liée au compte échouée :', error);
+          }
+        }
+
+        if (changed && document.getElementById('page-objectifs')?.classList.contains('active')) renderObjectifs();
+        if (failed && !options.silent) {
+          showToast('Solde modifié, mais la synchronisation d’un objectif lié a échoué.', 'error');
+        }
+        return { changed, failed };
+      }
+
+      async function syncLinkedObjectivesFromAccounts() {
+        const links = readObjectiveAccountLinks();
+        for (const obj of D.objectives) {
+          const accountId = objectiveAccountIdColumn
+            ? obj.accountId
+            : (obj.accountId != null && obj.accountId !== '' ? obj.accountId : links[String(obj.id)]);
+          if (accountId == null || accountId === '') {
+            if (objectiveAccountIdColumn) delete links[String(obj.id)];
+            continue;
+          }
+          const account = D.accounts.find(a => String(a.id) === String(accountId));
+          if (!account) {
+            obj.accountId = null;
+            delete links[String(obj.id)];
+            if (objectiveAccountIdColumn && obj.id) {
+              const { error } = await supabaseClient.from('objectives')
+                .update({ account_id: null }).eq('id', obj.id);
+              if (error) console.warn('Impossible de retirer le lien vers un compte supprimé :', error);
+            }
+            continue;
+          }
+          obj.accountId = account.id;
+          links[String(obj.id)] = String(account.id);
+          await syncLinkedObjectivesForAccount(account, { silent: true });
+        }
+        writeObjectiveAccountLinks(links);
+      }
 
       // ======================== PERSISTANCE SUPABASE ========================
       function renderAll() {
@@ -6708,15 +7033,24 @@
       async function loadAllData() {
         if (!currentUserId) return;
         try {
-          const [accRes, txRes, objRes, histRes, setRes, indRes, profRes] = await Promise.all([
+          const [accRes, txRes, objRes, objAccountRes, histRes, histAccountValuesRes, setRes, indRes, profRes] = await Promise.all([
             supabaseClient.from('accounts').select('*').order('id', { ascending: true }),
             supabaseClient.from('transactions').select('*').order('date', { ascending: false }),
             supabaseClient.from('objectives').select('*').order('id', { ascending: true }),
+            supabaseClient.from('objectives').select('account_id').limit(1),
             supabaseClient.from('net_worth_history').select('*').order('month_date', { ascending: true }),
+            supabaseClient.from('net_worth_history').select('account_values').limit(1),
             supabaseClient.from('settings').select('*').eq('user_id', currentUserId).maybeSingle(),
             supabaseClient.from('indicators').select('*').eq('user_id', currentUserId).maybeSingle(),
             supabaseClient.from('profiles').select('*').eq('id', currentUserId).maybeSingle(),
           ]);
+
+          // Anciennes installations ne possèdent pas forcément `account_id`.
+          // Cette requête ne bloque pas le chargement : un stockage local sert de repli.
+          objectiveAccountIdColumn = !objAccountRes.error ||
+            (objRes.data || []).some(o => Object.prototype.hasOwnProperty.call(o, 'account_id'));
+          historyAccountValuesColumn = !histAccountValuesRes.error ||
+            (histRes.data || []).some(h => Object.prototype.hasOwnProperty.call(h, 'account_values'));
 
           if (accRes.error) throw accRes.error;
           if (txRes.error) throw txRes.error;
@@ -6734,15 +7068,30 @@
             cat: t.category, amount: parseFloat(t.amount), type: t.type, account_id: t.account_id
           }));
 
-          D.objectives = (objRes.data || []).map(o => ({
-            id: o.id, name: o.name, target: parseFloat(o.target), current: parseFloat(o.current),
-            date: o.target_date, color: o.color, isMain: o.is_main === true
-          }));
+          const savedObjectiveLinks = readObjectiveAccountLinks();
+          D.objectives = (objRes.data || []).map(o => {
+            const localAccountId = savedObjectiveLinks[String(o.id)];
+            const hasAccountColumn = Object.prototype.hasOwnProperty.call(o, 'account_id');
+            return {
+              id: o.id, name: o.name, target: parseFloat(o.target), current: parseFloat(o.current),
+              date: o.target_date, color: o.color, isMain: o.is_main === true,
+              accountId: hasAccountColumn ? o.account_id : (localAccountId != null ? localAccountId : null)
+            };
+          });
 
-          D.history = (histRes.data || []).map(h => ({
-            id: h.id, m: h.month_label, total: parseFloat(h.total), livret: parseFloat(h.livret),
-            banque: parseFloat(h.banque), esp: parseFloat(h.especes), month_date: h.month_date
-          }));
+          const savedHistoryAccountValues = readHistoryAccountValues();
+          D.history = (histRes.data || []).map(h => {
+            const databaseValues = normalizeHistoryAccountValues(h.account_values);
+            const hasAccountValuesColumn = Object.prototype.hasOwnProperty.call(h, 'account_values');
+            const localValues = savedHistoryAccountValues[String(h.month_date)];
+            const accountValues = databaseValues ||
+              (hasAccountValuesColumn && h.account_values != null ? {} : (localValues || null));
+            return {
+              id: h.id, m: h.month_label, total: parseFloat(h.total), livret: parseFloat(h.livret),
+              banque: parseFloat(h.banque), esp: parseFloat(h.especes), month_date: h.month_date,
+              accountValues
+            };
+          });
 
           if (setRes.data) {
             let goalValue = parseFloat(setRes.data.goal);
@@ -6785,6 +7134,9 @@
             D.settings.delta = 0;
           }
 
+          // À chaque connexion, aligne le montant actuel des objectifs liés
+          // sur le dernier solde connu de leur compte.
+          await syncLinkedObjectivesFromAccounts();
           renderAll();
         } catch (err) {
           console.error('Erreur de chargement des données Supabase :', err);
@@ -6807,6 +7159,11 @@
         // rappeler systématiquement les règles de sécurité.
         if (user && user.is_anonymous) {
           showDemoNotice();
+        }
+        evolutionMonthlyReminderPending = true;
+        if (!user || !user.is_anonymous) {
+          // Laisse le temps à la fenêtre de connexion de se fermer avant le rappel.
+          setTimeout(showEvolutionMonthlyReminderIfNeeded, 850);
         }
       };
       
@@ -6852,6 +7209,10 @@
       
       window.onUserLoggedOut = function () {
         currentUserId = null;
+        objectiveAccountIdColumn = false;
+        historyAccountValuesColumn = false;
+        evolutionMonthlyReminderPending = false;
+        evolutionMonthlyReminderSessionStamp = null;
         D.accounts = [];
         D.transactions = [];
         D.objectives = [];
@@ -7034,6 +7395,7 @@
         setTimeout(() => { t.style.animation = 'slideOut 0.3s ease forwards'; setTimeout(() => t.remove(), 300) }, 2500);
       }
       function openModal(id) {
+        if (id === 'addObjectif') resetAddObjectifForm();
         if (id === 'editGoal') document.getElementById('editGoalVal').value = D.settings.goal;
         if (id === 'editBanque') renderEditAccountType('banque', 'editBanqueList');
         if (id === 'editLivret') renderEditAccountType('livret', 'editLivretList');
@@ -7046,12 +7408,10 @@
         }
         if (id === 'addHistorique') {
           // Mois EN COURS pré-rempli à chaque ouverture (toujours modifiable).
-          // Les montants repartent à vide : pas de valeurs d'une saisie annulée.
+          // Les soldes repartent à vide : aucune saisie d'un mois précédent n'est reprise.
           const hm = document.getElementById('histMois');
           if (hm) hm.value = moisLabelFromDate(new Date());
-          ['histTotal', 'histLivret', 'histBanque', 'histEsp'].forEach(i => {
-            const el = document.getElementById(i); if (el) el.value = '';
-          });
+          renderHistoriqueAccountFields('add', null);
         }
         if (id === 'addAccount' || id === 'editAccount') window._widgetReturn = null;
         if (id === 'addAccount') {
@@ -7117,9 +7477,19 @@
           window._widgetReturn = null;
           openModal(back);
         }
+        if (window.checkEvolutionMonthlyReminder) {
+          setTimeout(window.checkEvolutionMonthlyReminder, 100);
+        }
       }
       document.querySelectorAll('.modal-overlay').forEach(o => {
-        o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show') });
+        o.addEventListener('click', e => {
+          if (e.target !== o) return;
+          if (o.id === 'modal-evolutionReminder') {
+            deferEvolutionMonthlyReminder();
+            return;
+          }
+          o.classList.remove('show');
+        });
       });
 
       // ================================================================
@@ -8475,7 +8845,10 @@
               .update({ balance: newBalance })
               .eq('id', accId);
             if (error) console.warn('Update balance failed for', accId, error);
-            else acc.balance = newBalance;
+            else {
+              acc.balance = newBalance;
+              await syncLinkedObjectivesForAccount(acc, { silent: true });
+            }
           }
           // 4. Mise à jour locale de D.transactions : lignes retournées par
           //    Supabase (avec leurs ids) quand c'est possible, re-tri par date
@@ -9258,6 +9631,8 @@
         if (error) { showToast('Erreur : ' + error.message, 'error'); return }
 
         acc.balance = balance;
+        await syncLinkedObjectivesForAccount(acc);
+        renderObjectifs();
         renderOverview();
         showToast('Solde mis à jour ✓');
       }
@@ -9548,7 +9923,8 @@
         if (error) { showToast('Erreur : ' + error.message, 'error'); return }
 
         acc.name = name; acc.balance = balance; acc.type = type; acc.bank = bank;
-        closeModal('editAccount'); renderComptes(); renderOverview(); showToast('Compte modifié ✓');
+        await syncLinkedObjectivesForAccount(acc);
+        closeModal('editAccount'); renderComptes(); renderObjectifs(); renderOverview(); showToast('Compte modifié ✓');
       }
 
       async function deleteAccount(i) {
@@ -9557,11 +9933,43 @@
         if (!acc) return;
         if (!confirm('Supprimer définitivement le compte « ' + acc.name + ' » (' + fmt(acc.balance) + ') ?\nSes transactions restent dans l\'historique.')) return;
 
+        const linkedObjectives = D.objectives.filter(o => o.accountId != null && String(o.accountId) === String(acc.id));
+        const detachedInDatabase = [];
+        if (objectiveAccountIdColumn) {
+          for (const obj of linkedObjectives) {
+            const { error: linkError } = await supabaseClient.from('objectives')
+              .update({ account_id: null }).eq('id', obj.id);
+            if (linkError && isUnsupportedObjectiveAccountIdColumn(linkError)) {
+              objectiveAccountIdColumn = false;
+              break;
+            }
+            if (linkError) {
+              for (const previous of detachedInDatabase) {
+                await supabaseClient.from('objectives')
+                  .update({ account_id: acc.id }).eq('id', previous.id);
+              }
+              showToast('Impossible de détacher l’objectif du compte : ' + linkError.message, 'error');
+              return;
+            }
+            detachedInDatabase.push(obj);
+          }
+        }
+
         const { error } = await supabaseClient.from('accounts').delete().eq('id', acc.id);
+        if (error) {
+          for (const obj of detachedInDatabase) {
+            await supabaseClient.from('objectives').update({ account_id: acc.id }).eq('id', obj.id);
+          }
+          showToast('Erreur : ' + error.message, 'error');
+          return;
+        }
 
-        if (error) { showToast('Erreur : ' + error.message, 'error'); return }
-
-        D.accounts.splice(i, 1); renderComptes(); renderOverview(); showToast('Compte supprimé');
+        linkedObjectives.forEach(obj => {
+          obj.accountId = null;
+          storeObjectiveAccountLink(obj.id, null);
+        });
+        D.accounts.splice(i, 1);
+        renderComptes(); renderObjectifs(); renderOverview(); showToast('Compte supprimé');
       }
 
       async function addTransaction() {
@@ -9598,7 +10006,10 @@
         if (acc) {
           const { error: balErr } = await supabaseClient.from('accounts').update({ balance: newBalance }).eq('id', acc.id);
           if (balErr) { showToast('Transaction enregistrée, mais erreur de mise à jour du solde : ' + balErr.message, 'error'); }
-          else { acc.balance = newBalance; }
+          else {
+            acc.balance = newBalance;
+            await syncLinkedObjectivesForAccount(acc);
+          }
         }
 
         D.transactions.unshift({ id: data.id, date: data.date, account: data.account_name, desc: data.description, cat: data.category, amount: parseFloat(data.amount), type: data.type, account_id: data.account_id });
@@ -9620,7 +10031,10 @@
         if (acc) {
           const { error: balErr } = await supabaseClient.from('accounts').update({ balance: newBalance }).eq('id', acc.id);
           if (balErr) { showToast('Transaction supprimée, mais erreur de mise à jour du solde : ' + balErr.message, 'error'); }
-          else { acc.balance = newBalance; }
+          else {
+            acc.balance = newBalance;
+            await syncLinkedObjectivesForAccount(acc);
+          }
         }
 
         D.transactions.splice(i, 1); renderComptes(); renderOverview(); showToast('Transaction supprimée');
@@ -9726,6 +10140,8 @@
           newAcc.balance += (newType === 'income' ? newAmount : -newAmount);
           await supabaseClient.from('accounts').update({ balance: newAcc.balance }).eq('id', newAcc.id);
         }
+        const affectedAccounts = Array.from(new Set([oldAcc, newAcc].filter(Boolean)));
+        for (const account of affectedAccounts) await syncLinkedObjectivesForAccount(account);
 
         // Mise à jour de l'objet local
         t.date    = newDate;
@@ -9886,33 +10302,287 @@
         return p.year + '-' + String(p.monthIdx + 1).padStart(2, '0') + '-01';
       }
 
+      function evolutionMonthlyReminderStorageKey() {
+        return currentUserId ? 'patrimoine_evolution_monthly_reminder_' + currentUserId : null;
+      }
+
+      function readEvolutionMonthlyReminderState() {
+        const key = evolutionMonthlyReminderStorageKey();
+        if (!key) return {};
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (e) { return {}; }
+      }
+
+      function writeEvolutionMonthlyReminderState(state) {
+        const key = evolutionMonthlyReminderStorageKey();
+        if (!key) return;
+        try { localStorage.setItem(key, JSON.stringify(state || {})); }
+        catch (e) { console.warn('Le rappel mensuel ne peut pas être mémorisé sur cet appareil.', e); }
+      }
+
+      function showEvolutionMonthlyReminderIfNeeded() {
+        if (!evolutionMonthlyReminderPending || !currentUserId) return;
+        const month = localTodayStr().slice(0, 7);
+        const sessionStamp = String(currentUserId) + ':' + month;
+        if (evolutionMonthlyReminderSessionStamp === sessionStamp) {
+          evolutionMonthlyReminderPending = false;
+          return;
+        }
+        const demoNotice = document.getElementById('modal-demoNotice');
+        const authModal = document.getElementById('authModal');
+        if (demoNotice?.classList.contains('show') || authModal?.classList.contains('show')) return;
+        const anotherModalIsOpen = Array.from(document.querySelectorAll('.modal-overlay.show'))
+          .some(overlay => !['modal-evolutionReminder', 'modal-demoNotice'].includes(overlay.id));
+        if (anotherModalIsOpen) return;
+
+        const state = readEvolutionMonthlyReminderState();
+        const hasCurrentMonthEntry = D.history.some(row => String(row.month_date || '').slice(0, 7) === month);
+        if (hasCurrentMonthEntry) {
+          state.lastShownMonth = month;
+          state.deferredMonth = '';
+          writeEvolutionMonthlyReminderState(state);
+          evolutionMonthlyReminderSessionStamp = sessionStamp;
+          evolutionMonthlyReminderPending = false;
+          return;
+        }
+        // Le rappel ne s'affiche qu'une fois qu'il existe des comptes à saisir.
+        // Le prochain ajout de compte relancera la vérification.
+        if (!D.accounts.length) return;
+        if (state.lastShownMonth === month && state.deferredMonth !== month) {
+          evolutionMonthlyReminderSessionStamp = sessionStamp;
+          evolutionMonthlyReminderPending = false;
+          return;
+        }
+
+        state.lastShownMonth = month;
+        writeEvolutionMonthlyReminderState(state);
+        evolutionMonthlyReminderSessionStamp = sessionStamp;
+        evolutionMonthlyReminderPending = false;
+        openModal('evolutionReminder');
+      }
+      window.checkEvolutionMonthlyReminder = showEvolutionMonthlyReminderIfNeeded;
+
+      function deferEvolutionMonthlyReminder() {
+        const month = localTodayStr().slice(0, 7);
+        const state = readEvolutionMonthlyReminderState();
+        state.lastShownMonth = month;
+        state.deferredMonth = month;
+        writeEvolutionMonthlyReminderState(state);
+        evolutionMonthlyReminderPending = false;
+        closeModal('evolutionReminder');
+      }
+
+      function startEvolutionMonthlyEntry() {
+        const month = localTodayStr().slice(0, 7);
+        const state = readEvolutionMonthlyReminderState();
+        state.lastShownMonth = month;
+        state.deferredMonth = '';
+        writeEvolutionMonthlyReminderState(state);
+        evolutionMonthlyReminderPending = false;
+        closeModal('evolutionReminder');
+        showPage('evolution');
+        openModal('addHistorique');
+      }
+
+      function historyAccountValuesStorageKey() {
+        return currentUserId ? 'patrimoine_history_account_values_' + currentUserId : null;
+      }
+
+      function readHistoryAccountValues() {
+        const key = historyAccountValuesStorageKey();
+        if (!key) return {};
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (e) { return {}; }
+      }
+
+      function writeHistoryAccountValues(values) {
+        const key = historyAccountValuesStorageKey();
+        if (!key) return;
+        try { localStorage.setItem(key, JSON.stringify(values || {})); }
+        catch (e) { console.warn('Le détail mensuel par compte ne peut pas être conservé sur cet appareil.', e); }
+      }
+
+      function normalizeHistoryAccountValues(values) {
+        if (typeof values === 'string') {
+          try { values = JSON.parse(values); } catch (e) { return null; }
+        }
+        if (!values || typeof values !== 'object' || Array.isArray(values)) return null;
+        const normalized = {};
+        Object.keys(values).forEach(id => {
+          if (values[id] == null || values[id] === '') normalized[String(id)] = null;
+          else {
+            const amount = parseFloat(values[id]);
+            normalized[String(id)] = Number.isFinite(amount) ? amount : null;
+          }
+        });
+        return normalized;
+      }
+
+      function storeHistoryAccountValues(monthDate, values) {
+        if (!monthDate) return;
+        const stored = readHistoryAccountValues();
+        stored[String(monthDate)] = normalizeHistoryAccountValues(values) || {};
+        writeHistoryAccountValues(stored);
+      }
+
+      function removeHistoryAccountValues(monthDate) {
+        if (!monthDate) return;
+        const stored = readHistoryAccountValues();
+        delete stored[String(monthDate)];
+        writeHistoryAccountValues(stored);
+      }
+
+      function historyAccountValuesForRow(row) {
+        const saved = normalizeHistoryAccountValues(row && row.accountValues);
+        if (saved) return saved;
+        const local = readHistoryAccountValues()[String(row && row.month_date)];
+        const localValues = normalizeHistoryAccountValues(local);
+        if (localValues) return localValues;
+
+        // Pour les anciens mois, on peut restaurer une catégorie uniquement
+        // quand un seul compte de ce type existe : aucune répartition n'est inventée.
+        const legacy = {};
+        const legacyTypes = [
+          { type: 'livret', field: 'livret' },
+          { type: 'banque', field: 'banque' },
+          { type: 'especes', field: 'esp' }
+        ];
+        legacyTypes.forEach(item => {
+          const accounts = D.accounts.filter(a => a.type === item.type);
+          const amount = parseFloat(row && row[item.field]);
+          if (accounts.length === 1 && Number.isFinite(amount)) legacy[String(accounts[0].id)] = amount;
+        });
+        return legacy;
+      }
+
+      function renderHistoriqueAccountFields(mode, values) {
+        const isEdit = mode === 'edit';
+        const container = document.getElementById(isEdit ? 'editHistAccountFields' : 'histAccountFields');
+        if (!container) return;
+        const savedValues = normalizeHistoryAccountValues(values) || {};
+        if (!D.accounts.length) {
+          container.innerHTML = '<div class="s-desc" style="grid-column:1/-1;padding:10px">Aucun compte disponible. Ajoutez d’abord un compte dans la page « Comptes ».</div>';
+          updateHistoriqueTotalPreview(mode);
+          return;
+        }
+        container.innerHTML = D.accounts.map((account, index) => {
+          const id = String(account.id);
+          const inputId = (isEdit ? 'editHistAccount' : 'histAccount') + index;
+          const value = Object.prototype.hasOwnProperty.call(savedValues, id) && savedValues[id] != null
+            ? String(savedValues[id])
+            : '';
+          return `<div class="history-account-field">
+            <label class="form-label" for="${inputId}">
+              <span>${escHtml(account.icon || '💰')} ${escHtml(account.name)}</span>
+              <span class="history-account-field-type">${escHtml(typeLabel(account.type))}</span>
+            </label>
+            <input type="number" step="0.01" inputmode="decimal" class="form-input"
+              id="${inputId}" data-history-account-id="${escHtml(id)}" aria-label="Solde de ${escHtml(account.name)}"
+              placeholder="0,00" value="${escHtml(value)}" oninput="updateHistoriqueTotalPreview('${mode}')">
+          </div>`;
+        }).join('');
+        updateHistoriqueTotalPreview(mode);
+      }
+
+      function collectHistoriqueAccountValues(mode) {
+        const isEdit = mode === 'edit';
+        const container = document.getElementById(isEdit ? 'editHistAccountFields' : 'histAccountFields');
+        const values = {};
+        let total = 0;
+        let count = 0;
+        if (!container) return { values, total, count };
+        container.querySelectorAll('[data-history-account-id]').forEach(input => {
+          const id = input.getAttribute('data-history-account-id');
+          const raw = String(input.value == null ? '' : input.value).trim();
+          values[id] = null;
+          if (!raw) return;
+          const amount = parseFloat(raw);
+          if (!Number.isFinite(amount)) return;
+          values[id] = amount;
+          total += amount;
+          count++;
+        });
+        total = Math.round((total + Number.EPSILON) * 100) / 100;
+        return { values, total, count };
+      }
+
+      function updateHistoriqueTotalPreview(mode) {
+        const isEdit = mode === 'edit';
+        const preview = document.getElementById(isEdit ? 'editHistTotalPreview' : 'histTotalPreview');
+        if (!preview) return;
+        preview.textContent = fmt(collectHistoriqueAccountValues(mode).total);
+      }
+
+      function aggregateHistoriqueValuesByType(values) {
+        const sums = { livret: 0, banque: 0, especes: 0 };
+        D.accounts.forEach(account => {
+          const amount = values[String(account.id)];
+          if (amount == null || !Number.isFinite(parseFloat(amount))) return;
+          const type = account.type;
+          if (Object.prototype.hasOwnProperty.call(sums, type)) sums[type] += parseFloat(amount);
+        });
+        Object.keys(sums).forEach(type => {
+          sums[type] = Math.round((sums[type] + Number.EPSILON) * 100) / 100;
+        });
+        return sums;
+      }
+
+      function isUnsupportedHistoryAccountValuesColumn(error) {
+        const message = String(error && error.message || '').toLowerCase();
+        const code = String(error && error.code || '');
+        return code === '42703' || (message.includes('account_values') &&
+          /column|schema cache|could not find|does not exist|not found|permission denied/.test(message));
+      }
+
       async function addHistorique() {
         if (!requireLogin()) return;
         const m = document.getElementById('histMois').value.trim();
-        const total = parseFloat(document.getElementById('histTotal').value) || 0;
-        const livret = parseFloat(document.getElementById('histLivret').value) || 0;
-        const banque = parseFloat(document.getElementById('histBanque').value) || 0;
-        const esp = parseFloat(document.getElementById('histEsp').value) || 0;
-        if (!m || !total) { showToast('Mois et total requis', 'error'); return }
+        const amounts = collectHistoriqueAccountValues('add');
+        if (!m || amounts.count === 0) {
+          showToast('Mois et au moins un solde de compte requis', 'error');
+          return;
+        }
         const monthDate = moisLabelToDate(m);
         if (!monthDate) { showToast('Mois non reconnu. Exemples : « Jan 26 », « Févr. 2026 », « juillet 2025 ».', 'error'); return }
         const already = D.history.find(x => x.month_date === monthDate);
         if (already && !confirm('Le mois « ' + already.m + ' » existe déjà (total ' + fmt(already.total) + '). Le remplacer par ces valeurs ?')) return;
 
-        const { data, error } = await supabaseClient.from('net_worth_history').upsert({
-          user_id: currentUserId, month_label: m, month_date: monthDate, total, livret, banque, especes: esp
-        }, { onConflict: 'user_id,month_date' }).select().single();
+        const categories = aggregateHistoriqueValuesByType(amounts.values);
+        const payload = {
+          user_id: currentUserId, month_label: m, month_date: monthDate, total: amounts.total,
+          livret: categories.livret, banque: categories.banque, especes: categories.especes
+        };
+        if (historyAccountValuesColumn) payload.account_values = amounts.values;
 
+        let saveResult = await supabaseClient.from('net_worth_history')
+          .upsert(payload, { onConflict: 'user_id,month_date' }).select().single();
+        if (saveResult.error && historyAccountValuesColumn && isUnsupportedHistoryAccountValuesColumn(saveResult.error)) {
+          historyAccountValuesColumn = false;
+          delete payload.account_values;
+          saveResult = await supabaseClient.from('net_worth_history')
+            .upsert(payload, { onConflict: 'user_id,month_date' }).select().single();
+        }
+        const { data, error } = saveResult;
         if (error) { showToast('Erreur : ' + error.message, 'error'); return }
 
         D.history = D.history.filter(x => x.month_date !== monthDate);
-        D.history.push({ id: data.id, m: data.month_label, total: parseFloat(data.total), livret: parseFloat(data.livret), banque: parseFloat(data.banque), esp: parseFloat(data.especes), month_date: data.month_date });
+        D.history.push({
+          id: data.id, m: data.month_label, total: parseFloat(data.total),
+          livret: parseFloat(data.livret), banque: parseFloat(data.banque),
+          esp: parseFloat(data.especes), month_date: data.month_date,
+          accountValues: amounts.values
+        });
+        storeHistoryAccountValues(data.month_date, amounts.values);
         D.history.sort((a, b) => (a.month_date || '').localeCompare(b.month_date || ''));
 
         closeModal('addHistorique');
         renderEvolution(); renderAnalyse(); renderOverview();
         showToast('Données ajoutées ✓');
-        ['histMois', 'histTotal', 'histLivret', 'histBanque', 'histEsp'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        document.getElementById('histMois').value = '';
       }
 
       // ======================== ANALYSE ========================
@@ -11411,12 +12081,10 @@
 
       function editHistoriqueRow(i) {
         const x = D.history[i];
+        if (!x) return;
         document.getElementById('editHistIdx').value = i;
         document.getElementById('editHistMois').value = x.m;
-        document.getElementById('editHistTotal').value = x.total;
-        document.getElementById('editHistLivret').value = x.livret;
-        document.getElementById('editHistBanque').value = x.banque;
-        document.getElementById('editHistEsp').value = x.esp;
+        renderHistoriqueAccountFields('edit', historyAccountValuesForRow(x));
         openModal('editHistorique');
       }
 
@@ -11424,21 +12092,43 @@
         if (!requireLogin()) return;
         const i = parseInt(document.getElementById('editHistIdx').value);
         const row = D.history[i];
-        const m = document.getElementById('editHistMois').value;
-        const total = parseFloat(document.getElementById('editHistTotal').value) || 0;
-        const livret = parseFloat(document.getElementById('editHistLivret').value) || 0;
-        const banque = parseFloat(document.getElementById('editHistBanque').value) || 0;
-        const esp = parseFloat(document.getElementById('editHistEsp').value) || 0;
+        if (!row) return;
+        const m = document.getElementById('editHistMois').value.trim();
+        const amounts = collectHistoriqueAccountValues('edit');
+        if (!m || amounts.count === 0) {
+          showToast('Mois et au moins un solde de compte requis', 'error');
+          return;
+        }
         const monthDate = m !== row.m ? moisLabelToDate(m) : row.month_date;
         if (!monthDate) { showToast('Mois non reconnu. Exemples : « Jan 26 », « Févr. 2026 », « juillet 2025 ».', 'error'); return }
 
-        const { error } = await supabaseClient.from('net_worth_history')
-          .update({ month_label: m, month_date: monthDate, total, livret, banque, especes: esp })
-          .eq('id', row.id);
+        const categories = aggregateHistoriqueValuesByType(amounts.values);
+        const payload = {
+          month_label: m, month_date: monthDate, total: amounts.total,
+          livret: categories.livret, banque: categories.banque, especes: categories.especes
+        };
+        if (historyAccountValuesColumn) payload.account_values = amounts.values;
 
-        if (error) { showToast('Erreur : ' + error.message, 'error'); return }
+        let updateResult = await supabaseClient.from('net_worth_history')
+          .update(payload).eq('id', row.id);
+        if (updateResult.error && historyAccountValuesColumn && isUnsupportedHistoryAccountValuesColumn(updateResult.error)) {
+          historyAccountValuesColumn = false;
+          delete payload.account_values;
+          updateResult = await supabaseClient.from('net_worth_history')
+            .update(payload).eq('id', row.id);
+        }
+        if (updateResult.error) { showToast('Erreur : ' + updateResult.error.message, 'error'); return }
 
-        row.m = m; row.total = total; row.livret = livret; row.banque = banque; row.esp = esp; row.month_date = monthDate;
+        const oldMonthDate = row.month_date;
+        row.m = m;
+        row.total = amounts.total;
+        row.livret = categories.livret;
+        row.banque = categories.banque;
+        row.esp = categories.especes;
+        row.month_date = monthDate;
+        row.accountValues = amounts.values;
+        if (oldMonthDate !== monthDate) removeHistoryAccountValues(oldMonthDate);
+        storeHistoryAccountValues(monthDate, amounts.values);
         D.history.sort((a, b) => (a.month_date || '').localeCompare(b.month_date || ''));
         // CORRECTIF : recalcule le delta (settings.delta dépend de l'historique)
         if (D.history.length >= 2) {
@@ -11461,11 +12151,107 @@
         if (error) { showToast('Erreur : ' + error.message, 'error'); return }
 
         D.history.splice(i, 1);
+        removeHistoryAccountValues(row.month_date);
         renderAnalyse(); renderEvolution(); renderOverview();
         showToast('Mois supprimé');
       }
 
       // ======================== OBJECTIFS ========================
+      function objectifAccountFieldIds(mode) {
+        const prefix = mode === 'edit' ? 'editObj' : 'obj';
+        return {
+          card: prefix + 'AccountLinkCard',
+          toggle: prefix + 'AccountToggle',
+          fields: prefix + 'AccountFields',
+          select: prefix + 'AccountSelect',
+          status: prefix + 'AccountStatus',
+          current: prefix + 'Current'
+        };
+      }
+
+      function populateObjectifAccountSelect(mode, selectedAccountId) {
+        const ids = objectifAccountFieldIds(mode);
+        const select = document.getElementById(ids.select);
+        if (!select) return;
+        const hasAccounts = D.accounts.length > 0;
+        const placeholder = hasAccounts ? 'Choisir un compte…' : 'Aucun compte disponible';
+        const options = [`<option value="">${placeholder}</option>`].concat(D.accounts.map(a => {
+          const icon = a.icon || '🏦';
+          const type = a.type ? ` · ${typeLabel(a.type)}` : '';
+          return `<option value="${escHtml(String(a.id))}">${escHtml(icon)} ${escHtml(a.name)}${escHtml(type)} — ${escHtml(fmt(a.balance))}</option>`;
+        }));
+        select.innerHTML = options.join('');
+        select.disabled = !hasAccounts;
+        select.value = selectedAccountId == null ? '' : String(selectedAccountId);
+      }
+
+      function updateObjectifAccountPreview(mode) {
+        const ids = objectifAccountFieldIds(mode);
+        const toggle = document.getElementById(ids.toggle);
+        const select = document.getElementById(ids.select);
+        const current = document.getElementById(ids.current);
+        const status = document.getElementById(ids.status);
+        if (!toggle || !select || !current || !status) return;
+
+        const attached = toggle.classList.contains('on');
+        const account = attached
+          ? D.accounts.find(a => String(a.id) === String(select.value))
+          : null;
+        const isLinked = attached && !!account;
+        current.readOnly = isLinked;
+        current.setAttribute('aria-readonly', String(isLinked));
+        current.classList.toggle('goal-current-linked', isLinked);
+
+        if (account) {
+          const balance = Number.isFinite(parseFloat(account.balance)) ? parseFloat(account.balance) : 0;
+          current.value = balance;
+          status.textContent = `Montant actuel synchronisé : ${fmt(balance)} avec « ${account.name} ».`;
+        } else if (attached && D.accounts.length === 0) {
+          status.textContent = 'Ajoutez d’abord un compte pour pouvoir le rattacher à cet objectif.';
+        } else if (attached) {
+          status.textContent = 'Sélectionnez un compte : son solde mettra automatiquement à jour le montant actuel.';
+        } else {
+          status.textContent = '';
+        }
+      }
+
+      function setObjectifAccountLinkUI(mode, attached, selectedAccountId) {
+        const ids = objectifAccountFieldIds(mode);
+        const card = document.getElementById(ids.card);
+        const toggle = document.getElementById(ids.toggle);
+        const fields = document.getElementById(ids.fields);
+        const select = document.getElementById(ids.select);
+        if (!card || !toggle || !fields) return;
+
+        populateObjectifAccountSelect(mode, selectedAccountId);
+        if (select) select.tabIndex = attached ? 0 : -1;
+        toggle.classList.toggle('on', !!attached);
+        toggle.classList.toggle('off', !attached);
+        toggle.setAttribute('aria-pressed', String(!!attached));
+        toggle.setAttribute('aria-expanded', String(!!attached));
+        card.classList.toggle('is-linked', !!attached);
+        fields.classList.toggle('is-open', !!attached);
+        fields.setAttribute('aria-hidden', String(!attached));
+        updateObjectifAccountPreview(mode);
+      }
+
+      function toggleObjectifAccountLink(mode) {
+        const ids = objectifAccountFieldIds(mode);
+        const toggle = document.getElementById(ids.toggle);
+        const select = document.getElementById(ids.select);
+        if (!toggle) return;
+        const nextState = !toggle.classList.contains('on');
+        setObjectifAccountLinkUI(mode, nextState, select ? select.value : null);
+      }
+
+      function resetAddObjectifForm() {
+        ['objName', 'objTarget', 'objCurrent', 'objDate'].forEach(id => {
+          const field = document.getElementById(id);
+          if (field) field.value = '';
+        });
+        setObjectifAccountLinkUI('add', false, null);
+      }
+
       function renderObjectifs() {
         if (D.objectives.length === 0) {
           // Empty state intelligent (point 5)
@@ -11480,7 +12266,8 @@
           return;
         }
         document.getElementById('objectifsList').innerHTML = D.objectives.map((o, i) => {
-          const pct = Math.min(100, Math.round(o.current / o.target * 100));
+          const pct = o.target > 0 ? Math.max(0, Math.min(100, Math.round(o.current / o.target * 100))) : 0;
+          const linkedAccount = accountForObjective(o);
           const isMain = o.isMain === true;
           const mainBadge = isMain
             ? '<span class="badge" style="background:rgba(200,168,75,0.25);color:var(--gold);font-size:9px;margin-left:6px">⭐ PRINCIPAL</span>'
@@ -11507,6 +12294,7 @@
         <span>Reste : ${fmt(Math.max(0, o.target - o.current))}</span>
         <span>Échéance : ${o.date ? (fmtDateFr(o.date) || escHtml(o.date)) : 'non définie'}</span>
       </div>
+      ${linkedAccount ? `<div class="obj-linked-account">↗ Montant actuel synchronisé avec ${escHtml(linkedAccount.name)}</div>` : ''}
     </div>`;
         }).join('');
       }
@@ -11561,28 +12349,53 @@
       async function addObjectif() {
         if (!requireLogin()) return;
         const name = document.getElementById('objName').value.trim();
-        const target = parseFloat(document.getElementById('objTarget').value) || 0;
-        const current = parseFloat(document.getElementById('objCurrent').value) || 0;
+        const target = parseFloat(document.getElementById('objTarget').value);
+        const accountToggle = document.getElementById('objAccountToggle');
+        const attached = !!(accountToggle && accountToggle.classList.contains('on'));
+        const accountIdValue = attached ? document.getElementById('objAccountSelect').value : '';
+        const linkedAccount = accountIdValue
+          ? D.accounts.find(a => String(a.id) === String(accountIdValue))
+          : null;
+        if (!name || !Number.isFinite(target) || target <= 0) {
+          showToast('Nom et montant cible supérieur à 0 requis', 'error');
+          return;
+        }
+        if (attached && !linkedAccount) {
+          showToast('Sélectionnez un compte à rattacher à cet objectif.', 'error');
+          return;
+        }
+        const manualCurrent = parseFloat(document.getElementById('objCurrent').value) || 0;
+        const current = linkedAccount ? (parseFloat(linkedAccount.balance) || 0) : manualCurrent;
         const date = document.getElementById('objDate').value || '2027-12-31';
-        if (!name || !target) { showToast('Nom et cible requis', 'error'); return }
         const colors = ['#C8A84B', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336'];
         const color = colors[D.objectives.length % colors.length];
 
         // Si c'est le tout premier objectif, il devient automatiquement principal
         const isMain = D.objectives.length === 0;
-
-        const { data, error } = await supabaseClient.from('objectives').insert({
+        const insertPayload = {
           user_id: currentUserId, name, target, current, target_date: date, color, is_main: isMain
-        }).select().single();
+        };
+        if (objectiveAccountIdColumn) insertPayload.account_id = linkedAccount ? linkedAccount.id : null;
 
+        let insertResult = await supabaseClient.from('objectives').insert(insertPayload).select().single();
+        if (insertResult.error && objectiveAccountIdColumn && isUnsupportedObjectiveAccountIdColumn(insertResult.error)) {
+          objectiveAccountIdColumn = false;
+          delete insertPayload.account_id;
+          insertResult = await supabaseClient.from('objectives').insert(insertPayload).select().single();
+        }
+        const { data, error } = insertResult;
         if (error) { showToast('Erreur : ' + error.message, 'error'); return }
 
+        const savedAccountId = linkedAccount
+          ? (data.account_id != null ? data.account_id : linkedAccount.id)
+          : null;
         D.objectives.push({
           id: data.id, name: data.name,
           target: parseFloat(data.target), current: parseFloat(data.current),
           date: data.target_date, color: data.color,
-          isMain: data.is_main === true
+          isMain: data.is_main === true, accountId: savedAccountId
         });
+        storeObjectiveAccountLink(data.id, savedAccountId);
         closeModal('addObjectif');
         renderObjectifs();
         renderOverview();
@@ -11602,6 +12415,7 @@
         document.getElementById('editObjTarget').value = obj.target;
         document.getElementById('editObjCurrent').value = obj.current;
         document.getElementById('editObjDate').value = obj.date || '';
+        setObjectifAccountLinkUI('edit', obj.accountId != null && obj.accountId !== '', obj.accountId);
         openModal('editObjectif');
       }
 
@@ -11613,20 +12427,47 @@
         const i = parseInt(document.getElementById('editObjIdx').value);
         const obj = D.objectives[i];
         if (!obj) return;
-        const targetRaw  = document.getElementById('editObjTarget').value;
+        const targetRaw = document.getElementById('editObjTarget').value;
         const currentRaw = document.getElementById('editObjCurrent').value;
-        const dateRaw    = document.getElementById('editObjDate').value;
-        const target  = targetRaw  === '' ? obj.target  : (parseFloat(targetRaw)  || 0);
-        const current = currentRaw === '' ? obj.current : (parseFloat(currentRaw) || 0);
-        const date    = dateRaw    === '' ? obj.date    : dateRaw;
+        const dateRaw = document.getElementById('editObjDate').value;
+        const target = targetRaw === '' ? obj.target : parseFloat(targetRaw);
+        const date = dateRaw === '' ? obj.date : dateRaw;
+        const accountToggle = document.getElementById('editObjAccountToggle');
+        const attached = !!(accountToggle && accountToggle.classList.contains('on'));
+        const accountIdValue = attached ? document.getElementById('editObjAccountSelect').value : '';
+        const linkedAccount = accountIdValue
+          ? D.accounts.find(a => String(a.id) === String(accountIdValue))
+          : null;
 
-        const { error } = await supabaseClient.from('objectives')
-          .update({ target, current, target_date: date })
-          .eq('id', obj.id);
+        if (!Number.isFinite(target) || target <= 0) {
+          showToast('Le montant cible doit être supérieur à 0.', 'error');
+          return;
+        }
+        if (attached && !linkedAccount) {
+          showToast('Sélectionnez un compte à rattacher à cet objectif.', 'error');
+          return;
+        }
+        const manualCurrent = currentRaw === '' ? obj.current : (parseFloat(currentRaw) || 0);
+        const current = linkedAccount ? (parseFloat(linkedAccount.balance) || 0) : manualCurrent;
+        const accountId = linkedAccount ? linkedAccount.id : null;
+        const updatePayload = { target, current, target_date: date };
+        if (objectiveAccountIdColumn) updatePayload.account_id = accountId;
 
-        if (error) { showToast('Erreur : ' + error.message, 'error'); return; }
+        let updateResult = await supabaseClient.from('objectives')
+          .update(updatePayload).eq('id', obj.id);
+        if (updateResult.error && objectiveAccountIdColumn && isUnsupportedObjectiveAccountIdColumn(updateResult.error)) {
+          objectiveAccountIdColumn = false;
+          delete updatePayload.account_id;
+          updateResult = await supabaseClient.from('objectives')
+            .update(updatePayload).eq('id', obj.id);
+        }
+        if (updateResult.error) { showToast('Erreur : ' + updateResult.error.message, 'error'); return; }
 
-        obj.target = target; obj.current = current; obj.date = date;
+        obj.target = target;
+        obj.current = current;
+        obj.date = date;
+        obj.accountId = accountId;
+        storeObjectiveAccountLink(obj.id, accountId);
         closeModal('editObjectif');
         // Re-render l'anneau d'objectif ET recalculer le score
         // (sinon le ring continue d'afficher l'ancien % si l'objectif modifié est le principal)
@@ -11648,6 +12489,7 @@
         if (error) { showToast('Erreur : ' + error.message, 'error'); return }
 
         D.objectives.splice(i, 1);
+        storeObjectiveAccountLink(obj.id, null);
 
         // Si on a supprimé l'objectif principal, promouvoir le premier restant
         if (wasMain && D.objectives.length > 0) {
@@ -12070,6 +12912,7 @@
           D.transactions = [];
           D.objectives = [];
           D.history = [];
+          writeHistoryAccountValues({});
           D.settings = { revenu: 2200, goal: 20000, delta: 0, budget: 1800, currency: D.settings.currency, dateFormat: D.settings.dateFormat };
           D.indicators = { bestVal: 0, bestDate: '-', worstVal: 0, worstDate: '-', avgEpargne: 0 };
           closeResetDataModal();
@@ -12475,6 +13318,9 @@
           }
         } else {
           document.body.style.overflow = '';
+        }
+        if (window.checkEvolutionMonthlyReminder) {
+          setTimeout(window.checkEvolutionMonthlyReminder, 120);
         }
       }
 
