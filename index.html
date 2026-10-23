@@ -2182,7 +2182,38 @@
       border-radius: 9px;
       padding: 12px;
       margin-bottom: 8px;
-      border: 1px solid var(--border)
+      border: 1px solid var(--border);
+      /* Réordonnancement par glisser-déposer : la carte entière est
+         saisissable (appui long sur tactile, pression-glissée à la souris). */
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: pan-y;
+      cursor: grab;
+    }
+
+    .obj-card.dragging {
+      opacity: 0.94;
+      transform: scale(1.02);
+      border-color: var(--gold) !important;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+      cursor: grabbing;
+      position: relative;
+      z-index: 5;
+    }
+
+    body.obj-dragging,
+    body.obj-dragging * {
+      cursor: grabbing !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+    }
+
+    .obj-drag-hint {
+      margin: 0 0 10px;
+      color: var(--text3);
+      font-size: 10px;
+      letter-spacing: 0.2px;
     }
 
     .obj-progress-bar {
@@ -5746,6 +5777,7 @@
             </div>
             <button class="btn btn-gold btn-sm" onclick="openModal('addObjectif')">+ Nouvel objectif</button>
           </div>
+          <div class="obj-drag-hint">🖐️ Maintenez un objectif (appui long) puis glissez-le pour changer son ordre.</div>
           <div id="objectifsList"></div>
         </div>
 
@@ -6368,7 +6400,7 @@
         <div class="modal-title">✏️ Modifier l'objectif</div>
         <input type="hidden" id="editObjIdx">
         <div class="form-group"><label class="form-label">Nom</label>
-          <input class="form-input" id="editObjName" readonly style="background:var(--bg2);color:var(--text3);cursor:default">
+          <input class="form-input" id="editObjName" placeholder="Ex: Fonds d'urgence">
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Montant cible (€)</label>
@@ -7002,6 +7034,13 @@
       // les anciens schémas Supabase. Si elle n'existe pas, le lien est conservé
       // dans le stockage local de l'utilisateur et le montant reste synchronisé.
       let objectiveAccountIdColumn = false;
+      // Colonnes optionnelles : dès qu'une ABSENCE est confirmée (erreur
+      // 42703 ou équivalente), on ne réessaie jamais d'écrire account_id /
+      // sort_order. Tant que l'absence n'est pas confirmée, les écritures
+      // sont tentées (avec repli) pour ne dépendre jamais d'un simple
+      // drapeau de détection, qui peut être faux sur un raté transitoire.
+      let objectiveAccountColumnMissing = false;
+      let objectiveSortOrderColumnMissing = false;
       // `account_values` est également facultative : ancien schéma = détail
       // par compte conservé localement, nouveau schéma = détail partagé via Supabase.
       let historyAccountValuesColumn = false;
@@ -7066,6 +7105,75 @@
           /column|schema cache|could not find|does not exist|not found|permission denied/.test(message));
       }
 
+      function isMissingDbColumnError(error, column) {
+        const message = String(error && error.message || '').toLowerCase();
+        const code = String(error && error.code || '');
+        return code === '42703' || (message.includes(column) &&
+          /column|schema cache|could not find|does not exist|not found|permission denied/.test(message));
+      }
+
+      // La colonne existe mais refuse la valeur (clé étrangère, type…),
+      // par ex. le sentinel « __total__ » sur une colonne uuid/bigint.
+      function isRejectedAccountLinkValue(error) {
+        const message = String(error && error.message || '').toLowerCase();
+        const code = String(error && error.code || '');
+        return code === '22P02' || code === '23503' || code === '23502' || code === '23514' ||
+          /account_id|foreign key|constraint|invalid input syntax|cast|violates/.test(message);
+      }
+
+      // Écriture d'une ligne objectives avec persistance TOUJOURS tentée du
+      // lien account_id (compte réel ou sentinel « __total__ »).
+      //   linkValue === undefined → ne pas toucher au champ account_id ;
+      //   sinon le champ est tenté, avec replis :
+      //     valeur refusée  → account_id = NULL (le lien local garde la main) ;
+      //     colonne absente → sans le champ (le lien reste en stockage local).
+      async function updateObjectiveRow(objectiveId, payload, linkValue) {
+        const base = { ...payload };
+        if (linkValue === undefined) {
+          return supabaseClient.from('objectives').update(base).eq('id', objectiveId);
+        }
+        if (!objectiveAccountColumnMissing) {
+          const attempt = { ...base, account_id: linkValue == null ? null : linkValue };
+          let res = await supabaseClient.from('objectives').update(attempt).eq('id', objectiveId);
+          if (!res.error) return res;
+          if (isMissingDbColumnError(res.error, 'account_id')) {
+            objectiveAccountColumnMissing = true;
+            objectiveAccountIdColumn = false;
+          } else if (isRejectedAccountLinkValue(res.error)) {
+            attempt.account_id = null;
+            return supabaseClient.from('objectives').update(attempt).eq('id', objectiveId);
+          } else {
+            return res;
+          }
+        }
+        if (Object.keys(base).length === 0) return { error: null, data: null };
+        return supabaseClient.from('objectives').update(base).eq('id', objectiveId);
+      }
+
+      // Insertion avec la même cascade de replis pour account_id.
+      // Les retentatives ne déclenchent que sur des erreurs déterministes
+      // (colonne absente / valeur refusée), jamais sur un raté réseau, pour
+      // ne pas créer de doublon.
+      async function insertObjectiveRow(payload, linkValue) {
+        const attempt = { ...payload };
+        if (linkValue !== undefined && !objectiveAccountColumnMissing) {
+          attempt.account_id = linkValue == null ? null : linkValue;
+        }
+        let res = await supabaseClient.from('objectives').insert(attempt).select().single();
+        if (res.error && Object.prototype.hasOwnProperty.call(attempt, 'account_id')) {
+          if (isMissingDbColumnError(res.error, 'account_id')) {
+            objectiveAccountColumnMissing = true;
+            objectiveAccountIdColumn = false;
+            delete attempt.account_id;
+            res = await supabaseClient.from('objectives').insert(attempt).select().single();
+          } else if (isRejectedAccountLinkValue(res.error)) {
+            attempt.account_id = null;
+            res = await supabaseClient.from('objectives').insert(attempt).select().single();
+          }
+        }
+        return res;
+      }
+
       // Aligne le montant actuel d'un objectif sur une valeur cible
       // (solde du compte lié ou patrimoine total) et PERSISTE la valeur.
       async function syncObjectiveAmount(obj, balance) {
@@ -7121,17 +7229,13 @@
       async function syncLinkedObjectivesFromAccounts() {
         const links = readObjectiveAccountLinks();
         for (const obj of D.objectives) {
-          // La colonne BDD account_id (si elle existe) référence un compte
-          // réel ; le lien local peut porter un compte réel OU le pseudo-
-          // compte « Patrimoine total » (TOTAL_ACCOUNT_ID).
-          const dbAccountId = obj.accountId != null && obj.accountId !== '' && String(obj.accountId) !== TOTAL_ACCOUNT_ID
+          // Le lien peut venir de la colonne BDD account_id (compte réel,
+          // ou sentinel « __total__ » sur les colonnes texte) OU du stockage
+          // local (compte réel OU pseudo-compte « Patrimoine total »).
+          const accountId = (obj.accountId != null && obj.accountId !== '')
             ? obj.accountId
-            : null;
-          const accountId = dbAccountId != null ? dbAccountId : links[String(obj.id)];
-          if (accountId == null || accountId === '') {
-            if (objectiveAccountIdColumn && obj.accountId == null) delete links[String(obj.id)];
-            continue;
-          }
+            : links[String(obj.id)];
+          if (accountId == null || accountId === '') continue;
           if (String(accountId) === TOTAL_ACCOUNT_ID) {
             obj.accountId = TOTAL_ACCOUNT_ID;
             links[String(obj.id)] = TOTAL_ACCOUNT_ID;
@@ -7140,13 +7244,14 @@
           }
           const account = D.accounts.find(a => String(a.id) === String(accountId));
           if (!account) {
-            obj.accountId = null;
-            delete links[String(obj.id)];
-            if (objectiveAccountIdColumn && obj.id) {
-              const { error } = await supabaseClient.from('objectives')
-                .update({ account_id: null }).eq('id', obj.id);
-              if (error) console.warn('Impossible de retirer le lien vers un compte supprimé :', error);
-            }
+            // CORRECTIF : ne JAMAIS détacher automatiquement un lien dont le
+            // compte est introuvable à l'instant T (chargement partiel, requête
+            // comptes en échec transitoire…). C'est ce détachement automatique
+            // qui faisait « se désactiver tout seul » le rattachement. On
+            // conserve le lien ; seul un détachement explicite (modale
+            // d'édition ou suppression de compte) le retire.
+            obj.accountId = accountId;
+            links[String(obj.id)] = String(accountId);
             continue;
           }
           obj.accountId = account.id;
@@ -7170,11 +7275,12 @@
       async function loadAllData() {
         if (!currentUserId) return;
         try {
-          const [accRes, txRes, objRes, objAccountRes, histRes, histAccountValuesRes, setRes, indRes, profRes] = await Promise.all([
+          const [accRes, txRes, objRes, objAccountRes, objSortRes, histRes, histAccountValuesRes, setRes, indRes, profRes] = await Promise.all([
             supabaseClient.from('accounts').select('*').order('id', { ascending: true }),
             supabaseClient.from('transactions').select('*').order('date', { ascending: false }),
             supabaseClient.from('objectives').select('*').order('id', { ascending: true }),
             supabaseClient.from('objectives').select('account_id').limit(1),
+            supabaseClient.from('objectives').select('sort_order').limit(1),
             supabaseClient.from('net_worth_history').select('*').order('month_date', { ascending: true }),
             supabaseClient.from('net_worth_history').select('account_values').limit(1),
             supabaseClient.from('settings').select('*').eq('user_id', currentUserId).maybeSingle(),
@@ -7186,6 +7292,15 @@
           // Cette requête ne bloque pas le chargement : un stockage local sert de repli.
           objectiveAccountIdColumn = !objAccountRes.error ||
             (objRes.data || []).some(o => Object.prototype.hasOwnProperty.call(o, 'account_id'));
+          // L'absence n'est retenue que si elle est CONFIRMÉE : un simple raté
+          // transitoire de la sonde ne doit jamais couper les écritures BDD.
+          objectiveAccountColumnMissing = !objectiveAccountIdColumn &&
+            isMissingDbColumnError(objAccountRes.error, 'account_id');
+          // `sort_order` (optionnelle) : ordre personnalisé des objectifs.
+          const sortColSeen = !objSortRes.error ||
+            (objRes.data || []).some(o => Object.prototype.hasOwnProperty.call(o, 'sort_order'));
+          objectiveSortOrderColumnMissing = !sortColSeen &&
+            isMissingDbColumnError(objSortRes.error, 'sort_order');
           historyAccountValuesColumn = !histAccountValuesRes.error ||
             (histRes.data || []).some(h => Object.prototype.hasOwnProperty.call(h, 'account_values'));
 
@@ -7206,6 +7321,7 @@
           }));
 
           const savedObjectiveLinks = readObjectiveAccountLinks();
+          const linkHealList = [];
           D.objectives = (objRes.data || []).map(o => {
             const localAccountId = savedObjectiveLinks[String(o.id)];
             const hasAccountColumn = Object.prototype.hasOwnProperty.call(o, 'account_id');
@@ -7217,12 +7333,18 @@
             const accountId = (dbAccountId != null && dbAccountId !== '')
               ? dbAccountId
               : (localAccountId != null && localAccountId !== '' ? localAccountId : null);
+            // Lien porté uniquement par le stockage local : à réécrire en BDD
+            // (auto-guérison) pour être durable et partagé entre appareils.
+            if (accountId != null && accountId !== '' && (dbAccountId == null || dbAccountId === '')) {
+              linkHealList.push({ id: o.id, value: accountId });
+            }
             return {
               id: o.id, name: o.name, target: parseFloat(o.target), current: parseFloat(o.current),
               date: o.target_date, color: o.color, isMain: o.is_main === true,
               accountId
             };
           });
+          applySavedObjectiveOrder(D.objectives, objRes.data || []);
 
           const savedHistoryAccountValues = readHistoryAccountValues();
           D.history = (histRes.data || []).map(h => {
@@ -7282,6 +7404,12 @@
           // À chaque connexion, aligne le montant actuel des objectifs liés
           // sur le dernier solde connu de leur compte.
           await syncLinkedObjectivesFromAccounts();
+          // Auto-guérison : réécrit en BDD les liens connus seulement en
+          // stockage local (ancienne sauvegarde, purge locale, autre appareil).
+          for (const item of linkHealList) {
+            await updateObjectiveRow(item.id, {},
+              String(item.value) === TOTAL_ACCOUNT_ID ? TOTAL_ACCOUNT_ID : item.value);
+          }
           renderAll();
         } catch (err) {
           console.error('Erreur de chargement des données Supabase :', err);
@@ -7355,6 +7483,8 @@
       window.onUserLoggedOut = function () {
         currentUserId = null;
         objectiveAccountIdColumn = false;
+        objectiveAccountColumnMissing = false;
+        objectiveSortOrderColumnMissing = false;
         historyAccountValuesColumn = false;
         evolutionMonthlyReminderPending = false;
         evolutionMonthlyReminderSessionStamp = null;
@@ -10082,11 +10212,12 @@
 
         const linkedObjectives = D.objectives.filter(o => o.accountId != null && String(o.accountId) === String(acc.id));
         const detachedInDatabase = [];
-        if (objectiveAccountIdColumn) {
+        if (!objectiveAccountColumnMissing) {
           for (const obj of linkedObjectives) {
             const { error: linkError } = await supabaseClient.from('objectives')
               .update({ account_id: null }).eq('id', obj.id);
-            if (linkError && isUnsupportedObjectiveAccountIdColumn(linkError)) {
+            if (linkError && isMissingDbColumnError(linkError, 'account_id')) {
+              objectiveAccountColumnMissing = true;
               objectiveAccountIdColumn = false;
               break;
             }
@@ -12569,6 +12700,7 @@
       }
 
       function renderObjectifs() {
+        initObjectifsDragDrop();
         if (D.objectives.length === 0) {
           // Empty state intelligent (point 5)
           document.getElementById('objectifsList').innerHTML = `<div class="empty-state">
@@ -12591,7 +12723,7 @@
           const mainBtnStyle = isMain
             ? 'background:rgba(200,168,75,0.15);border-color:var(--gold);color:var(--gold)'
             : '';
-          return `<div class="obj-card" style="${isMain ? 'border-color:var(--gold);box-shadow:0 0 0 1px rgba(200,168,75,0.25)' : ''}">
+          return `<div class="obj-card" data-obj-id="${escHtml(String(o.id))}" style="${isMain ? 'border-color:var(--gold);box-shadow:0 0 0 1px rgba(200,168,75,0.25)' : ''}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div style="font-size:13px;font-weight:600">🎯 ${escHtml(o.name)}${mainBadge}</div>
         <div class="action-btns">
@@ -12613,6 +12745,248 @@
       ${linkedAccount ? `<div class="obj-linked-account">↗ Montant actuel synchronisé avec ${escHtml(linkedAccount.name)}</div>` : ''}
     </div>`;
         }).join('');
+      }
+
+      // ================================================================
+      // OBJECTIFS — RÉORDONNEMENT PAR GLISSER-DÉPOSER (sans bouton)
+      // ================================================================
+      // Souris : pression-glissée (dès ~5 px de mouvement).
+      // Tactile / stylet : appui long (~400 ms) puis glisser — un simple
+      // défilement de doigt reste un défilement de page.
+      // L'ordre obtenu est persisté (stockage local + colonne sort_order
+      // quand elle existe) et restauré au chargement.
+      const OBJ_DND_LONGPRESS_MS = 400;
+      const OBJ_DND_MOUSE_PX = 5;
+      const OBJ_DND_TOUCH_CANCEL_PX = 12;
+      let objDndState = null;
+      let objDndBound = false;
+      let objDndSuppressClickUntil = 0;
+
+      function objectiveOrderStorageKey() {
+        return currentUserId ? 'patrimoine_objective_order_' + currentUserId : null;
+      }
+
+      function readObjectiveOrder() {
+        const key = objectiveOrderStorageKey();
+        if (!key) return [];
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+          return Array.isArray(parsed) ? parsed.map(String) : [];
+        } catch (e) { return []; }
+      }
+
+      function writeObjectiveOrder(ids) {
+        const key = objectiveOrderStorageKey();
+        if (!key) return;
+        try { localStorage.setItem(key, JSON.stringify((ids || []).map(String))); }
+        catch (e) { console.warn('L’ordre des objectifs ne peut pas être conservé sur cet appareil.', e); }
+      }
+
+      // Applique l'ordre mémorisé à la liste : colonnes sort_order BDD si
+      // tous les objectifs en ont une, sinon l'ordre du stockage local.
+      function applySavedObjectiveOrder(list, rows) {
+        if (!Array.isArray(list) || list.length < 2) return;
+        const rowById = {};
+        (rows || []).forEach(r => { rowById[String(r.id)] = r; });
+        const dbRank = new Map();
+        let dbComplete = true;
+        list.forEach(o => {
+          const r = rowById[String(o.id)];
+          const v = r && Object.prototype.hasOwnProperty.call(r, 'sort_order')
+            ? parseFloat(r.sort_order) : NaN;
+          if (Number.isFinite(v)) dbRank.set(String(o.id), v);
+          else dbComplete = false;
+        });
+        if (dbComplete) {
+          list.sort((a, b) => dbRank.get(String(a.id)) - dbRank.get(String(b.id)));
+          writeObjectiveOrder(list.map(o => String(o.id)));
+          return;
+        }
+        const localOrder = readObjectiveOrder();
+        if (!localOrder.length) return;
+        const pos = new Map();
+        localOrder.forEach((id, i) => { if (!pos.has(id)) pos.set(id, i); });
+        const decorated = list.map((o, i) => ({ o, i }));
+        decorated.sort((a, b) => {
+          const pa = pos.has(String(a.o.id)) ? pos.get(String(a.o.id)) : Number.MAX_SAFE_INTEGER;
+          const pb = pos.has(String(b.o.id)) ? pos.get(String(b.o.id)) : Number.MAX_SAFE_INTEGER;
+          return pa - pb || a.i - b.i;
+        });
+        list.splice(0, list.length, ...decorated.map(d => d.o));
+        // Ordre local réappliqué : on tente de le répercuter en BDD (une fois
+        // la colonne refusée, objectiveSortOrderColumnMissing coupe les essais).
+        if (!objectiveSortOrderColumnMissing) persistObjectiveOrderInDatabase();
+      }
+
+      // Persistance de l'ordre dans la colonne optionnelle sort_order.
+      async function persistObjectiveOrderInDatabase() {
+        if (objectiveSortOrderColumnMissing) return;
+        for (let i = 0; i < D.objectives.length; i++) {
+          const o = D.objectives[i];
+          if (!o.id) continue;
+          const { error } = await supabaseClient.from('objectives')
+            .update({ sort_order: i }).eq('id', o.id);
+          if (error) {
+            if (isMissingDbColumnError(error, 'sort_order')) {
+              objectiveSortOrderColumnMissing = true;
+            } else {
+              console.warn('Ordre des objectifs non synchronisé :', error);
+            }
+            return;
+          }
+        }
+      }
+
+      // Lit l'ordre final dans le DOM (les cartes ont été déplacées en direct)
+      // et le fige dans D.objectives + stockage local + BDD.
+      function commitObjectiveOrderFromDOM() {
+        const list = document.getElementById('objectifsList');
+        if (!list) return;
+        const ids = Array.from(list.querySelectorAll('.obj-card[data-obj-id]'))
+          .map(c => c.getAttribute('data-obj-id'));
+        if (!ids.length) return;
+        const byId = new Map(D.objectives.map(o => [String(o.id), o]));
+        const next = [];
+        ids.forEach(id => {
+          const o = byId.get(id);
+          if (o) { next.push(o); byId.delete(id); }
+        });
+        byId.forEach(o => next.push(o)); // sécurité : aucun objectif perdu
+        const before = D.objectives.map(o => String(o.id)).join('|');
+        const after = next.map(o => String(o.id)).join('|');
+        D.objectives.length = 0;
+        D.objectives.push(...next);
+        if (before === after) return; // la carte n'a pas changé de place
+        writeObjectiveOrder(D.objectives.map(o => String(o.id)));
+        persistObjectiveOrderInDatabase();
+        renderObjectifs();
+      }
+
+      function objDndGrab() {
+        const s = objDndState;
+        if (!s || s.active) return;
+        s.active = true;
+        if (s.timer) { clearTimeout(s.timer); s.timer = null; }
+        s.card.classList.add('dragging');
+        document.body.classList.add('obj-dragging');
+        // Empêche tout défilement de page résiduel pendant la saisie.
+        s.prevBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        if (navigator.vibrate) { try { navigator.vibrate(12); } catch (e) {} }
+      }
+
+      function objDndCleanup() {
+        const s = objDndState;
+        objDndState = null;
+        if (!s) return;
+        if (s.timer) clearTimeout(s.timer);
+        if (s.card) s.card.classList.remove('dragging');
+        document.body.classList.remove('obj-dragging');
+        document.body.style.overflow = s.prevBodyOverflow || '';
+      }
+
+      // Déplace la carte saisie à la position du doigt / curseur (les autres
+      // cartes s'écartent en direct : le DOM reflète le futur ordre).
+      function objDndReorderAt(clientY) {
+        const s = objDndState;
+        if (!s || !s.active) return;
+        const list = document.getElementById('objectifsList');
+        if (!list) return;
+        const others = Array.from(list.querySelectorAll('.obj-card')).filter(c => c !== s.card);
+        if (!others.length) return;
+        let target = null;
+        for (const c of others) {
+          const r = c.getBoundingClientRect();
+          if (clientY < r.top + r.height / 2) { target = c; break; }
+        }
+        if (target) {
+          if (s.card.nextElementSibling !== target) list.insertBefore(s.card, target);
+        } else if (s.card.previousElementSibling !== others[others.length - 1]) {
+          list.appendChild(s.card);
+        }
+      }
+
+      function initObjectifsDragDrop() {
+        const list = document.getElementById('objectifsList');
+        if (!list || objDndBound) return;
+        objDndBound = true;
+
+        // Empêche le menu contextuel d'appui long sur les cartes (mobile).
+        list.addEventListener('contextmenu', e => {
+          if (e.target && e.target.closest && e.target.closest('.obj-card')) e.preventDefault();
+        });
+
+        list.addEventListener('pointerdown', e => {
+          if (e.button != null && e.button !== 0) return;
+          if (objDndState) return;
+          const t = e.target;
+          const card = t && t.closest ? t.closest('.obj-card[data-obj-id]') : null;
+          if (!card || card.parentElement !== list) return;
+          // Les boutons d'action (⭐ ✏️ 🗑️) restent pleinement utilisables.
+          if (t.closest('button, a, input, select, textarea, label')) return;
+          const isTouch = e.pointerType === 'touch' || e.pointerType === 'pen';
+          objDndState = {
+            pointerId: e.pointerId,
+            card: card,
+            startX: e.clientX,
+            startY: e.clientY,
+            active: false,
+            isTouch: isTouch,
+            timer: null
+          };
+          if (isTouch) {
+            objDndState.timer = setTimeout(objDndGrab, OBJ_DND_LONGPRESS_MS);
+          }
+        });
+
+        document.addEventListener('pointermove', e => {
+          const s = objDndState;
+          if (!s || e.pointerId !== s.pointerId) return;
+          const dx = e.clientX - s.startX;
+          const dy = e.clientY - s.startY;
+          if (!s.active) {
+            if (s.isTouch) {
+              // Doigt qui bouge avant l'appui long = intention de défilement.
+              if (Math.abs(dx) > OBJ_DND_TOUCH_CANCEL_PX || Math.abs(dy) > OBJ_DND_TOUCH_CANCEL_PX) {
+                objDndCleanup();
+              }
+              return;
+            }
+            if (Math.abs(dx) <= OBJ_DND_MOUSE_PX && Math.abs(dy) <= OBJ_DND_MOUSE_PX) return;
+            objDndGrab();
+          }
+          if (objDndState && objDndState.active) {
+            if (e.cancelable) e.preventDefault();
+            objDndReorderAt(e.clientY);
+          }
+        });
+
+        const endDrag = e => {
+          const s = objDndState;
+          if (!s || (e && e.pointerId !== s.pointerId)) return;
+          const wasActive = s.active;
+          objDndCleanup();
+          if (wasActive) {
+            // Le navigateur émet un click parasite juste après : on l'avale.
+            objDndSuppressClickUntil = Date.now() + 400;
+            commitObjectiveOrderFromDOM();
+          }
+        };
+        document.addEventListener('pointerup', endDrag);
+        document.addEventListener('pointercancel', endDrag);
+
+        list.addEventListener('click', e => {
+          if (Date.now() < objDndSuppressClickUntil) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }, true);
+
+        // Défilement tactile bloqué UNIQUEMENT pendant que la carte est
+        // saisie : hors drag, la page défile normalement sur les cartes.
+        list.addEventListener('touchmove', e => {
+          if (objDndState && objDndState.active && e.cancelable) e.preventDefault();
+        }, { passive: false });
       }
 
       // Marque un objectif comme principal (ou retire ce statut).
@@ -12695,21 +13069,18 @@
         const insertPayload = {
           user_id: currentUserId, name, target, current, target_date: date, color, is_main: isMain
         };
-        // account_id référence les comptes réels : pour le « Patrimoine total »
-        // on laisse NULL et le lien est conservé côté local.
-        if (objectiveAccountIdColumn) insertPayload.account_id = (linkedAccount && !isTotalLink) ? linkedAccount.id : null;
-
-        let insertResult = await supabaseClient.from('objectives').insert(insertPayload).select().single();
-        if (insertResult.error && objectiveAccountIdColumn && isUnsupportedObjectiveAccountIdColumn(insertResult.error)) {
-          objectiveAccountIdColumn = false;
-          delete insertPayload.account_id;
-          insertResult = await supabaseClient.from('objectives').insert(insertPayload).select().single();
-        }
+        // Le lien compte est TOUJOURS proposé à la BDD (compte réel ou
+        // sentinel « __total__ ») avec replis automatiques — cf.
+        // insertObjectiveRow. Le stockage local reste le miroir de secours.
+        const linkValue = linkedAccount
+          ? (isTotalLink ? TOTAL_ACCOUNT_ID : linkedAccount.id)
+          : null;
+        const insertResult = await insertObjectiveRow(insertPayload, linkValue);
         const { data, error } = insertResult;
         if (error) { showToast('Erreur : ' + error.message, 'error'); return }
 
         const savedAccountId = linkedAccount
-          ? (isTotalLink ? TOTAL_ACCOUNT_ID : (data.account_id != null ? data.account_id : linkedAccount.id))
+          ? (isTotalLink ? TOTAL_ACCOUNT_ID : linkedAccount.id)
           : null;
         const savedCurrent = Number.isFinite(parseFloat(data.current)) ? parseFloat(data.current) : current;
         D.objectives.push({
@@ -12738,7 +13109,12 @@
         document.getElementById('editObjTarget').value = obj.target;
         document.getElementById('editObjCurrent').value = obj.current;
         document.getElementById('editObjDate').value = obj.date || '';
-        setObjectifAccountLinkUI('edit', obj.accountId != null && obj.accountId !== '', obj.accountId);
+        // Le lien n'est proposé que s'il se résout (compte existant ou
+        // « Patrimoine total ») : sinon on ouvre détaché pour ne jamais
+        // bloquer la modale. Le lien n'est effacé qu'au moment d'enregistrer.
+        const linkResolves = obj.accountId != null && obj.accountId !== '' &&
+          !!resolveObjectifAccount(obj.accountId);
+        setObjectifAccountLinkUI('edit', linkResolves, linkResolves ? obj.accountId : null);
         openModal('editObjectif');
       }
 
@@ -12750,9 +13126,12 @@
         const i = parseInt(document.getElementById('editObjIdx').value);
         const obj = D.objectives[i];
         if (!obj) return;
+        const nameRaw = document.getElementById('editObjName').value.trim();
         const targetRaw = document.getElementById('editObjTarget').value;
         const currentRaw = document.getElementById('editObjCurrent').value;
         const dateRaw = document.getElementById('editObjDate').value;
+        // Le nom est modifiable : champ vide → on conserve le nom existant.
+        const name = nameRaw === '' ? obj.name : nameRaw;
         const target = targetRaw === '' ? obj.target : parseFloat(targetRaw);
         const date = dateRaw === '' ? obj.date : dateRaw;
         const accountToggle = document.getElementById('editObjAccountToggle');
@@ -12777,21 +13156,15 @@
         const current = linkedAccount ? (parseFloat(linkedAccount.balance) || 0) : manualCurrent;
         const accountId = linkedAccount ? linkedAccount.id : null;
         const isTotalLink = !!linkedAccount && String(accountId) === TOTAL_ACCOUNT_ID;
-        const updatePayload = { target, current, target_date: date };
-        // account_id référence les comptes réels : pour le « Patrimoine total »
-        // on laisse NULL et le lien est conservé côté local.
-        if (objectiveAccountIdColumn) updatePayload.account_id = isTotalLink ? null : accountId;
+        // Nom + montants + lien compte TOUJOURS proposé à la BDD (compte réel
+        // ou sentinel « __total__ ») avec replis automatiques.
+        const updatePayload = { name, target, current, target_date: date };
+        const linkValue = isTotalLink ? TOTAL_ACCOUNT_ID : accountId;
 
-        let updateResult = await supabaseClient.from('objectives')
-          .update(updatePayload).eq('id', obj.id);
-        if (updateResult.error && objectiveAccountIdColumn && isUnsupportedObjectiveAccountIdColumn(updateResult.error)) {
-          objectiveAccountIdColumn = false;
-          delete updatePayload.account_id;
-          updateResult = await supabaseClient.from('objectives')
-            .update(updatePayload).eq('id', obj.id);
-        }
+        const updateResult = await updateObjectiveRow(obj.id, updatePayload, linkValue);
         if (updateResult.error) { showToast('Erreur : ' + updateResult.error.message, 'error'); return; }
 
+        obj.name = name;
         obj.target = target;
         obj.current = current;
         obj.date = date;
