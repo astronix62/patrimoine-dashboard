@@ -195,3 +195,47 @@ et la fenêtre de connexion :
   JavaScript, sur tous les formats ;
 - sur 320 px, 375 px et 390 px : aucun texte tronqué, aucune carte de hauteur
   différente.
+
+---
+
+## 6. Réordonnancement des objectifs — fluidité « écran d'accueil » iPhone
+
+### Problèmes corrigés
+- **Saut de page** : l'ancien code posait `overflow: hidden` sur `<body>` au
+  début du glisser. Cela provoquait un décalage de la mise en page et un
+  défilement qui se bloquait : c'est supprimé. Le défilement est maintenant
+  bloqué uniquement par `preventDefault` sur `touchmove` (écouteur non
+  passif) pendant que la carte est saisie.
+- **Oscillation** : l'ancien calcul déplaçait la carte dans le DOM à chaque
+  `pointermove` en comparant les rects courants : avec des hauteurs
+  différentes, la carte oscillait entre deux positions. Le nouveau calcul
+  utilise les positions **d'origine** fixées au début du glisser et fait
+  glisser les autres cartes par `transform` (pas de changement de layout
+  pendant le glisser).
+- **La carte ne suivait pas le doigt** : désormais la carte saisie est
+  translatée en direct sous le curseur / le doigt, avec un léger
+  agrandissement et une ombre, comme une icône sur l'écran d'accueil.
+- **Flash au relâchement** : l'ancien code re-renderait toute la liste à la
+  fin, ce qui cassait l'animation. Le DOM est maintenant réordonné une seule
+  fois, suivi d'un **FLIP** (First-Last-Invert-Play) qui anime la mise en
+  place ; les indices des boutons ⭐/✏️/🗑️ sont resynchronisés sans
+  re-render.
+
+### Comportement
+- **Souris** : pression-glissée dès ~5 px.
+- **Tactile / stylet** : appui long (~400 ms) puis glisser ; un défilement
+  normal reste possible (la carte est annulée si le doigt bouge avant l'appui
+  long).
+- **Persistance** : ordre conservé en local + colonne `sort_order` Supabase
+  (déjà en place, inchangée).
+- **Animation** : les autres cartes glissent avec une transition CSS
+  (`transform 0.18 s`), la carte saisie suit le doigt instantanément et se
+  « pose » en ~0,23 s à la libération.
+- **iPhone v2** : arêtes plus arrondies, ombre plus nette, libellé d'aide qui
+  disparaît après le premier glisser.
+
+### Icône Paramètres
+Dans le menu iPhone v2 (bouton « Menu » de la barre inférieure), l'icône
+« Paramètres » était un **soleil** (cercle + rayons). Elle est remplacée par
+un **engrenage** (SVG Feather « settings »), conformément à l'interface
+iPhone.
