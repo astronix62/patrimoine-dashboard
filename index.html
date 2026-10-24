@@ -2120,6 +2120,122 @@
       margin-top: 18px
     }
 
+    /* Animation d'ouverture fluide pour toutes les modales */
+    .modal-overlay.show .modal {
+      animation: modalIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── Tableau de bord Santé financière ── */
+    .modal-health {
+      width: 980px;
+      max-width: 96vw;
+      max-height: 92vh;
+      padding: 24px;
+    }
+    .health-dash { display: flex; flex-direction: column; gap: 18px; }
+    .health-dash-top {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+    .health-gauge-wrap { text-align: center; }
+    .health-gauge { width: 180px; height: 180px; display: block; margin: 0 auto; }
+    .health-gauge-num { font-size: 44px; font-weight: 700; fill: var(--gold); }
+    .health-gauge-lbl { font-size: 13px; fill: var(--text2); }
+    .health-gauge-delta { margin-top: 8px; font-size: 11px; color: var(--text3); min-height: 16px; }
+    .health-sub-title { font-size: 10px; letter-spacing: 1px; color: var(--text3); margin-bottom: 8px; }
+    .health-radar-wrap { min-height: 220px; }
+    .health-criteria {
+      display: flex; flex-direction: column; gap: 8px;
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+    }
+    .health-crit-row {
+      display: grid;
+      grid-template-columns: 1fr 140px 34px;
+      gap: 12px; align-items: center;
+    }
+    .health-crit-main { min-width: 0; }
+    .health-crit-label { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .health-crit-weight {
+      font-size: 9px; color: var(--text3); background: var(--bg4);
+      padding: 2px 6px; border-radius: 4px; font-weight: 500;
+    }
+    .health-crit-detail { font-size: 10px; color: var(--text3); margin-top: 2px; }
+    .health-crit-bar { height: 7px; background: var(--bg4); border-radius: 4px; overflow: hidden; }
+    .health-crit-fill { height: 100%; border-radius: 4px; transition: width 0.7s cubic-bezier(0.2,0.8,0.2,1); }
+    .health-crit-pct { font-size: 14px; font-weight: 700; text-align: right; color: var(--gold); }
+    .health-actions { display: flex; flex-direction: column; gap: 8px; }
+    .health-rec {
+      display: flex; gap: 10px; align-items: flex-start;
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+      animation: recIn 0.4s ease backwards;
+    }
+    .health-rec:nth-child(2) { animation-delay: 0.06s; }
+    .health-rec:nth-child(3) { animation-delay: 0.12s; }
+    .health-rec:nth-child(4) { animation-delay: 0.18s; }
+    .health-rec:nth-child(5) { animation-delay: 0.24s; }
+    @keyframes recIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .health-rec-ico { font-size: 20px; line-height: 1.2; }
+    .health-rec-text { font-size: 12px; color: var(--text2); line-height: 1.4; }
+    .health-empty {
+      padding: 16px; text-align: center; color: var(--text3); font-size: 12px;
+      background: var(--bg3); border: 1px dashed var(--border); border-radius: 8px;
+    }
+
+    /* Widget scoreMini cliquable */
+    .score-mini.clickable {
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    }
+    .score-mini.clickable:hover {
+      border-color: var(--border-gold);
+      background: var(--bg4);
+      transform: translateY(-1px);
+    }
+    .score-mini.clickable:active { transform: translateY(0); }
+    .score-detail-hint {
+      margin-top: 6px; font-size: 9px; color: var(--gold);
+      text-align: right; letter-spacing: 0.5px;
+    }
+
+    /* Onglets de type Projection + simulateur d'objectifs */
+    .proj-type-tabs {
+      display: flex; gap: 8px; margin-bottom: 12px;
+      border-bottom: 1px solid var(--border); padding-bottom: 10px;
+    }
+    .proj-type-tab {
+      flex: 1;
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text2);
+      padding: 10px 12px; border-radius: 8px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .proj-type-tab:hover { border-color: var(--border-gold); color: var(--text); }
+    .proj-type-tab.active {
+      background: linear-gradient(135deg, rgba(200,168,75,0.15), rgba(200,168,75,0.05));
+      border-color: var(--gold); color: var(--gold);
+    }
+    .goal-sim-info { margin-bottom: 12px; }
+    .goal-sim-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .goal-sim-grid > div { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+    .goal-sim-result { margin-top: 12px; }
+    .goal-sim-ok, .goal-sim-ko { padding: 12px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; }
+    .goal-sim-ok { background: rgba(76,175,80,0.12); border: 1px solid rgba(76,175,80,0.4); color: var(--green); }
+    .goal-sim-ko { background: rgba(244,67,54,0.12); border: 1px solid rgba(244,67,54,0.4); color: var(--red); }
+
+    @media (max-width: 720px) {
+      .health-dash-top { grid-template-columns: 1fr; }
+      .health-gauge { width: 150px; height: 150px; }
+      .goal-sim-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
     /* TX */
     .tx-item {
       display: flex;
@@ -5358,7 +5474,7 @@
              vers le HAUT (flux normal, aucune position absolue) : aucun
              chevauchement possible, la barre défile si l'écran est trop bas. -->
         <div class="sidebar-bottom" id="sidebarBottom">
-        <div class="score-mini" id="scoreMini">
+        <div class="score-mini clickable" id="scoreMini" onclick="openHealthDashboard()" title="Cliquez pour voir le détail de votre santé financière">
           <div class="score-title">SANTÉ FINANCIÈRE</div>
           <div class="hw-score">
             <div class="hw-num" id="scoreNum">72</div>
@@ -5369,6 +5485,7 @@
               </div>
             </div>
           </div>
+          <div class="score-detail-hint">Détail ›</div>
         </div>
         <div class="quote-box" id="quoteBox">
           <div class="q">"</div>
@@ -5812,6 +5929,11 @@
               <div class="page-sub">Simulez vos scénarios financiers</div>
             </div>
           </div>
+          <div class="proj-type-tabs">
+            <button class="proj-type-tab active" type="button" data-type="patrimoine" onclick="switchProjType('patrimoine')">📈 Projection du patrimoine</button>
+            <button class="proj-type-tab" type="button" data-type="objectifs" onclick="switchProjType('objectifs')">🎯 Simulateur d'objectifs</button>
+          </div>
+          <div id="projPatrimoinePanel">
           <div class="panel" style="margin-bottom:10px">
             <div class="panel-header">
               <div class="panel-title">PROJECTION INTERACTIVE</div>
@@ -5847,6 +5969,35 @@
             </div>
           </div>
           <div class="grid-3eq" id="projSummary"></div>
+          </div>
+          <div id="projObjectifsPanel" style="display:none">
+            <div class="panel" style="margin-bottom:10px">
+              <div class="panel-header">
+                <div class="panel-title">SIMULATEUR D'OBJECTIFS</div>
+                <select class="panel-action" id="goalSimSelect" onchange="renderGoalSimulator()"></select>
+              </div>
+              <div class="goal-sim-info" id="goalSimInfo"></div>
+              <div class="proj-controls">
+                <div class="proj-ctrl-title">CONTRIBUTION MENSUELLE</div>
+                <div class="proj-sliders">
+                  <div class="slider-group">
+                    <div class="slider-label">Épargne mensuelle</div>
+                    <div class="slider-value"><span id="goalSimEpargneVal">0</span> €/mois</div>
+                    <input type="range" min="0" max="3000" step="10" value="0" id="goalSimEpargneRange" oninput="onGoalSimChange()">
+                    <input type="number" class="form-input" id="goalSimEpargneInput" value="0" oninput="onGoalSimInputChange('epargne')" style="margin-top:4px">
+                  </div>
+                  <div class="slider-group">
+                    <div class="slider-label">Rendement annuel</div>
+                    <div class="slider-value"><span id="goalSimRendVal">3.0</span>%</div>
+                    <input type="range" min="0" max="15" step="0.5" value="3" id="goalSimRendRange" oninput="onGoalSimChange()">
+                    <input type="number" class="form-input" id="goalSimRendInput" value="3" min="0" max="15" step="0.5" oninput="onGoalSimInputChange('rend')" style="margin-top:4px">
+                  </div>
+                </div>
+              </div>
+              <div class="chart-wrap h260"><canvas id="goalSimChart"></canvas></div>
+              <div class="goal-sim-result" id="goalSimResult"></div>
+            </div>
+          </div>
         </div>
 
         <!-- ===== COMPTES & ACTIFS ===== -->
@@ -6697,6 +6848,44 @@
       </div>
     </div>
 
+    <!-- ===== TABLEAU DE BORD SANTE FINANCIERE (cliquable via widget scoreMini) ===== -->
+    <div class="modal-overlay" id="modal-health">
+      <div class="modal modal-health">
+        <div class="modal-title">❤️ TABLEAU DE BORD SANTE FINANCIERE</div>
+        <div class="health-dash">
+          <div class="health-dash-top">
+            <div class="health-gauge-wrap">
+              <svg viewBox="0 0 130 130" class="health-gauge">
+                <circle cx="65" cy="65" r="56" fill="none" stroke="var(--bg4)" stroke-width="11"/>
+                <circle cx="65" cy="65" r="56" fill="none" stroke="var(--gold)" stroke-width="11"
+                  stroke-linecap="round" stroke-dasharray="351.86" stroke-dashoffset="351.86"
+                  transform="rotate(-90 65 65)" id="healthGaugeArc"/>
+                <text x="65" y="62" text-anchor="middle" class="health-gauge-num" id="healthGaugeNum">—</text>
+                <text x="65" y="84" text-anchor="middle" class="health-gauge-lbl" id="healthGaugeLbl">En attente</text>
+              </svg>
+              <div class="health-gauge-delta" id="healthGaugeDelta"></div>
+            </div>
+            <div class="health-radar-wrap">
+              <div class="health-sub-title">CRITÈRES DU SCORE</div>
+              <div class="chart-wrap h220"><canvas id="healthRadar"></canvas></div>
+            </div>
+          </div>
+          <div class="health-criteria" id="healthCriteria"></div>
+          <div class="health-evolution">
+            <div class="health-sub-title">ÉVOLUTION DU SCORE</div>
+            <div class="chart-wrap h180"><canvas id="healthEvoChart"></canvas></div>
+          </div>
+          <div class="health-actions">
+            <div class="health-sub-title">RECOMMANDATIONS</div>
+            <div id="healthActions"></div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal('health')">Fermer</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== INTERFACE iPHONE v2 : barre d'onglets, menu, écran de démarrage ===== -->
     <nav class="ip-tabbar" id="ipTabbar" aria-label="Navigation principale">
       <button class="ip-tab active" type="button" data-page="overview" onclick="showPage('overview')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span>Accueil</span></button>
@@ -7433,6 +7622,8 @@
             await updateObjectiveRow(item.id, {},
               String(item.value) === TOTAL_ACCOUNT_ID ? TOTAL_ACCOUNT_ID : item.value);
           }
+          // Historique du score santé (sans échec fatal si la table est absente).
+          await loadScoreHistory();
           renderAll();
         } catch (err) {
           console.error('Erreur de chargement des données Supabase :', err);
@@ -9322,6 +9513,7 @@
           document.getElementById('scoreLabel').textContent = 'En attente de données';
           const f0 = document.getElementById('scoreFill');
           if (f0) { f0.style.width = '0%'; f0.style.background = 'var(--border)'; }
+          D.scoreBreakdown = null;
           return null;
         }
         const total   = getTotal();
@@ -9346,9 +9538,10 @@
         // Supabase `indicators` n'était pas alimentée. Comme renderIndicateurs()
         // est appelé AVANT calcScore() dans renderOverview(), D.indicators
         // contient déjà la bonne valeur calculée.
+        let avg = 0;
         let pctEpargne = 50; // score neutre par défaut si pas de revenu
         if (revenu > 0) {
-          const avg = (D.indicators && D.indicators.avgEpargne) || 0;
+          avg = (D.indicators && D.indicators.avgEpargne) || 0;
           const rate = (avg / revenu) * 100;
           pctEpargne = Math.min(100, (rate / 50) * 100); // 50% de taux = score max
         }
@@ -9356,14 +9549,15 @@
         // ── 3. Coussin de sécurité (liquidités / charges mensuelles) ────
         // Nombre de mois de charges couvert par les liquidités disponibles
         const chargesTotales = charges > 0 ? charges : (budget > 0 ? budget * 0.6 : 0);
+        let liquide = 0, moisReserve = 0, cible = 0;
         let pctCoussin = 50; // neutre si aucune donnée
         if (chargesTotales > 0) {
-          const liquide = D.accounts
+          liquide = D.accounts
             .filter(a => a.type === 'banque' || a.type === 'especes')
             .reduce((s, a) => s + a.balance, 0);
-          const moisReserve = liquide / chargesTotales;
+          moisReserve = liquide / chargesTotales;
           // Objectif : 3 à 6 mois selon horizon
-          const cible = horizon === 'court' ? 3 : horizon === 'long' ? 6 : 4;
+          cible = horizon === 'court' ? 3 : horizon === 'long' ? 6 : 4;
           pctCoussin = Math.min(100, (moisReserve / cible) * 100);
         }
 
@@ -9429,6 +9623,23 @@
         );
 
         const label = score >= 80 ? 'Excellent' : score >= 60 ? 'Bon' : score >= 40 ? 'Moyen' : 'À améliorer';
+
+        // Détail complet du score — réutilisé par le tableau de bord
+        // « Santé financière » (critères, pondérations, contexte).
+        const breakdown = {
+          score: score, label: label,
+          pctGoal: pctGoal, pctEpargne: pctEpargne, pctCoussin: pctCoussin,
+          pctRegularite: pctRegularite, pctDiversite: pctDiversite,
+          weights: {
+            goal: weights.goal, epargne: weights.epargne, coussin: weights.coussin,
+            regularite: weights.regularite, diversite: weights.diversite
+          },
+          total: total, revenu: revenu, budget: budget, charges: chargesTotales,
+          horizon: horizon, sit: sit, goal: goal,
+          avgEpargne: avg, liquidite: liquide, moisReserve: moisReserve, cibleCoussin: cible
+        };
+        D.scoreBreakdown = breakdown;
+
         document.getElementById('scoreNum').textContent  = score;
         document.getElementById('scoreLabel').textContent = label;
         document.getElementById('scoreFill').style.width  = score + '%';
@@ -9442,7 +9653,335 @@
               ? 'linear-gradient(90deg,var(--red),var(--amber))'
               : 'var(--red)';
         }
-        return score;
+
+        // Historique mensuel du score (repli local si la table est absente).
+        persistScoreHistory(breakdown);
+        return breakdown;
+      }
+
+      // ── Historique du score santé (table optionnelle `score_history`) ──
+      // Snapshot mensuel du score + 5 critères. Repli localStorage si la
+      // table Supabase est absente (comme pour objectives.sort_order).
+      let scoreHistoryTableMissing = false;
+      let scoreHistoryLastKey = null;
+
+      function currentMonthKey() {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      }
+
+      function scoreHistoryStorageKey() {
+        return currentUserId ? 'patrimoine_score_history_' + currentUserId : null;
+      }
+
+      function readScoreHistoryLocal() {
+        const key = scoreHistoryStorageKey();
+        if (!key) return [];
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) { return []; }
+      }
+
+      function writeScoreHistoryLocal(list) {
+        const key = scoreHistoryStorageKey();
+        if (!key) return;
+        try { localStorage.setItem(key, JSON.stringify(list)); } catch (e) {}
+      }
+
+      function isMissingScoreHistoryTable(error) {
+        const message = String(error && error.message || '').toLowerCase();
+        const code = String(error && error.code || '');
+        return code === '42P01' || code === '42703' || code === 'PGRST205' ||
+          (/score_history/.test(message) &&
+            /relation|does not exist|could not find|schema cache|not found|permission denied/.test(message));
+      }
+
+      function mergeScoreHistory(dbList, localList) {
+        const map = new Map();
+        (localList || []).forEach(x => { if (x && x.month) map.set(x.month, x); });
+        (dbList || []).forEach(x => { if (x && x.month) map.set(x.month, x); }); // la BDD l'emporte
+        return Array.from(map.values()).sort((a, b) => a.month < b.month ? -1 : 1);
+      }
+
+      function persistScoreHistory(b) {
+        if (!b || b.score == null) return;
+        const month = currentMonthKey();
+        const list = (D.scoreHistory || []).slice();
+        // Une seule ligne par mois (la plus récente).
+        const filtered = list.filter(x => x.month !== month);
+        const row = {
+          month: month, score: b.score,
+          goal: Math.round(b.pctGoal), epargne: Math.round(b.pctEpargne),
+          coussin: Math.round(b.pctCoussin), regularite: Math.round(b.pctRegularite),
+          diversite: Math.round(b.pctDiversite)
+        };
+        filtered.push(row);
+        filtered.sort((a, b2) => a.month < b2.month ? -1 : 1);
+        D.scoreHistory = filtered;
+        writeScoreHistoryLocal(filtered);
+        if (scoreHistoryTableMissing || !currentUserId) return;
+        const key = month + ':' + b.score;
+        if (scoreHistoryLastKey === key) return; // déjà persisté ce mois-ci (pas de requête redondante)
+        scoreHistoryLastKey = key;
+        supabaseClient.from('score_history')
+          .upsert({
+            user_id: currentUserId, month: month, score: b.score,
+            goal: row.goal, epargne: row.epargne, coussin: row.coussin,
+            regularite: row.regularite, diversite: row.diversite
+          }, { onConflict: 'user_id,month' })
+          .then(({ error }) => {
+            if (error && isMissingScoreHistoryTable(error)) scoreHistoryTableMissing = true;
+          });
+      }
+
+      async function loadScoreHistory() {
+        if (!currentUserId || scoreHistoryTableMissing) {
+          D.scoreHistory = readScoreHistoryLocal();
+          return;
+        }
+        try {
+          const { data, error } = await supabaseClient.from('score_history')
+            .select('*').eq('user_id', currentUserId).order('month', { ascending: true });
+          if (error) {
+            if (isMissingScoreHistoryTable(error)) scoreHistoryTableMissing = true;
+            D.scoreHistory = readScoreHistoryLocal();
+            return;
+          }
+          const db = (data || []).map(r => ({
+            month: r.month, score: parseFloat(r.score),
+            goal: parseFloat(r.goal), epargne: parseFloat(r.epargne),
+            coussin: parseFloat(r.coussin), regularite: parseFloat(r.regularite),
+            diversite: parseFloat(r.diversite)
+          }));
+          D.scoreHistory = mergeScoreHistory(db, readScoreHistoryLocal());
+          writeScoreHistoryLocal(D.scoreHistory);
+        } catch (e) {
+          D.scoreHistory = readScoreHistoryLocal();
+        }
+      }
+
+      // ── Tableau de bord « Santé financière » (écran dédié, cliquable via scoreMini) ──
+      function escapeHtml(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      function openHealthDashboard() {
+        renderHealthDashboard();
+        openModal('health');
+        // Animation fluide de la jauge : vide → valeur finale.
+        requestAnimationFrame(() => {
+          const b = D.scoreBreakdown;
+          const arc = document.getElementById('healthGaugeArc');
+          if (b && arc) {
+            const C = 2 * Math.PI * 56;
+            arc.setAttribute('stroke-dashoffset', (C * (1 - b.score / 100)).toFixed(2));
+          }
+        });
+      }
+
+      function scoreColor(score) {
+        return score >= 70 ? 'var(--green)' : score >= 40 ? 'var(--amber)' : 'var(--red)';
+      }
+
+      function renderHealthDashboard() {
+        const b = D.scoreBreakdown;
+        const gaugeNum = document.getElementById('healthGaugeNum');
+        const gaugeLbl = document.getElementById('healthGaugeLbl');
+        const gaugeArc = document.getElementById('healthGaugeArc');
+        const gaugeDelta = document.getElementById('healthGaugeDelta');
+        const C = 2 * Math.PI * 56;
+
+        if (!b) {
+          if (gaugeNum) gaugeNum.textContent = '—';
+          if (gaugeLbl) gaugeLbl.textContent = 'En attente';
+          if (gaugeArc) {
+            gaugeArc.setAttribute('stroke-dasharray', C.toFixed(2));
+            gaugeArc.setAttribute('stroke-dashoffset', C.toFixed(2));
+          }
+          if (gaugeDelta) { gaugeDelta.textContent = ''; gaugeDelta.style.color = ''; }
+          const crit = document.getElementById('healthCriteria');
+          if (crit) crit.innerHTML = '<div class="health-empty">Aucune donnée disponible pour le calcul du score.</div>';
+          const act = document.getElementById('healthActions');
+          if (act) act.innerHTML = '';
+          dc('healthRadar'); dc('healthEvoChart');
+          return;
+        }
+
+        if (gaugeNum) gaugeNum.textContent = b.score;
+        if (gaugeLbl) gaugeLbl.textContent = b.label;
+        if (gaugeArc) {
+          gaugeArc.setAttribute('stroke-dasharray', C.toFixed(2));
+          gaugeArc.setAttribute('stroke-dashoffset', C.toFixed(2)); // animé vers la valeur finale après l'ouverture
+          gaugeArc.setAttribute('stroke', scoreColor(b.score));
+          gaugeArc.style.transition = 'stroke-dashoffset 0.9s cubic-bezier(0.2,0.8,0.2,1), stroke 0.3s';
+        }
+        if (gaugeDelta) {
+          const hist = (D.scoreHistory || []);
+          if (hist.length >= 2) {
+            const prev = hist[hist.length - 2];
+            const d = b.score - prev.score;
+            gaugeDelta.textContent = (d >= 0 ? '▲ +' : '▼ ') + Math.abs(d) + ' vs mois précédent';
+            gaugeDelta.style.color = d >= 0 ? 'var(--green)' : 'var(--red)';
+          } else if (hist.length === 1) {
+            gaugeDelta.textContent = 'Première mesure';
+            gaugeDelta.style.color = 'var(--text3)';
+          } else {
+            gaugeDelta.textContent = 'Historique à construire';
+            gaugeDelta.style.color = 'var(--text3)';
+          }
+        }
+
+        // Critères détaillés
+        const crit = document.getElementById('healthCriteria');
+        if (crit) {
+          const rows = [
+            { label: 'Progression objectif', pct: b.pctGoal, w: b.weights.goal,
+              detail: b.goal ? (b.pctGoal.toFixed(0) + '% atteint — objectif ' + fmt(b.goal)) : 'Aucun objectif défini' },
+            { label: 'Taux d\'épargne', pct: b.pctEpargne, w: b.weights.epargne,
+              detail: b.revenu > 0 ? ('Épargne ' + fmt(b.avgEpargne) + ' / revenu ' + fmt(b.revenu)) : 'Revenu non défini' },
+            { label: 'Coussin de sécurité', pct: b.pctCoussin, w: b.weights.coussin,
+              detail: b.charges > 0 ? (b.moisReserve.toFixed(1) + ' mois de charges — cible ' + b.cibleCoussin + ' mois') : 'Charges non définies' },
+            { label: 'Régularité', pct: b.pctRegularite, w: b.weights.regularite,
+              detail: b.pctRegularite + '% des mois en croissance (12 mois)' },
+            { label: 'Diversification', pct: b.pctDiversite, w: b.weights.diversite,
+              detail: Math.round(b.pctDiversite / 33.3) + ' type(s) de compte — 3 conseillés' }
+          ];
+          crit.innerHTML = rows.map(r => `
+            <div class="health-crit-row">
+              <div class="health-crit-main">
+                <div class="health-crit-label">${r.label}<span class="health-crit-weight">${Math.round(r.w * 100)}%</span></div>
+                <div class="health-crit-detail">${r.detail}</div>
+              </div>
+              <div class="health-crit-bar"><div class="health-crit-fill" style="width:${r.pct}%;background:${scoreColor(r.pct)}"></div></div>
+              <div class="health-crit-pct">${Math.round(r.pct)}</div>
+            </div>`).join('');
+        }
+
+        // Recommandations (plan d'action)
+        const act = document.getElementById('healthActions');
+        if (act) {
+          const recs = buildHealthRecommendations(b);
+          act.innerHTML = recs.length
+            ? recs.map(r => `<div class="health-rec"><div class="health-rec-ico">${r.ico}</div><div class="health-rec-text">${r.text}</div></div>`).join('')
+            : '<div class="health-empty">Votre santé financière est excellente — continuez vos bons choix 👍</div>';
+        }
+
+        createHealthRadarChart(b);
+        createHealthEvolutionChart();
+      }
+
+      function buildHealthRecommendations(b) {
+        const recs = [];
+        if (b.goal && b.pctGoal < 60) {
+          const remaining = Math.max(0, b.goal - b.total);
+          const months = 12;
+          const contrib = remaining > 0 ? Math.round(remaining / months) : 0;
+          if (contrib > 0) recs.push({ ico: '🎯', text: `Objectif à ${fmt(b.goal)} : il reste ${fmt(remaining)}. Une épargne de ~${fmt(contrib)}/mois permet d'y arriver en ${months} mois.` });
+        }
+        if (b.revenu > 0 && b.pctEpargne < 60) {
+          const needed = Math.max(0, 0.2 * b.revenu - b.avgEpargne);
+          if (needed > 1) recs.push({ ico: '💰', text: `Taux d'épargne : ${fmt(b.avgEpargne)} / ${fmt(b.revenu)}. Augmenter ~${fmt(Math.round(needed))}/mois pour atteindre 20%.` });
+        }
+        if (b.charges > 0 && b.pctCoussin < 60) {
+          const needed = Math.max(0, (b.cibleCoussin - b.moisReserve) * b.charges);
+          if (needed > 1) recs.push({ ico: '🛡️', text: `Coussin de sécurité : ${b.moisReserve.toFixed(1)} mois (cible ${b.cibleCoussin}). Prévoir ~${fmt(Math.round(needed))} de liquidités.` });
+        }
+        if (b.pctRegularite < 60) {
+          recs.push({ ico: '📈', text: `Régularité : ${b.pctRegularite}% des mois en croissance. Programmez une épargne automatique mensuelle.` });
+        }
+        if (b.pctDiversite < 60) {
+          recs.push({ ico: '🧩', text: `Diversification : ${Math.round(b.pctDiversite / 33.3)} type(s) de compte. Élargir vers d'autres catégories réduit les risques.` });
+        }
+        return recs;
+      }
+
+      function createHealthRadarChart(b) {
+        dc('healthRadar');
+        const canvas = document.getElementById('healthRadar');
+        if (!canvas) return;
+        charts['healthRadar'] = new Chart(canvas, {
+          type: 'radar',
+          data: {
+            labels: ['Objectif', 'Épargne', 'Coussin', 'Régularité', 'Diversif.'],
+            datasets: [{
+              data: [b.pctGoal, b.pctEpargne, b.pctCoussin, b.pctRegularite, b.pctDiversite],
+              backgroundColor: 'rgba(200,168,75,0.18)',
+              borderColor: '#C8A84B',
+              borderWidth: 2,
+              pointBackgroundColor: '#C8A84B',
+              pointRadius: 3
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, title: { display: false } },
+            scales: {
+              r: {
+                beginAtZero: true, max: 100,
+                grid: { color: 'rgba(255,255,255,0.08)' },
+                angleLines: { color: 'rgba(255,255,255,0.08)' },
+                pointLabels: { color: '#B0B0B0', font: { size: 10 } },
+                ticks: { display: false, backdropColor: 'transparent' }
+              }
+            }
+          }
+        });
+      }
+
+      function createHealthEvolutionChart() {
+        dc('healthEvoChart');
+        const canvas = document.getElementById('healthEvoChart');
+        if (!canvas) return;
+        const hist = (D.scoreHistory || []);
+        const labels = hist.map(h => String(h.month).slice(5));
+        const data = hist.map(h => h.score);
+        if (!data.length) {
+          charts['healthEvoChart'] = new Chart(canvas, {
+            type: 'line',
+            data: {
+              labels: [''],
+              datasets: [{
+                label: 'Score', data: [D.scoreBreakdown ? D.scoreBreakdown.score : 0],
+                borderColor: '#C8A84B', backgroundColor: 'rgba(200,168,75,0.15)',
+                fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#C8A84B'
+              }]
+            },
+            options: healthEvoOptions()
+          });
+          return;
+        }
+        charts['healthEvoChart'] = new Chart(canvas, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Score', data: data,
+              borderColor: '#C8A84B', backgroundColor: 'rgba(200,168,75,0.15)',
+              fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#C8A84B'
+            }]
+          },
+          options: healthEvoOptions()
+        });
+      }
+
+      function healthEvoOptions() {
+        return {
+          responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1C1C1C', borderColor: '#C8A84B', borderWidth: 1,
+              callbacks: { label: c => ' Score : ' + c.raw + '/100' }
+            }
+          },
+          scales: {
+            x: { ticks: { color: '#606060', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+            y: { beginAtZero: true, max: 100, ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } }
+          }
+        };
       }
 
       function renderDonut(total, livret, banque, esp) {
@@ -13360,6 +13899,7 @@
       // ======================== PROJECTION ========================
       function renderProjection() {
         updateProjChart();
+        if (projType === 'objectifs') renderGoalSimulator();
       }
 
       function onProjChange() {
@@ -13480,6 +14020,191 @@
       <div style="font-size:22px;font-weight:700;color:${s.color};margin:6px 0">${s.val}</div>
       <div style="font-size:10px;color:var(--text3)">${s.sub}</div>
     </div>`).join('');
+      }
+
+      // ── Simulateur d'objectifs (onglet Projection, type switchable) ──
+      let projType = 'patrimoine';
+
+      function switchProjType(type) {
+        if (type === projType) return;
+        projType = type;
+        document.querySelectorAll('.proj-type-tab').forEach(t => {
+          t.classList.toggle('active', t.dataset.type === type);
+        });
+        const pP = document.getElementById('projPatrimoinePanel');
+        const pO = document.getElementById('projObjectifsPanel');
+        if (pP) pP.style.display = type === 'patrimoine' ? '' : 'none';
+        if (pO) pO.style.display = type === 'objectifs' ? '' : 'none';
+        if (type === 'objectifs') renderGoalSimulator();
+        else updateProjChart();
+      }
+
+      function renderGoalSimulator() {
+        const sel = document.getElementById('goalSimSelect');
+        const objs = (D.objectives || []).slice();
+        if (sel) {
+          sel.innerHTML = objs.length
+            ? objs.map(o => `<option value="${o.id}">${escapeHtml(o.name || 'Objectif')} — ${fmt(o.target)}</option>`).join('')
+            : '<option value="">Aucun objectif</option>';
+        }
+        const obj = currentGoalSimObjective();
+        if (!obj) {
+          const info = document.getElementById('goalSimInfo');
+          if (info) info.innerHTML = '<div class="health-empty">Ajoutez un objectif dans l\'onglet « Objectifs » pour utiliser le simulateur.</div>';
+          const res = document.getElementById('goalSimResult');
+          if (res) res.innerHTML = '';
+          dc('goalSimChart');
+          return;
+        }
+        const months = goalSimMonthsLeft(obj);
+        const rend = parseFloat(document.getElementById('goalSimRendRange').value);
+        const required = goalSimRequiredContribution(obj, rend, months);
+        // Le slider d'épargne démarre sur la contribution requise (bornes respectées).
+        const contrib = Math.min(3000, Math.max(0, Math.round(required)));
+        const eRange = document.getElementById('goalSimEpargneRange');
+        const eInput = document.getElementById('goalSimEpargneInput');
+        if (eRange) eRange.value = contrib;
+        if (eInput) eInput.value = contrib;
+        document.getElementById('goalSimEpargneVal').textContent = contrib;
+        // Panneau d'info
+        const pct = obj.target > 0 ? Math.min(100, (obj.current / obj.target) * 100) : 0;
+        document.getElementById('goalSimInfo').innerHTML = `
+          <div class="goal-sim-grid">
+            <div><div class="kpi-label">OBJECTIF</div><div style="font-weight:700;margin:4px 0">${escapeHtml(obj.name)}</div></div>
+            <div><div class="kpi-label">CIBLE</div><div style="font-weight:700;margin:4px 0">${fmt(obj.target)}</div></div>
+            <div><div class="kpi-label">ACTUEL</div><div style="font-weight:700;margin:4px 0">${fmt(obj.current)}</div></div>
+            <div><div class="kpi-label">PROGRESSION</div><div style="font-weight:700;margin:4px 0;color:${scoreColor(pct)}">${pct.toFixed(0)}%</div></div>
+            <div><div class="kpi-label">DATE LIMITE</div><div style="font-weight:700;margin:4px 0">${obj.date ? goalSimFormatDate(obj.date) : '—'}</div></div>
+            <div><div class="kpi-label">DURÉE</div><div style="font-weight:700;margin:4px 0">${months} mois</div></div>
+          </div>`;
+        updateGoalSimChart();
+      }
+
+      function currentGoalSimObjective() {
+        const objs = (D.objectives || []);
+        if (!objs.length) return null;
+        const sel = document.getElementById('goalSimSelect');
+        const id = sel && sel.value;
+        if (id && objs.find(o => o.id === id)) return objs.find(o => o.id === id);
+        return objs.find(o => o.isMain) || objs[0];
+      }
+
+      function goalSimMonthsLeft(obj) {
+        if (obj.date) {
+          const deadline = new Date(obj.date);
+          if (!isNaN(deadline.getTime())) {
+            const now = new Date();
+            let months = (deadline.getFullYear() - now.getFullYear()) * 12 +
+              (deadline.getMonth() - now.getMonth());
+            if (deadline.getDate() < now.getDate()) months -= 1;
+            if (months < 1) return 1;
+            return months;
+          }
+        }
+        return 60; // 5 ans par défaut si aucune date
+      }
+
+      function goalSimRequiredContribution(obj, rend, months) {
+        const t = rend / 100 / 12;
+        const n = months;
+        const annuity = t > 0 ? (Math.pow(1 + t, n) - 1) / t : n;
+        const future = obj.current * Math.pow(1 + t, n);
+        const remaining = obj.target - future;
+        if (remaining <= 0) return 0;
+        return remaining / annuity;
+      }
+
+      function onGoalSimChange() {
+        const r = parseFloat(document.getElementById('goalSimRendRange').value);
+        document.getElementById('goalSimRendVal').textContent = r.toFixed(1);
+        document.getElementById('goalSimRendInput').value = r;
+        const e = parseFloat(document.getElementById('goalSimEpargneRange').value);
+        document.getElementById('goalSimEpargneVal').textContent = e;
+        document.getElementById('goalSimEpargneInput').value = e;
+        updateGoalSimChart();
+      }
+
+      function onGoalSimInputChange(field) {
+        if (field === 'epargne') {
+          const raw = parseFloat(document.getElementById('goalSimEpargneInput').value);
+          const v = Number.isFinite(raw) ? Math.min(3000, Math.max(0, raw)) : 0;
+          document.getElementById('goalSimEpargneRange').value = v;
+          document.getElementById('goalSimEpargneVal').textContent = v;
+        }
+        if (field === 'rend') {
+          const raw = parseFloat(document.getElementById('goalSimRendInput').value);
+          const v = Number.isFinite(raw) ? Math.min(15, Math.max(0, raw)) : 0;
+          document.getElementById('goalSimRendRange').value = v;
+          document.getElementById('goalSimRendVal').textContent = v.toFixed(1);
+        }
+        updateGoalSimChart();
+      }
+
+      function updateGoalSimChart() {
+        dc('goalSimChart');
+        const canvas = document.getElementById('goalSimChart');
+        if (!canvas) return;
+        const obj = currentGoalSimObjective();
+        if (!obj) return;
+        const rend = parseFloat(document.getElementById('goalSimRendRange').value);
+        const epargne = parseFloat(document.getElementById('goalSimEpargneRange').value);
+        const months = goalSimMonthsLeft(obj);
+        const t = rend / 100 / 12;
+        const annuity = (m) => (t > 0 ? (Math.pow(1 + t, m) - 1) / t : m);
+        const step = Math.max(1, Math.round(months / 24));
+        const labels = [], data = [];
+        for (let m = 0; m <= months; m += step) {
+          labels.push('M' + m);
+          data.push(Math.round(obj.current * Math.pow(1 + t, m) + epargne * annuity(m)));
+        }
+        charts['goalSimChart'] = new Chart(canvas, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              { label: 'Projection', data: data, borderColor: '#C8A84B', backgroundColor: 'rgba(200,168,75,0.15)', fill: true, tension: 0.3, pointRadius: 2, pointBackgroundColor: '#C8A84B' },
+              { label: 'Objectif', data: Array(labels.length).fill(obj.target), borderColor: '#4CAF50', borderDash: [8, 4], borderWidth: 1.5, pointRadius: 0, fill: false }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { labels: { color: '#B0B0B0', font: { size: 10 }, boxWidth: 20 } },
+              tooltip: { backgroundColor: '#1C1C1C', borderColor: '#2A2A2A', borderWidth: 1, callbacks: { label: c => ' ' + c.dataset.label + ' : ' + fmt(c.raw) } }
+            },
+            scales: {
+              x: { ticks: { color: '#606060', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+              y: { ticks: { color: '#606060', font: { size: 9 }, callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k€' : v + '€' }, grid: { color: 'rgba(255,255,255,0.03)' } }
+            }
+          }
+        });
+
+        // Résultat : date d'atteinte de l'objectif
+        let reached = -1;
+        for (let i = 0; i < data.length; i++) {
+          if (data[i] >= obj.target) { reached = i; break; }
+        }
+        const res = document.getElementById('goalSimResult');
+        if (!res) return;
+        if (reached >= 0) {
+          const m = reached * step;
+          res.innerHTML = `<div class="goal-sim-ok">✅ À <b>${fmt(epargne)}/mois</b>, l'objectif est atteint en <b>${m} mois</b> (${goalSimFormatDateInMonths(m)}).</div>`;
+        } else {
+          const finalWealth = data[data.length - 1];
+          const remaining = Math.max(0, obj.target - finalWealth);
+          res.innerHTML = `<div class="goal-sim-ko">⚠️ À <b>${fmt(epargne)}/mois</b>, il restera <b>${fmt(remaining)}</b> à la date limite. Augmentez l'épargne.</div>`;
+        }
+      }
+
+      function goalSimFormatDate(d) {
+        const dt = new Date(d);
+        if (isNaN(dt.getTime())) return '—';
+        return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      }
+      function goalSimFormatDateInMonths(m) {
+        const dt = new Date();
+        dt.setMonth(dt.getMonth() + m);
+        return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
       }
 
       // ======================== SETTINGS ========================
@@ -14052,9 +14777,14 @@
           const lastSent  = prefs.last_hebdo_sent;
           if (lastSent !== monday) {
             const total = getTotal();
+            let health = '';
+            if (D.scoreBreakdown) {
+              const b = D.scoreBreakdown;
+              health = ` • Santé financière : ${b.score}/100 (${b.label})`;
+            }
             sendLocalNotification(
               '📊 Rapport hebdomadaire',
-              `Votre patrimoine total cette semaine : ${fmt(total)}`
+              `Votre patrimoine total cette semaine : ${fmt(total)}${health}`
             );
             await supabaseClient.from('notification_prefs')
               .update({ last_hebdo_sent: monday }).eq('user_id', currentUserId);
