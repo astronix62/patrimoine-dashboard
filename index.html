@@ -2120,13 +2120,25 @@
       margin-top: 18px
     }
 
-    /* Animation d'ouverture fluide pour toutes les modales */
+    /* Animation d'ouverture fluide pour toutes les modales (easeOutExpo) */
     .modal-overlay.show .modal {
-      animation: modalIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+      animation: modalIn 0.34s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes modalIn {
-      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      from { opacity: 0; transform: translateY(16px) scale(0.96); }
       to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Animation de fermeture (douce, amortie) */
+    .modal-overlay.closing { animation: overlayOut 0.24s cubic-bezier(0.4, 0, 1, 1) forwards; }
+    .modal-overlay.closing .modal { animation: modalOut 0.24s cubic-bezier(0.4, 0, 1, 1) forwards; }
+    @keyframes overlayOut {
+      from { opacity: 1; }
+      to   { opacity: 0; }
+    }
+    @keyframes modalOut {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to   { opacity: 0; transform: translateY(10px) scale(0.98); }
     }
 
     /* ── Barre de défilement sombre (cohérente avec l'app) ── */
@@ -2140,66 +2152,103 @@
 
     /* ── Tableau de bord Santé financière (compact : un écran) ── */
     .modal-health {
-      width: 980px;
+      width: 920px;
       max-width: 96vw;
-      max-height: 90vh;
-      padding: 20px 22px;
+      max-height: 92vh;
+      padding: 22px 24px 18px;
     }
-    .health-dash { display: flex; flex-direction: column; gap: 14px; }
-    .health-dash-top {
+    .health-dash { display: flex; flex-direction: column; gap: 13px; }
+
+    /* Cartes premium */
+    .health-card {
+      background: linear-gradient(180deg, var(--bg3), var(--bg2));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 10px 26px rgba(0,0,0,0.28);
+    }
+    .health-card-head {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 10px; font-weight: 700; letter-spacing: 1.4px;
+      color: var(--text2); text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .health-card-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 8px rgba(200,168,75,0.7);
+      flex-shrink: 0;
+    }
+
+    /* Haut : jauge + radar, deux cartes égales et centrées */
+    .health-grid-top {
       display: grid;
-      grid-template-columns: 230px 1fr;
-      gap: 16px;
-      align-items: center;
+      grid-template-columns: 1fr 1fr;
+      gap: 13px;
+      align-items: stretch;
     }
-    .health-gauge-wrap { text-align: center; }
+    .health-card-gauge { display: flex; flex-direction: column; }
+    .health-gauge-wrap {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 6px 0;
+    }
     .health-gauge {
-      width: 140px; height: 140px; display: block; margin: 0 auto;
-      filter: drop-shadow(0 0 8px rgba(200,168,75,0.25));
+      width: 150px; height: 150px; display: block;
+      filter: drop-shadow(0 0 10px rgba(200,168,75,0.3));
     }
-    .health-gauge-num { font-size: 36px; font-weight: 800; fill: var(--gold); }
-    .health-gauge-lbl { font-size: 11px; fill: var(--text2); letter-spacing: 1px; }
-    .health-gauge-delta { margin-top: 6px; font-size: 10px; color: var(--text3); min-height: 14px; }
-    .health-sub-title { font-size: 9px; letter-spacing: 1px; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; }
-    .health-radar-wrap { min-height: 200px; }
+    .health-gauge-num { font-size: 38px; font-weight: 800; fill: var(--gold); }
+    .health-gauge-lbl { margin-top: 8px; font-size: 12px; font-weight: 700; letter-spacing: .4px; color: var(--text2); }
+    .health-gauge-delta { margin-top: 4px; font-size: 10px; color: var(--text3); min-height: 14px; }
+    .health-card-radar { display: flex; flex-direction: column; }
+    .health-card-radar .chart-wrap { flex: 1; min-height: 200px; display: flex; align-items: center; justify-content: center; }
+
     .health-criteria {
-      display: flex; flex-direction: column; gap: 6px;
-      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+      display: flex; flex-direction: column; gap: 2px;
     }
     .health-crit-row {
       display: grid;
-      grid-template-columns: 1fr 120px 30px;
-      gap: 10px; align-items: center;
-      padding: 3px 0;
+      grid-template-columns: 1fr 130px 34px;
+      gap: 12px; align-items: center;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
     }
+    .health-crit-row:last-child { border-bottom: none; }
     .health-crit-main { min-width: 0; }
-    .health-crit-label { font-size: 12px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .health-crit-label { font-size: 12.5px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
     .health-crit-weight {
       font-size: 8px; color: var(--text3); background: var(--bg4);
-      padding: 1px 5px; border-radius: 3px; font-weight: 600;
+      padding: 2px 6px; border-radius: 4px; font-weight: 700; letter-spacing: .3px;
     }
-    .health-crit-detail { font-size: 9px; color: var(--text3); margin-top: 1px; }
-    .health-crit-bar { height: 5px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
-    .health-crit-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.2,0.8,0.2,1); }
-    .health-crit-pct { font-size: 12px; font-weight: 700; text-align: right; color: var(--gold); }
-    .health-actions { display: flex; flex-direction: column; gap: 6px; }
+    .health-crit-detail { font-size: 9.5px; color: var(--text3); margin-top: 2px; }
+    .health-crit-bar { height: 6px; background: var(--bg4); border-radius: 4px; overflow: hidden; }
+    .health-crit-fill { height: 100%; border-radius: 4px; transition: width 0.85s cubic-bezier(0.16,1,0.3,1); }
+    .health-crit-pct { font-size: 13px; font-weight: 700; text-align: right; color: var(--gold); }
+    .health-actions { display: flex; flex-direction: column; gap: 8px; }
     .health-rec {
-      display: flex; gap: 10px; align-items: flex-start;
-      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px;
-      animation: recIn 0.35s ease backwards;
-      transition: border-color 0.2s;
+      display: flex; gap: 12px; align-items: flex-start;
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px;
+      transition: border-color 0.25s, transform 0.25s, background 0.25s;
     }
-    .health-rec:hover { border-color: var(--border-gold); }
-    .health-rec:nth-child(2) { animation-delay: 0.05s; }
-    .health-rec:nth-child(3) { animation-delay: 0.1s; }
-    .health-rec:nth-child(4) { animation-delay: 0.15s; }
-    .health-rec:nth-child(5) { animation-delay: 0.2s; }
-    @keyframes recIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    .health-rec-ico { font-size: 18px; line-height: 1.3; }
-    .health-rec-text { font-size: 11px; color: var(--text2); line-height: 1.45; }
+    .health-rec:hover { border-color: var(--border-gold); background: var(--bg4); transform: translateY(-1px); }
+    .health-rec-ico { font-size: 18px; line-height: 1.4; flex-shrink: 0; }
+    .health-rec-text { font-size: 11.5px; color: var(--text2); line-height: 1.5; }
     .health-empty {
-      padding: 14px; text-align: center; color: var(--text3); font-size: 11px;
-      background: var(--bg3); border: 1px dashed var(--border); border-radius: 8px;
+      padding: 16px; text-align: center; color: var(--text3); font-size: 11px;
+      background: var(--bg3); border: 1px dashed var(--border); border-radius: 10px;
+    }
+
+    /* Entrée douce et amortie (easeOutExpo), en cascade à chaque ouverture */
+    .health-dash.in > * { animation: healthCardIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .health-dash.in > *:nth-child(1) { animation-delay: 0.03s; }
+    .health-dash.in > *:nth-child(2) { animation-delay: 0.11s; }
+    .health-dash.in > *:nth-child(3) { animation-delay: 0.19s; }
+    .health-dash.in > *:nth-child(4) { animation-delay: 0.27s; }
+    .health-dash.in .health-grid-top > .health-card:nth-child(1) { animation: healthCardIn 0.5s cubic-bezier(0.16,1,0.3,1) 0.07s both; }
+    .health-dash.in .health-grid-top > .health-card:nth-child(2) { animation: healthCardIn 0.5s cubic-bezier(0.16,1,0.3,1) 0.14s both; }
+    @keyframes healthCardIn {
+      from { opacity: 0; transform: translateY(14px) scale(0.985); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     /* Widget scoreMini cliquable */
@@ -2242,8 +2291,8 @@
     .goal-sim-ko { background: rgba(244,67,54,0.12); border: 1px solid rgba(244,67,54,0.4); color: var(--red); }
 
     @media (max-width: 720px) {
-      .health-dash-top { grid-template-columns: 1fr; }
-      .health-gauge { width: 130px; height: 130px; }
+      .health-grid-top { grid-template-columns: 1fr; }
+      .health-gauge { width: 132px; height: 132px; }
       .goal-sim-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
@@ -2254,11 +2303,11 @@
       padding: 18px 16px calc(18px + var(--safe-bottom, 0px)) !important;
     }
     html.iphone-v2.is-iphone .health-dash { gap: 12px; }
-    html.iphone-v2.is-iphone .health-dash-top { grid-template-columns: 1fr; gap: 12px; }
-    html.iphone-v2.is-iphone .health-gauge { width: 120px; height: 120px; }
+    html.iphone-v2.is-iphone .health-grid-top { grid-template-columns: 1fr; gap: 12px; }
+    html.iphone-v2.is-iphone .health-gauge { width: 124px; height: 124px; }
     html.iphone-v2.is-iphone .health-gauge-num { font-size: 30px; }
     html.iphone-v2.is-iphone .health-gauge-lbl { font-size: 10px; }
-    html.iphone-v2.is-iphone .health-radar-wrap { min-height: 180px; }
+    html.iphone-v2.is-iphone .health-card-radar .chart-wrap { min-height: 180px; }
     html.iphone-v2.is-iphone .health-crit-row { grid-template-columns: 1fr 90px 28px; gap: 8px; }
     html.iphone-v2.is-iphone .health-crit-label { font-size: 11px; }
     html.iphone-v2.is-iphone .health-crit-detail { font-size: 8px; }
@@ -6929,31 +6978,37 @@
       <div class="modal modal-health">
         <div class="modal-title">❤️ TABLEAU DE BORD SANTE FINANCIERE</div>
         <div class="health-dash">
-          <div class="health-dash-top">
-            <div class="health-gauge-wrap">
-              <svg viewBox="0 0 130 130" class="health-gauge">
-                <circle cx="65" cy="65" r="56" fill="none" stroke="var(--bg4)" stroke-width="11"/>
-                <circle cx="65" cy="65" r="56" fill="none" stroke="var(--gold)" stroke-width="11"
-                  stroke-linecap="round" stroke-dasharray="351.86" stroke-dashoffset="351.86"
-                  transform="rotate(-90 65 65)" id="healthGaugeArc"/>
-                <text x="65" y="62" text-anchor="middle" class="health-gauge-num" id="healthGaugeNum">—</text>
-                <text x="65" y="84" text-anchor="middle" class="health-gauge-lbl" id="healthGaugeLbl">En attente</text>
-              </svg>
-              <div class="health-gauge-delta" id="healthGaugeDelta"></div>
+          <div class="health-grid-top">
+            <div class="health-card health-card-gauge">
+              <div class="health-card-head"><span class="health-card-dot"></span>SCORE GLOBAL</div>
+              <div class="health-gauge-wrap">
+                <svg viewBox="0 0 130 130" class="health-gauge">
+                  <circle cx="65" cy="65" r="56" fill="none" stroke="var(--bg4)" stroke-width="11"/>
+                  <circle cx="65" cy="65" r="56" fill="none" stroke="var(--gold)" stroke-width="11"
+                    stroke-linecap="round" stroke-dasharray="351.86" stroke-dashoffset="351.86"
+                    transform="rotate(-90 65 65)" id="healthGaugeArc"/>
+                  <text x="65" y="65" text-anchor="middle" dominant-baseline="central" class="health-gauge-num" id="healthGaugeNum">—</text>
+                </svg>
+                <div class="health-gauge-lbl" id="healthGaugeLbl">En attente</div>
+                <div class="health-gauge-delta" id="healthGaugeDelta"></div>
+              </div>
             </div>
-            <div class="health-radar-wrap">
-              <div class="health-sub-title">CRITÈRES DU SCORE</div>
+            <div class="health-card health-card-radar">
+              <div class="health-card-head"><span class="health-card-dot"></span>PROFIL DU SCORE</div>
               <div class="chart-wrap h200"><canvas id="healthRadar"></canvas></div>
             </div>
           </div>
-          <div class="health-criteria" id="healthCriteria"></div>
-          <div class="health-evolution">
-            <div class="health-sub-title">ÉVOLUTION DU SCORE</div>
+          <div class="health-card">
+            <div class="health-card-head"><span class="health-card-dot"></span>CRITÈRES DU SCORE</div>
+            <div class="health-criteria" id="healthCriteria"></div>
+          </div>
+          <div class="health-card">
+            <div class="health-card-head"><span class="health-card-dot"></span>ÉVOLUTION DU SCORE</div>
             <div class="chart-wrap h180"><canvas id="healthEvoChart"></canvas></div>
           </div>
-          <div class="health-actions">
-            <div class="health-sub-title">RECOMMANDATIONS</div>
-            <div id="healthActions"></div>
+          <div class="health-card">
+            <div class="health-card-head"><span class="health-card-dot"></span>RECOMMANDATIONS</div>
+            <div class="health-actions" id="healthActions"></div>
           </div>
         </div>
         <div class="modal-actions">
@@ -8034,6 +8089,7 @@
         }
         const overlay = document.getElementById('modal-' + id);
         if (!overlay) return;
+        overlay.classList.remove('closing');
         overlay.classList.add('show');
         // Réinitialise la position de défilement de la fenêtre.
         // Sans cela, une fenêtre qu'on avait fait défiler s'ouvrait
@@ -8048,7 +8104,8 @@
       function closeModal(id) {
         const overlay = document.getElementById('modal-' + id);
         if (!overlay) return;
-        overlay.classList.remove('show');
+        if (overlay.classList.contains('closing')) return; // déjà en cours de fermeture
+        overlay.classList.add('closing');
         // Restaure le scroll du body si aucune sidebar mobile n'est ouverte
         if (isMobileView()) {
           const sb = document.getElementById('sidebar');
@@ -8063,8 +8120,10 @@
           window._widgetReturn = null;
           openModal(back);
         }
+        // Laisse jouer l'animation de fermeture avant de masquer la fenêtre.
+        setTimeout(() => { overlay.classList.remove('show', 'closing'); }, 240);
         if (window.checkEvolutionMonthlyReminder) {
-          setTimeout(window.checkEvolutionMonthlyReminder, 100);
+          setTimeout(window.checkEvolutionMonthlyReminder, 260);
         }
       }
       document.querySelectorAll('.modal-overlay').forEach(o => {
@@ -8074,7 +8133,7 @@
             deferEvolutionMonthlyReminder();
             return;
           }
-          o.classList.remove('show');
+          closeModal(o.id.replace(/^modal-/, ''));
         });
       });
 
@@ -9871,6 +9930,9 @@
       function openHealthDashboard() {
         renderHealthDashboard();
         openModal('health');
+        // Réinitialise la cascade d'entrée pour qu'elle rejoue à chaque ouverture.
+        const dash = document.querySelector('#modal-health .health-dash');
+        if (dash) { dash.classList.remove('in'); void dash.offsetWidth; dash.classList.add('in'); }
         // Animation fluide de la jauge : vide → valeur finale.
         requestAnimationFrame(() => {
           const b = D.scoreBreakdown;
@@ -9878,6 +9940,13 @@
           if (b && arc) {
             const C = 2 * Math.PI * 56;
             arc.setAttribute('stroke-dashoffset', (C * (1 - b.score / 100)).toFixed(2));
+          }
+          // Les graphiques sont créés alors que la modale est masquée : on
+          // force le recalcul de leur taille une fois affichés pour un rendu net.
+          if (typeof charts !== 'undefined') {
+            ['healthRadar', 'healthEvoChart'].forEach(k => {
+              try { if (charts[k]) charts[k].resize(); } catch (e) {}
+            });
           }
         });
       }
@@ -9910,8 +9979,8 @@
           return;
         }
 
-        if (gaugeNum) gaugeNum.textContent = b.score;
-        if (gaugeLbl) gaugeLbl.textContent = b.label;
+        if (gaugeNum) { gaugeNum.textContent = b.score; gaugeNum.style.fill = scoreColor(b.score); }
+        if (gaugeLbl) { gaugeLbl.textContent = b.label; gaugeLbl.style.color = scoreColor(b.score); }
         if (gaugeArc) {
           gaugeArc.setAttribute('stroke-dasharray', C.toFixed(2));
           gaugeArc.setAttribute('stroke-dashoffset', C.toFixed(2)); // animé vers la valeur finale après l'ouverture
@@ -14150,9 +14219,21 @@
         const sel = document.getElementById('goalSimSelect');
         const objs = (D.objectives || []).slice();
         if (sel) {
-          sel.innerHTML = objs.length
-            ? objs.map(o => `<option value="${o.id}">${escapeHtml(o.name || 'Objectif')} — ${fmt(o.target)}</option>`).join('')
-            : '<option value="">Aucun objectif</option>';
+          // On ne reconstruit la liste que si les objectifs ont changé, et on
+          // conserve la sélection courante. Sinon le <select> revenait à la
+          // première option et l'objectif choisi ne s'appliquait jamais.
+          const sig = objs.map(o => o.id + ':' + (o.name || '') + ':' + o.target).join('|');
+          if (sel.getAttribute('data-sig') !== sig) {
+            sel.innerHTML = objs.length
+              ? objs.map(o => `<option value="${o.id}">${escapeHtml(o.name || 'Objectif')} — ${fmt(o.target)}</option>`).join('')
+              : '<option value="">Aucun objectif</option>';
+            sel.setAttribute('data-sig', sig);
+          }
+          if (objs.length) {
+            const desired = sel.value;
+            const valid = objs.find(o => o.id === desired);
+            sel.value = valid ? desired : (objs.find(o => o.isMain) || objs[0]).id;
+          }
         }
         const obj = currentGoalSimObjective();
         if (!obj) {
