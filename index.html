@@ -2129,61 +2129,76 @@
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* ── Tableau de bord Santé financière ── */
+    /* ── Barre de défilement sombre (cohérente avec l'app) ── */
+    .modal {
+      scrollbar-color: var(--border) var(--bg2);
+    }
+    .modal::-webkit-scrollbar { width: 8px; }
+    .modal::-webkit-scrollbar-track { background: var(--bg2); border-radius: 4px; }
+    .modal::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .modal::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+    /* ── Tableau de bord Santé financière (compact : un écran) ── */
     .modal-health {
       width: 980px;
       max-width: 96vw;
-      max-height: 92vh;
-      padding: 24px;
+      max-height: 90vh;
+      padding: 20px 22px;
     }
-    .health-dash { display: flex; flex-direction: column; gap: 18px; }
+    .health-dash { display: flex; flex-direction: column; gap: 14px; }
     .health-dash-top {
       display: grid;
-      grid-template-columns: 280px 1fr;
-      gap: 20px;
+      grid-template-columns: 230px 1fr;
+      gap: 16px;
       align-items: center;
     }
     .health-gauge-wrap { text-align: center; }
-    .health-gauge { width: 180px; height: 180px; display: block; margin: 0 auto; }
-    .health-gauge-num { font-size: 44px; font-weight: 700; fill: var(--gold); }
-    .health-gauge-lbl { font-size: 13px; fill: var(--text2); }
-    .health-gauge-delta { margin-top: 8px; font-size: 11px; color: var(--text3); min-height: 16px; }
-    .health-sub-title { font-size: 10px; letter-spacing: 1px; color: var(--text3); margin-bottom: 8px; }
-    .health-radar-wrap { min-height: 220px; }
+    .health-gauge {
+      width: 140px; height: 140px; display: block; margin: 0 auto;
+      filter: drop-shadow(0 0 8px rgba(200,168,75,0.25));
+    }
+    .health-gauge-num { font-size: 36px; font-weight: 800; fill: var(--gold); }
+    .health-gauge-lbl { font-size: 11px; fill: var(--text2); letter-spacing: 1px; }
+    .health-gauge-delta { margin-top: 6px; font-size: 10px; color: var(--text3); min-height: 14px; }
+    .health-sub-title { font-size: 9px; letter-spacing: 1px; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; }
+    .health-radar-wrap { min-height: 200px; }
     .health-criteria {
-      display: flex; flex-direction: column; gap: 8px;
-      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+      display: flex; flex-direction: column; gap: 6px;
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
     }
     .health-crit-row {
       display: grid;
-      grid-template-columns: 1fr 140px 34px;
-      gap: 12px; align-items: center;
+      grid-template-columns: 1fr 120px 30px;
+      gap: 10px; align-items: center;
+      padding: 3px 0;
     }
     .health-crit-main { min-width: 0; }
-    .health-crit-label { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .health-crit-label { font-size: 12px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
     .health-crit-weight {
-      font-size: 9px; color: var(--text3); background: var(--bg4);
-      padding: 2px 6px; border-radius: 4px; font-weight: 500;
+      font-size: 8px; color: var(--text3); background: var(--bg4);
+      padding: 1px 5px; border-radius: 3px; font-weight: 600;
     }
-    .health-crit-detail { font-size: 10px; color: var(--text3); margin-top: 2px; }
-    .health-crit-bar { height: 7px; background: var(--bg4); border-radius: 4px; overflow: hidden; }
-    .health-crit-fill { height: 100%; border-radius: 4px; transition: width 0.7s cubic-bezier(0.2,0.8,0.2,1); }
-    .health-crit-pct { font-size: 14px; font-weight: 700; text-align: right; color: var(--gold); }
-    .health-actions { display: flex; flex-direction: column; gap: 8px; }
+    .health-crit-detail { font-size: 9px; color: var(--text3); margin-top: 1px; }
+    .health-crit-bar { height: 5px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+    .health-crit-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.2,0.8,0.2,1); }
+    .health-crit-pct { font-size: 12px; font-weight: 700; text-align: right; color: var(--gold); }
+    .health-actions { display: flex; flex-direction: column; gap: 6px; }
     .health-rec {
       display: flex; gap: 10px; align-items: flex-start;
-      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 12px;
-      animation: recIn 0.4s ease backwards;
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px;
+      animation: recIn 0.35s ease backwards;
+      transition: border-color 0.2s;
     }
-    .health-rec:nth-child(2) { animation-delay: 0.06s; }
-    .health-rec:nth-child(3) { animation-delay: 0.12s; }
-    .health-rec:nth-child(4) { animation-delay: 0.18s; }
-    .health-rec:nth-child(5) { animation-delay: 0.24s; }
-    @keyframes recIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    .health-rec-ico { font-size: 20px; line-height: 1.2; }
-    .health-rec-text { font-size: 12px; color: var(--text2); line-height: 1.4; }
+    .health-rec:hover { border-color: var(--border-gold); }
+    .health-rec:nth-child(2) { animation-delay: 0.05s; }
+    .health-rec:nth-child(3) { animation-delay: 0.1s; }
+    .health-rec:nth-child(4) { animation-delay: 0.15s; }
+    .health-rec:nth-child(5) { animation-delay: 0.2s; }
+    @keyframes recIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .health-rec-ico { font-size: 18px; line-height: 1.3; }
+    .health-rec-text { font-size: 11px; color: var(--text2); line-height: 1.45; }
     .health-empty {
-      padding: 16px; text-align: center; color: var(--text3); font-size: 12px;
+      padding: 14px; text-align: center; color: var(--text3); font-size: 11px;
       background: var(--bg3); border: 1px dashed var(--border); border-radius: 8px;
     }
 
@@ -2198,10 +2213,6 @@
       transform: translateY(-1px);
     }
     .score-mini.clickable:active { transform: translateY(0); }
-    .score-detail-hint {
-      margin-top: 6px; font-size: 9px; color: var(--gold);
-      text-align: right; letter-spacing: 0.5px;
-    }
 
     /* Onglets de type Projection + simulateur d'objectifs */
     .proj-type-tabs {
@@ -2232,9 +2243,36 @@
 
     @media (max-width: 720px) {
       .health-dash-top { grid-template-columns: 1fr; }
-      .health-gauge { width: 150px; height: 150px; }
+      .health-gauge { width: 130px; height: 130px; }
       .goal-sim-grid { grid-template-columns: repeat(2, 1fr); }
     }
+
+    /* iPhone v2 : tableau de bord Santé optimisé pour l'écran */
+    html.iphone-v2.is-iphone .modal-health {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 18px 16px calc(18px + var(--safe-bottom, 0px)) !important;
+    }
+    html.iphone-v2.is-iphone .health-dash { gap: 12px; }
+    html.iphone-v2.is-iphone .health-dash-top { grid-template-columns: 1fr; gap: 12px; }
+    html.iphone-v2.is-iphone .health-gauge { width: 120px; height: 120px; }
+    html.iphone-v2.is-iphone .health-gauge-num { font-size: 30px; }
+    html.iphone-v2.is-iphone .health-gauge-lbl { font-size: 10px; }
+    html.iphone-v2.is-iphone .health-radar-wrap { min-height: 180px; }
+    html.iphone-v2.is-iphone .health-crit-row { grid-template-columns: 1fr 90px 28px; gap: 8px; }
+    html.iphone-v2.is-iphone .health-crit-label { font-size: 11px; }
+    html.iphone-v2.is-iphone .health-crit-detail { font-size: 8px; }
+    html.iphone-v2.is-iphone .health-rec { padding: 8px 10px; }
+    html.iphone-v2.is-iphone .health-rec-text { font-size: 10px; }
+    html.iphone-v2.is-iphone .goal-sim-grid { grid-template-columns: repeat(2, 1fr); }
+    html.iphone-v2.is-iphone .proj-type-tab { font-size: 11px; padding: 9px 10px; }
+    html.iphone-v2.is-iphone .proj-type-tabs { gap: 6px; }
+    html.iphone-v2.is-iphone .slider-group { gap: 4px; }
+    html.iphone-v2.is-iphone .slider-label { font-size: 11px; }
+    html.iphone-v2.is-iphone .slider-value { font-size: 14px; }
+    html.iphone-v2.is-iphone input[type=range] { height: 30px; }
+    html.iphone-v2.is-iphone input[type=range]::-webkit-slider-thumb { width: 22px; height: 22px; margin-top: -8px; }
+    html.iphone-v2.is-iphone input[type=range]::-moz-range-thumb { width: 22px; height: 22px; }
 
     /* TX */
     .tx-item {
@@ -2400,11 +2438,50 @@
       color: var(--gold)
     }
 
+    /* Range sliders : piste sombre + poignée dorée animée (tout l'app) */
     input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
       width: 100%;
-      accent-color: var(--gold);
-      cursor: pointer
+      height: 26px;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      margin: 0;
     }
+    /* Piste : dégradé dorée jusqu'à --val, fond sombre après */
+    input[type=range]::-webkit-slider-runnable-track {
+      height: 6px;
+      background: linear-gradient(90deg, var(--gold) 0%, var(--gold) var(--val, 0%), var(--bg4) var(--val, 0%), var(--bg4) 100%);
+      border-radius: 3px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: 2px solid #0A0A0A;
+      box-shadow: 0 0 0 1px var(--gold), 0 2px 8px rgba(0,0,0,0.6);
+      margin-top: -6px;
+      transition: transform 0.15s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.15s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+      box-shadow: 0 0 0 1px var(--gold), 0 2px 12px rgba(200,168,75,0.6);
+    }
+    input[type=range]::-webkit-slider-thumb:active { transform: scale(1.25); }
+    /* Firefox */
+    input[type=range]::-moz-range-track { height: 6px; background: var(--bg4); border-radius: 3px; }
+    input[type=range]::-moz-range-progress { height: 6px; background: var(--gold); border-radius: 3px; }
+    input[type=range]::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--gold); border: 2px solid #0A0A0A;
+      box-shadow: 0 0 0 1px var(--gold), 0 2px 8px rgba(0,0,0,0.6);
+      transition: transform 0.15s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.15s;
+    }
+    input[type=range]::-moz-range-thumb:hover { transform: scale(1.18); box-shadow: 0 0 0 1px var(--gold), 0 2px 12px rgba(200,168,75,0.6); }
+    input[type=range]::-moz-range-thumb:active { transform: scale(1.25); }
 
     .proj-legend-row {
       display: flex;
@@ -5485,7 +5562,6 @@
               </div>
             </div>
           </div>
-          <div class="score-detail-hint">Détail ›</div>
         </div>
         <div class="quote-box" id="quoteBox">
           <div class="q">"</div>
@@ -6867,7 +6943,7 @@
             </div>
             <div class="health-radar-wrap">
               <div class="health-sub-title">CRITÈRES DU SCORE</div>
-              <div class="chart-wrap h220"><canvas id="healthRadar"></canvas></div>
+              <div class="chart-wrap h200"><canvas id="healthRadar"></canvas></div>
             </div>
           </div>
           <div class="health-criteria" id="healthCriteria"></div>
@@ -7482,6 +7558,8 @@
         if (document.getElementById('page-analyse')?.classList.contains('active')) renderAnalyse();
         if (document.getElementById('page-projection')?.classList.contains('active')) renderProjection();
         if (document.getElementById('page-parametres')?.classList.contains('active')) renderParametres();
+        // Initialise la position des poignées des sliders (piste remplie).
+        updateAllRangeFills();
       }
 
       async function loadAllData() {
@@ -7877,6 +7955,25 @@
       function getBanque() { return D.accounts.filter(a => a.type === 'banque').reduce((s, a) => s + a.balance, 0) }
       function getEspeces() { return D.accounts.filter(a => a.type === 'especes').reduce((s, a) => s + a.balance, 0) }
       function dc(id) { if (charts[id]) { charts[id].destroy(); delete charts[id] } }
+
+      // Met à jour la variable CSS --val (pour la piste remplie des sliders)
+      // sur tous les <input type=range>. Appelée à chaque changement et
+      // au rendu pour initialiser la position de la poignée.
+      function updateRangeFill(input) {
+        if (!input || input.type !== 'range') return;
+        const min = parseFloat(input.min) || 0;
+        const max = parseFloat(input.max) || 100;
+        const val = parseFloat(input.value);
+        const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+        input.style.setProperty('--val', pct.toFixed(2) + '%');
+      }
+      function updateAllRangeFills() {
+        document.querySelectorAll('input[type=range]').forEach(updateRangeFill);
+      }
+      // Mise à jour en direct quand l'utilisateur déplace une poignée.
+      document.addEventListener('input', function (e) {
+        if (e.target && e.target.type === 'range') updateRangeFill(e.target);
+      });
       function showToast(msg, type = 'success') {
         const c = document.getElementById('toastContainer');
         const t = document.createElement('div');
@@ -9665,9 +9762,12 @@
       let scoreHistoryTableMissing = false;
       let scoreHistoryLastKey = null;
 
-      function currentMonthKey() {
+      // Période d'enregistrement : 2 snapshots par mois (1er et 15).
+      // Le 1er couvre les jours 1–15, le 15 les jours 16–fin de mois.
+      function currentPeriodKey() {
         const d = new Date();
-        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        const half = d.getDate() <= 15 ? '01' : '15';
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + half;
       }
 
       function scoreHistoryStorageKey() {
@@ -9706,12 +9806,12 @@
 
       function persistScoreHistory(b) {
         if (!b || b.score == null) return;
-        const month = currentMonthKey();
+        const period = currentPeriodKey();
         const list = (D.scoreHistory || []).slice();
-        // Une seule ligne par mois (la plus récente).
-        const filtered = list.filter(x => x.month !== month);
+        // Une seule ligne par période (1er ou 15) : la plus récente.
+        const filtered = list.filter(x => x.month !== period);
         const row = {
-          month: month, score: b.score,
+          month: period, score: b.score,
           goal: Math.round(b.pctGoal), epargne: Math.round(b.pctEpargne),
           coussin: Math.round(b.pctCoussin), regularite: Math.round(b.pctRegularite),
           diversite: Math.round(b.pctDiversite)
@@ -9721,12 +9821,12 @@
         D.scoreHistory = filtered;
         writeScoreHistoryLocal(filtered);
         if (scoreHistoryTableMissing || !currentUserId) return;
-        const key = month + ':' + b.score;
-        if (scoreHistoryLastKey === key) return; // déjà persisté ce mois-ci (pas de requête redondante)
+        const key = period + ':' + b.score;
+        if (scoreHistoryLastKey === key) return; // déjà persisté cette période (pas de requête redondante)
         scoreHistoryLastKey = key;
         supabaseClient.from('score_history')
           .upsert({
-            user_id: currentUserId, month: month, score: b.score,
+            user_id: currentUserId, month: period, score: b.score,
             goal: row.goal, epargne: row.epargne, coussin: row.coussin,
             regularite: row.regularite, diversite: row.diversite
           }, { onConflict: 'user_id,month' })
@@ -9823,7 +9923,7 @@
           if (hist.length >= 2) {
             const prev = hist[hist.length - 2];
             const d = b.score - prev.score;
-            gaugeDelta.textContent = (d >= 0 ? '▲ +' : '▼ ') + Math.abs(d) + ' vs mois précédent';
+            gaugeDelta.textContent = (d >= 0 ? '▲ +' : '▼ ') + Math.abs(d) + ' vs période précédente';
             gaugeDelta.style.color = d >= 0 ? 'var(--green)' : 'var(--red)';
           } else if (hist.length === 1) {
             gaugeDelta.textContent = 'Première mesure';
@@ -9936,7 +10036,10 @@
         const canvas = document.getElementById('healthEvoChart');
         if (!canvas) return;
         const hist = (D.scoreHistory || []);
-        const labels = hist.map(h => String(h.month).slice(5));
+        const labels = hist.map(h => {
+          const p = String(h.month).split('-');
+          return p.length >= 3 ? (p[1] + '/' + p[2]) : p[1]; // "MM/JJ" ou "MM"
+        });
         const data = hist.map(h => h.score);
         if (!data.length) {
           charts['healthEvoChart'] = new Chart(canvas, {
@@ -13900,6 +14003,7 @@
       function renderProjection() {
         updateProjChart();
         if (projType === 'objectifs') renderGoalSimulator();
+        updateAllRangeFills();
       }
 
       function onProjChange() {
@@ -13923,18 +14027,21 @@
           const v = Number.isFinite(raw) ? Math.min(3000, Math.max(0, raw)) : 0;
           document.getElementById('projEpargneRange').value = v;
           document.getElementById('projEpargneVal').textContent = v;
+          updateRangeFill(document.getElementById('projEpargneRange'));
         }
         if (field === 'horizon') {
           const raw = parseFloat(document.getElementById('projHorizonInput').value);
           const v = Number.isFinite(raw) ? Math.min(30, Math.max(1, Math.round(raw))) : 5;
           document.getElementById('projHorizonRange').value = v;
           document.getElementById('projHorizonVal').textContent = v;
+          updateRangeFill(document.getElementById('projHorizonRange'));
         }
         if (field === 'rend') {
           const raw = parseFloat(document.getElementById('projRendInput').value);
           const v = Number.isFinite(raw) ? Math.min(15, Math.max(0, raw)) : 0;
           document.getElementById('projRendRange').value = v;
           document.getElementById('projRendVal').textContent = v.toFixed(1);
+          updateRangeFill(document.getElementById('projRendRange'));
         }
         updateProjChart();
       }
@@ -14066,6 +14173,8 @@
         if (eRange) eRange.value = contrib;
         if (eInput) eInput.value = contrib;
         document.getElementById('goalSimEpargneVal').textContent = contrib;
+        updateRangeFill(document.getElementById('goalSimEpargneRange'));
+        updateRangeFill(document.getElementById('goalSimRendRange'));
         // Panneau d'info
         const pct = obj.target > 0 ? Math.min(100, (obj.current / obj.target) * 100) : 0;
         document.getElementById('goalSimInfo').innerHTML = `
@@ -14130,12 +14239,14 @@
           const v = Number.isFinite(raw) ? Math.min(3000, Math.max(0, raw)) : 0;
           document.getElementById('goalSimEpargneRange').value = v;
           document.getElementById('goalSimEpargneVal').textContent = v;
+          updateRangeFill(document.getElementById('goalSimEpargneRange'));
         }
         if (field === 'rend') {
           const raw = parseFloat(document.getElementById('goalSimRendInput').value);
           const v = Number.isFinite(raw) ? Math.min(15, Math.max(0, raw)) : 0;
           document.getElementById('goalSimRendRange').value = v;
           document.getElementById('goalSimRendVal').textContent = v.toFixed(1);
+          updateRangeFill(document.getElementById('goalSimRendRange'));
         }
         updateGoalSimChart();
       }
