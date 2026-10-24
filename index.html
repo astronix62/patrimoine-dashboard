@@ -2184,22 +2184,35 @@
       margin-bottom: 8px;
       border: 1px solid var(--border);
       /* Réordonnancement par glisser-déposer : la carte entière est
-         saisissable (appui long sur tactile, pression-glissée à la souris). */
+         saisissable (appui long sur tactile, pression-glissée à la souris).
+         `pan-y` laisse le défilement libre tant qu'aucune carte n'est
+         saisie ; `none` est appliqué au moment de la saisie. */
       -webkit-user-select: none;
       user-select: none;
       -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
       touch-action: pan-y;
       cursor: grab;
     }
 
+    /* Carte saisie : elle suit le doigt / le curseur et passe au-dessus. */
     .obj-card.dragging {
-      opacity: 0.94;
-      transform: scale(1.02);
+      opacity: 0.97;
       border-color: var(--gold) !important;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45);
       cursor: grabbing;
       position: relative;
-      z-index: 5;
+      z-index: 1000;
+      transition: none;
+      will-change: transform;
+      touch-action: none;
+    }
+
+    /* Les autres cartes glissent pour libérer la place : animation CSS,
+       sans réordonnancement du DOM pendant le glisser (pas d'oscillation). */
+    body.obj-dragging .obj-card:not(.dragging) {
+      transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+      will-change: transform;
     }
 
     body.obj-dragging,
@@ -2207,6 +2220,7 @@
       cursor: grabbing !important;
       -webkit-user-select: none !important;
       user-select: none !important;
+      -webkit-touch-callout: none !important;
     }
 
     .obj-drag-hint {
@@ -5169,6 +5183,15 @@
     html.iphone-v2.is-iphone .ip-act-item:active { background: var(--border) }
     html.iphone-v2.is-iphone .ip-act-item.danger { color: var(--red) }
     html.iphone-v2.is-iphone .ip-act-cancel { width: 100%; min-height: 50px; margin-top: 10px }
+
+    /* ── Objectifs : réordonnancement par glisser-déposer (iPhone v2) ─────
+       Rendu inspiré de l'écran d'accueil : la carte saisie s'élève au-dessus
+       du doigt, les autres cartes glissent pour libérer la place, et la
+       mise en place finale se fait en une animation fluide (pas de flash). */
+    html.iphone-v2.is-iphone .obj-card { border-radius: 14px; margin-bottom: 10px }
+    html.iphone-v2.is-iphone .obj-card.dragging { box-shadow: 0 20px 44px rgba(0, 0, 0, 0.5); border-radius: 16px }
+    html.iphone-v2.is-iphone .obj-drag-hint { font-size: 11px; opacity: 0.85 }
+    html.iphone-v2.is-iphone .obj-drag-hint.ip-hint-done { display: none }
   </style>
 </head>
 
@@ -6697,7 +6720,7 @@
         <div class="ip-grid">
           <button class="ip-tile" type="button" onclick="ipGo('analyse')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>Analyse</span></button>
           <button class="ip-tile" type="button" onclick="ipGo('projection')"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span>Projection</span></button>
-          <button class="ip-tile" type="button" onclick="ipGo('parametres')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg><span>Paramètres</span></button>
+          <button class="ip-tile" type="button" onclick="ipGo('parametres')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Paramètres</span></button>
           <button class="ip-tile" type="button" onclick="ipAct('import')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10M8 10l4 4 4-4"/><path d="M5 18h14"/></svg><span>Importer CSV</span></button>
           <button class="ip-tile" type="button" onclick="ipAct('reconcile')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg><span>Vérifier les soldes</span></button>
           <button class="ip-tile" type="button" onclick="ipAct('export')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V5M8 9l4-4 4 4"/><path d="M5 19h14"/></svg><span>Exporter CSV</span></button>
@@ -12758,9 +12781,11 @@
       const OBJ_DND_LONGPRESS_MS = 400;
       const OBJ_DND_MOUSE_PX = 5;
       const OBJ_DND_TOUCH_CANCEL_PX = 12;
+      const OBJ_DND_SETTLE_MS = 230;
       let objDndState = null;
       let objDndBound = false;
       let objDndSuppressClickUntil = 0;
+      let objDndDropTimer = null;
 
       function objectiveOrderStorageKey() {
         return currentUserId ? 'patrimoine_objective_order_' + currentUserId : null;
@@ -12857,21 +12882,58 @@
         D.objectives.length = 0;
         D.objectives.push(...next);
         if (before === after) return; // la carte n'a pas changé de place
+        // Les cartes ont été déplacées dans le DOM : leurs boutons d'action
+        // gardent les indices de l'ancien ordre. On les resynchronise avec
+        // le nouvel ordre (pas de re-render → l'animation de mise en place
+        // reste intacte).
+        Array.from(list.querySelectorAll('.obj-card[data-obj-id]')).forEach((card, i) => {
+          const btns = card.querySelectorAll('.action-btn');
+          if (btns.length < 3) return;
+          btns[0].setAttribute('onclick', 'toggleMainObjectif(' + i + ')');
+          btns[1].setAttribute('onclick', 'editObjectif(' + i + ')');
+          btns[2].setAttribute('onclick', 'deleteObjectif(' + i + ')');
+        });
         writeObjectiveOrder(D.objectives.map(o => String(o.id)));
         persistObjectiveOrderInDatabase();
-        renderObjectifs();
+        // Pas de re-render : le DOM est déjà dans le bon ordre et un
+        // re-render immédiat casserait l'animation de mise en place.
+      }
+
+      // Snapshot des positions des cartes au début du glisser : les autres
+      // cartes glissent par transform (pas de changement de layout pendant
+      // le glisser, donc pas d'oscillation même avec des hauteurs variables).
+      function objDndMeasure() {
+        const s = objDndState;
+        const listRect = s.list.getBoundingClientRect();
+        s.cards = Array.from(s.list.querySelectorAll('.obj-card'));
+        s.startIndex = s.cards.indexOf(s.card);
+        s.origin = s.cards.map(c => {
+          const r = c.getBoundingClientRect();
+          return { el: c, top: r.top - listRect.top, height: r.height };
+        });
+        // Espace occupé par la carte saisie (hauteur + inter-carte) : les
+        // autres cartes glissent exactement de cet espace, quelle que soit
+        // leur propre hauteur (hauteurs différentes → pas d'accumulation).
+        const gap = s.origin.length > 1
+          ? (s.origin[1].top - s.origin[0].top - s.origin[0].height)
+          : 8;
+        s.shift = s.origin[s.startIndex].height + (gap > 0 ? gap : 8);
+        s.targetIndex = s.startIndex;
       }
 
       function objDndGrab() {
         const s = objDndState;
         if (!s || s.active) return;
+        // Une animation de mise en place est peut-être encore en cours : on
+        // l'arrête proprement pour éviter deux transform simultanés.
+        if (objDndDropTimer) { clearTimeout(objDndDropTimer); objDndDropTimer = null; }
         s.active = true;
         if (s.timer) { clearTimeout(s.timer); s.timer = null; }
         s.card.classList.add('dragging');
+        s.card.style.transition = 'none';
+        s.card.style.transform = '';
         document.body.classList.add('obj-dragging');
-        // Empêche tout défilement de page résiduel pendant la saisie.
-        s.prevBodyOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
+        objDndMeasure();
         if (navigator.vibrate) { try { navigator.vibrate(12); } catch (e) {} }
       }
 
@@ -12880,30 +12942,106 @@
         objDndState = null;
         if (!s) return;
         if (s.timer) clearTimeout(s.timer);
-        if (s.card) s.card.classList.remove('dragging');
+        // L'animation de mise en place gère elle-même la carte saisie.
+        if (s.card && !s.dropping) s.card.classList.remove('dragging');
+        if (!s.dropping && s.card) {
+          s.card.style.transition = '';
+          s.card.style.transform = '';
+        }
+        if (!s.dropping && s.origin) {
+          for (let j = 0; j < s.origin.length; j++) {
+            if (j === s.startIndex) continue;
+            s.origin[j].el.style.transform = '';
+          }
+        }
         document.body.classList.remove('obj-dragging');
-        document.body.style.overflow = s.prevBodyOverflow || '';
       }
 
-      // Déplace la carte saisie à la position du doigt / curseur (les autres
-      // cartes s'écartent en direct : le DOM reflète le futur ordre).
-      function objDndReorderAt(clientY) {
+      // Index cible de la carte saisie : on compare l'ordonnée du doigt /
+      // du curseur aux positions D'ORIGINE des cartes (fixées au début du
+      // glisser). Aucune oscillation possible.
+      function objDndTargetIndex(clientY) {
+        const s = objDndState;
+        const listRect = s.list.getBoundingClientRect();
+        const y = clientY - listRect.top;
+        for (let i = 0; i < s.origin.length; i++) {
+          if (y < s.origin[i].top + s.origin[i].height / 2) return i;
+        }
+        return s.origin.length;
+      }
+
+      // Déplace les autres cartes pour libérer la place de la carte saisie.
+      function objDndApplyShifts(t) {
+        const s = objDndState;
+        const start = s.startIndex;
+        const shift = s.shift;
+        for (let j = 0; j < s.origin.length; j++) {
+          if (j === start) continue;
+          let off = 0;
+          if (t > start && j > start && j <= t) {
+            // La carte saisie descend : celles-ci montent d'un espace.
+            off = -shift;
+          } else if (t < start && j >= t && j < start) {
+            // La carte saisie monte : celles-ci descendent d'un espace.
+            off = shift;
+          }
+          s.origin[j].el.style.transform = off ? 'translateY(' + off + 'px)' : '';
+        }
+      }
+
+      // Met à jour la carte saisie (elle suit le doigt) et l'ordonnancement
+      // visuel des autres cartes.
+      function objDndUpdate(px, py) {
         const s = objDndState;
         if (!s || !s.active) return;
-        const list = document.getElementById('objectifsList');
-        if (!list) return;
-        const others = Array.from(list.querySelectorAll('.obj-card')).filter(c => c !== s.card);
-        if (!others.length) return;
-        let target = null;
-        for (const c of others) {
-          const r = c.getBoundingClientRect();
-          if (clientY < r.top + r.height / 2) { target = c; break; }
+        const dx = px - s.startX;
+        const dy = py - s.startY;
+        s.card.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(1.03)';
+        const t = objDndTargetIndex(py);
+        if (t === s.targetIndex) return;
+        s.targetIndex = t;
+        objDndApplyShifts(t);
+      }
+
+      // Libération : réordonnancement du DOM, FLIP de la carte saisie pour
+      // éviter le saut, puis animation de mise en place (comme sur iOS).
+      function objDndDrop() {
+        const s = objDndState;
+        if (!s || !s.active) return;
+        s.dropping = true;
+        const t = typeof s.targetIndex === 'number' ? s.targetIndex : s.startIndex;
+        // Position visuelle actuelle de la carte (inclut le transform).
+        s.card.style.transition = 'none';
+        const visualTop = s.card.getBoundingClientRect().top;
+        // Réordonnancement du DOM à la position finale.
+        const others = Array.from(s.list.querySelectorAll('.obj-card')).filter(c => c !== s.card);
+        const ref = others[t] || null;
+        if (ref) s.list.insertBefore(s.card, ref); else s.list.appendChild(s.card);
+        // Les autres cartes : leur position naturelle coïncide déjà avec la
+        // position affichée pendant le glisser → on libère le décalage.
+        for (let j = 0; j < s.origin.length; j++) {
+          if (j === s.startIndex) continue;
+          s.origin[j].el.style.transform = '';
         }
-        if (target) {
-          if (s.card.nextElementSibling !== target) list.insertBefore(s.card, target);
-        } else if (s.card.previousElementSibling !== others[others.length - 1]) {
-          list.appendChild(s.card);
-        }
+        // FLIP de la carte saisie : on mesure la position layout finale (sans
+        // transform), on compense, puis on anime vers la position finale.
+        s.card.style.transform = '';
+        const layoutTop = s.card.getBoundingClientRect().top;
+        const delta = Math.round(visualTop - layoutTop);
+        requestAnimationFrame(() => {
+          s.card.style.transition = 'none';
+          s.card.style.transform = delta ? 'translateY(' + delta + 'px) scale(1.03)' : '';
+          void s.card.offsetWidth; // reflow : mémorise la position de départ
+          s.card.style.transition = 'transform ' + OBJ_DND_SETTLE_MS + 'ms cubic-bezier(0.2, 0.8, 0.2, 1)';
+          s.card.style.transform = '';
+          objDndDropTimer = setTimeout(() => {
+            objDndDropTimer = null;
+            s.card.style.transition = '';
+            s.card.style.transform = '';
+            s.card.classList.remove('dragging');
+            document.body.classList.remove('obj-dragging');
+          }, OBJ_DND_SETTLE_MS + 80);
+        });
       }
 
       function initObjectifsDragDrop() {
@@ -12928,6 +13066,7 @@
           objDndState = {
             pointerId: e.pointerId,
             card: card,
+            list: list,
             startX: e.clientX,
             startY: e.clientY,
             active: false,
@@ -12957,7 +13096,7 @@
           }
           if (objDndState && objDndState.active) {
             if (e.cancelable) e.preventDefault();
-            objDndReorderAt(e.clientY);
+            objDndUpdate(e.clientX, e.clientY);
           }
         });
 
@@ -12965,11 +13104,15 @@
           const s = objDndState;
           if (!s || (e && e.pointerId !== s.pointerId)) return;
           const wasActive = s.active;
+          if (wasActive) objDndDrop();
           objDndCleanup();
           if (wasActive) {
             // Le navigateur émet un click parasite juste après : on l'avale.
             objDndSuppressClickUntil = Date.now() + 400;
             commitObjectiveOrderFromDOM();
+            // Le premier glisser suffit : le libellé d'aide disparaît.
+            const hint = document.querySelector('#page-objectifs .obj-drag-hint');
+            if (hint) hint.classList.add('ip-hint-done');
           }
         };
         document.addEventListener('pointerup', endDrag);
