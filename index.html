@@ -14215,13 +14215,36 @@
         else updateProjChart();
       }
 
+      // Liste d'objectifs utilisée par le simulateur : les objectifs de la page
+      // Objectifs, plus l'« Objectif global » défini dans les paramètres
+      // (D.settings.goal) quand il existe. Ce dernier est un objectif
+      // synthétique basé sur le patrimoine total courant.
+      function goalSimEffectiveObjectives() {
+        const objs = (D.objectives || []).slice();
+        const g = (D.settings && parseFloat(D.settings.goal) > 0) ? parseFloat(D.settings.goal) : 0;
+        if (g > 0) {
+          objs.unshift({
+            id: '__global__',
+            name: 'Objectif global (patrimoine)',
+            target: g,
+            current: getTotal(),
+            date: null,
+            isGlobal: true
+          });
+        }
+        return objs;
+      }
+
       function renderGoalSimulator() {
         const sel = document.getElementById('goalSimSelect');
-        const objs = (D.objectives || []).slice();
+        // Liste effective : objectifs de la page Objectifs + objectif global.
+        const objs = goalSimEffectiveObjectives();
         if (sel) {
           // On ne reconstruit la liste que si les objectifs ont changé, et on
-          // conserve la sélection courante. Sinon le <select> revenait à la
-          // première option et l'objectif choisi ne s'appliquait jamais.
+          // conserve la sélection courante. La valeur d'un <select> est TOUJOURS
+          // une chaîne : on compare donc avec String() pour ne pas échouer quand
+          // l'id en mémoire est un nombre (id Supabase) — c'était la cause du bug
+          // « la sélection ne change rien ».
           const sig = objs.map(o => o.id + ':' + (o.name || '') + ':' + o.target).join('|');
           if (sel.getAttribute('data-sig') !== sig) {
             sel.innerHTML = objs.length
@@ -14231,7 +14254,7 @@
           }
           if (objs.length) {
             const desired = sel.value;
-            const valid = objs.find(o => o.id === desired);
+            const valid = objs.find(o => String(o.id) === String(desired));
             sel.value = valid ? desired : (objs.find(o => o.isMain) || objs[0]).id;
           }
         }
@@ -14271,12 +14294,14 @@
       }
 
       function currentGoalSimObjective() {
-        const objs = (D.objectives || []);
-        if (!objs.length) return null;
+        const objs = goalSimEffectiveObjectives();
         const sel = document.getElementById('goalSimSelect');
         const id = sel && sel.value;
-        if (id && objs.find(o => o.id === id)) return objs.find(o => o.id === id);
-        return objs.find(o => o.isMain) || objs[0];
+        if (id) {
+          const found = objs.find(o => String(o.id) === String(id));
+          if (found) return found;
+        }
+        return objs.find(o => o.isMain) || objs[0] || null;
       }
 
       function goalSimMonthsLeft(obj) {
