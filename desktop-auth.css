@@ -1,0 +1,31 @@
+/* Desktop authentication is a page, including before session restoration. */
+@media (min-width: 1025px) {
+  html.auth-pending .app > :not(#authModal),
+  html.desktop-auth-transition .app > :not(#authModal),
+  html.desktop-auth-locked .app > :not(#authModal) { visibility: hidden; }
+  html.auth-pending #authModal,
+  html.desktop-auth-transition #authModal,
+  html.desktop-auth-locked #authModal { display: flex; background: #080808; }
+  html.auth-pending #closeAuth,
+  html.desktop-auth-transition #closeAuth,
+  html.desktop-auth-locked #closeAuth { display: none; }
+  html.auth-pending, html.desktop-auth-locked { overflow: hidden; }
+  html.auth-pending .auth-backdrop,
+  html.desktop-auth-transition .auth-backdrop,
+  html.desktop-auth-locked .auth-backdrop { background: #080808; backdrop-filter: none; }
+}
+.desktop-welcome {
+  position: fixed; inset: 0; z-index: 20000; background: #080808;
+  display: grid; place-items: center; overflow: hidden; color: #C8A84B;
+}
+.desktop-welcome[hidden] { display: none; }
+.desktop-welcome-content { text-align: center; padding: 32px; }
+.desktop-welcome-brand { font: 500 11px 'Segoe UI', sans-serif; letter-spacing: .45em; color: #a68e50; }
+.desktop-welcome-title {
+  margin: 30px 0 26px; font: 400 clamp(48px, 6vw, 88px)/1.15 Georgia, serif;
+  letter-spacing: -.035em; color: #e8c96a;
+  background: linear-gradient(110deg, #b99440, #f5e3a7 48%, #c8a84b);
+  background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.desktop-welcome-line { width: 72px; height: 1px; margin: auto; background: linear-gradient(90deg, transparent, #c8a84b, transparent); }
+.desktop-welcome-caption { margin-top: 24px; font: 400 13px 'Segoe UI', sans-serif; letter-spacing: .12em; color: #aaa18b; }

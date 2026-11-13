@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="auth-pending">
 
 <head>
   <meta charset="UTF-8">
@@ -19,6 +19,8 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Patrimoine Dashboard</title>
+  <link rel="stylesheet" href="desktop-auth.css">
+  <script src="desktop-auth.js"></script>
 
   <!-- Favicon & icônes d'application : permet d'afficher le logo dans
        l'onglet du navigateur, les favoris, ET l'écran d'accueil mobile
@@ -7071,6 +7073,9 @@
 
       document.addEventListener("DOMContentLoaded", function () {
         const modal = document.getElementById("authModal");
+        const desktopAuth = createDesktopAuth(modal);
+        let loadedUserId = null, loadingUser = null;
+        let authSubmission = false;
         const openBtn = document.getElementById("openAuth");
         const closeBtn = document.getElementById("closeAuth");
         const tabs = document.querySelectorAll(".auth-tab");
@@ -7117,6 +7122,7 @@
         }
 
         function closeModal() {
+          if (desktopAuth.blocked) return;
           modal.classList.remove("show");
           document.body.style.overflow = "";
           if (window.checkEvolutionMonthlyReminder) {
@@ -7205,7 +7211,9 @@
             btn.disabled = true;
             btn.style.opacity = ".75";
 
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            authSubmission = true;
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }).catch(error => ({ error }));
+            authSubmission = false;
 
             btn.disabled = false;
             btn.style.opacity = "1";
@@ -7216,8 +7224,7 @@
             }
 
             setMessage(loginMsg, "Connexion réussie.", "success");
-            await refreshAuthUI();
-            setTimeout(closeModal, 600);
+            await finishAuthentication(data.user, false);
           });
         }
 
@@ -7258,7 +7265,9 @@
             btn.disabled = true;
             btn.style.opacity = ".75";
 
-            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            authSubmission = true;
+            const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { welcome_pending: true } } }).catch(error => ({ error }));
+            authSubmission = false;
 
             btn.disabled = false;
             btn.style.opacity = "1";
@@ -7270,8 +7279,7 @@
 
             if (data.session) {
               setMessage(signupMsg, "Compte créé avec succès.", "success");
-              await refreshAuthUI();
-              setTimeout(closeModal, 600);
+              await finishAuthentication(data.user, true);
             } else {
               setMessage(signupMsg, "Compte créé. Vérifiez votre e-mail pour confirmer votre adresse avant de vous connecter.", "success");
             }
@@ -7331,9 +7339,29 @@
           return msg || "Une erreur est survenue. Réessayez.";
         }
 
-        async function refreshAuthUI() {
-          const { data } = await supabaseClient.auth.getSession();
-          const session = data.session;
+        async function finishAuthentication(user, created) {
+          const first = created || (user.user_metadata?.welcome_pending === true && !user.user_metadata?.welcome_seen);
+          const ready = refreshAuthUI();
+          try {
+            const animated = await desktopAuth.welcome(user, ready, first);
+            if (!animated) { await ready; setTimeout(closeModal, 600); }
+            const current = (await supabaseClient.auth.getSession()).data.session;
+            if (first && current?.user.id === user.id) {
+              // Account-scoped, survives confirmation links and a change of device.
+              await supabaseClient.auth.updateUser({ data: { welcome_pending: false, welcome_seen: true } });
+            }
+          } catch (error) {
+            desktopAuth.cancel();
+            await refreshAuthUI();
+            closeModal();
+            showToast('Chargement interrompu. Veuillez réessayer.', 'error');
+          }
+        }
+
+        async function refreshAuthUI(sessionOverride) {
+          const session = sessionOverride === undefined
+            ? (await supabaseClient.auth.getSession()).data.session : sessionOverride;
+          desktopAuth.setSession(session?.user || null);
           const openBtnEl = document.getElementById("openAuth");
           const userBar = document.getElementById("userBar");
           const userEmailLabel = document.getElementById("userEmailLabel");
@@ -7341,8 +7369,14 @@
             openBtnEl.style.display = "none";
             userBar.style.display = "flex";
             userEmailLabel.textContent = session.user.email || 'Visiteur (démo)';
-            if (window.onUserLoggedIn) await window.onUserLoggedIn(session.user);
+            if (loadedUserId !== session.user.id) {
+              loadedUserId = session.user.id;
+              loadingUser = Promise.resolve(window.onUserLoggedIn?.(session.user));
+            }
+            await loadingUser;
           } else {
+            loadedUserId = null;
+            loadingUser = null;
             openBtnEl.style.display = "inline-block";
             userBar.style.display = "none";
             userEmailLabel.textContent = "";
@@ -7351,8 +7385,19 @@
         }
         window.refreshAuthUI = refreshAuthUI;
 
-        supabaseClient.auth.onAuthStateChange(function () {
-          refreshAuthUI();
+        supabaseClient.auth.onAuthStateChange(function (event, session) {
+          // Capture before deferring: the form may finish before this timer runs.
+          const submittedHere = authSubmission;
+          // Never await another Supabase call while its auth lock is held.
+          setTimeout(function () {
+            if (submittedHere && event === 'SIGNED_IN') return;
+            if (event === 'SIGNED_IN' && session?.user.user_metadata?.welcome_pending && !desktopAuth.running) {
+              setMessage(loginMsg, "Connexion réussie.", "success");
+              finishAuthentication(session.user, false);
+            } else {
+              refreshAuthUI(session);
+            }
+          }, 0);
         });
 
         refreshAuthUI();
@@ -11511,7 +11556,7 @@
         }
         const demoNotice = document.getElementById('modal-demoNotice');
         const authModal = document.getElementById('authModal');
-        if (demoNotice?.classList.contains('show') || authModal?.classList.contains('show')) return;
+        if (demoNotice?.classList.contains('show') || authModal?.classList.contains('show') || document.querySelector('.desktop-welcome:not([hidden])')) return;
         const anotherModalIsOpen = Array.from(document.querySelectorAll('.modal-overlay.show'))
           .some(overlay => !['modal-evolutionReminder', 'modal-demoNotice'].includes(overlay.id));
         if (anotherModalIsOpen) return;
